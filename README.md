@@ -87,7 +87,7 @@ On first start without a profile, Layout Studio offers to import your existing T
 | Page | What you do |
 | --- | --- |
 | Graphics and performance | What Playnite's settings and the theme cost, what to fix, optional savings, and a button to fix each |
-| Sections | Drag a details-view section to reorder it or move it to the other column; the eye hides it, the arrow sets whether it starts open |
+| Sections | Drag a details-view section to reorder it or move it to the other column (an amber line shows where it lands), or press its left/right button; the eye hides it, the arrow sets whether it starts open. Every section can change column |
 | Sizes | Drag the handle of a box (top panel, cover, play button...); values are clamped to a sane range |
 | Header cards | Drag a card type onto a slot, or drag a slot onto another to swap |
 | Corners | One rounding scale for the card, panels, tiles, chips and buttons |

@@ -1,3 +1,4 @@
 build/
 tools/roslyn/
 *.pdb
+__pycache__/

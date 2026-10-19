@@ -91,9 +91,9 @@ public static class TileCellTests
     public static void The_theme_reads_the_extra_cards_from_the_constants_the_schema_lists()
     {
         var e = Make();
-        if (!Directory.Exists(Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, @"..\theme\Modula"))) return;   // the exported Layout Studio repository has no theme
-        string xaml = File.ReadAllText(Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, @"..\theme\Modula\Views\DetailsViewGameOverview.xaml"));
-        string constants = File.ReadAllText(Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, @"..\theme\Modula\Constants.xaml"));
+        if (!Directory.Exists(Path.Combine(TestPaths.RepoRoot(), @"theme\Modula"))) return;   // the exported Layout Studio repository has no theme
+        string xaml = File.ReadAllText(Path.Combine(TestPaths.RepoRoot(), @"theme\Modula\Views\DetailsViewGameOverview.xaml"));
+        string constants = File.ReadAllText(Path.Combine(TestPaths.RepoRoot(), @"theme\Modula\Constants.xaml"));
         for (int n = 1; n <= 12; n++)
             foreach (string s in new[] { "", "B", "C", "D" })
             {

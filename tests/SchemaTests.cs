@@ -4,12 +4,26 @@ using LayoutStudio.Core;
 
 public static class TestPaths
 {
+    // tests.exe is built into the local build folder (tools\local-paths.ps1), usually outside the repository:
+    // tests\run.ps1 passes the repository in MODULA_REPO; otherwise the exe folder, then the current folder, are walked up.
     public static string RepoRoot()
     {
-        var dir = new DirectoryInfo(System.AppDomain.CurrentDomain.BaseDirectory);
-        while (dir != null && !Directory.Exists(Path.Combine(dir.FullName, "layout-studio"))) dir = dir.Parent;
-        if (dir == null) throw new System.Exception("repository root not found");
-        return dir.FullName;
+        string env = System.Environment.GetEnvironmentVariable("MODULA_REPO");
+        if (!string.IsNullOrEmpty(env) && Directory.Exists(Path.Combine(env, "layout-studio")))
+        {
+            // the theme tests skip when theme\ is missing (the exported Layout Studio repository, which has the schema fixture):
+            // a tree with neither would let them pass without checking anything
+            if (!Directory.Exists(Path.Combine(env, "theme")) && !File.Exists(Path.Combine(env, @"tests\fixtures\modula.layout-studio.schema.json")))
+                throw new System.Exception("MODULA_REPO (" + env + ") has no theme folder and no tests\\fixtures schema: not this repository nor its public export");
+            return Path.GetFullPath(env);
+        }
+        foreach (string start in new[] { System.AppDomain.CurrentDomain.BaseDirectory, System.Environment.CurrentDirectory })
+        {
+            var dir = new DirectoryInfo(start);
+            while (dir != null && !Directory.Exists(Path.Combine(dir.FullName, "layout-studio"))) dir = dir.Parent;
+            if (dir != null) return dir.FullName;
+        }
+        throw new System.Exception("repository root not found (run tests\\run.ps1, or set MODULA_REPO)");
     }
 
     public static string SchemaPath()

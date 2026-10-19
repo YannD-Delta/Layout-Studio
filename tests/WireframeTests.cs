@@ -28,7 +28,7 @@ public static class WireframeTests
     {
         var s = Schema_();
         Assert.Equal(18, s.Sections.Count);
-        Assert.Equal(4, s.Sections.Count(d => d.ColumnKey != null));
+        Assert.Equal(18, s.Sections.Count(d => d.ColumnKey != null), "every section can change column");
         Assert.True(s.Sections.All(d => d.LeftKey != null || d.RightKey != null), "every section has a place");
         Assert.True(s.Sections.All(d => (d.LeftKey == null || s.Find(d.LeftKey) != null) && (d.ShowKey == null || s.Find(d.ShowKey) != null)), "all keys are known constants");
     }
@@ -59,7 +59,9 @@ public static class WireframeTests
         Assert.True(Ids(slots, 1).Contains("Genres"));
         Assert.False(Ids(slots, 0).Contains("Genres"));
         Assert.True(slots.Single(x => x.Id == "Genres").CanMove);
-        Assert.False(slots.Single(x => x.Id == "Notes").CanMove);
+        Assert.True(slots.Single(x => x.Id == "Notes").CanMove);
+        var fixedNotes = Schema.Load(TestSections.SchemaJsonWithFixed("Notes"));
+        Assert.False(WireframeModel.FromStore(new ConstantStore(fixedNotes.AllConstants()), fixedNotes).Single(x => x.Id == "Notes").CanMove, "a section without a column constant stays put");
     }
 
     public static void Move_between_columns_keeps_unique_orders()
@@ -95,13 +97,35 @@ public static class WireframeTests
         Assert.Equal(0, store.Changed().Count);
     }
 
-    public static void A_fixed_section_cannot_change_column()
+    public static void A_section_without_a_column_constant_cannot_change_column()
     {
-        var s = Schema_();
+        var s = Schema.Load(TestSections.SchemaJsonWithFixed("Notes", "HowLongToBeat"));
         var store = Store(s);
         Assert.False(WireframeModel.Move(store, s, "Notes", 1, 0));
         Assert.False(WireframeModel.Move(store, s, "HowLongToBeat", 0, 0));
         Assert.Equal(0, store.Changed().Count);
+        Assert.True(WireframeModel.Move(store, s, "Notes", 0, 3), "but it still reorders inside its column");
+    }
+
+    public static void Every_section_can_change_column_and_come_back()
+    {
+        var s = Schema_();
+        foreach (var d in s.Sections)
+        {
+            var store = Store(s);
+            int home = WireframeModel.FromStore(store, s).Single(x => x.Id == d.Id).Column;
+            Assert.True(WireframeModel.Move(store, s, d.Id, 1 - home, 0), d.Id + " moves to the other column");
+            Assert.Equal(1 - home, WireframeModel.FromStore(store, s).Single(x => x.Id == d.Id).Column, d.Id + " is there");
+            Assert.True(WireframeModel.Move(store, s, d.Id, home, 0), d.Id + " comes back");
+            var slots = WireframeModel.FromStore(store, s);
+            Assert.Equal(home, slots.Single(x => x.Id == d.Id).Column);
+            Assert.Equal(18, slots.Count, "no section is lost");
+            foreach (var column in new[] { 0, 1 })
+            {
+                var values = OrderValues(store, s, column);
+                Assert.Equal(values.Length, values.Distinct().Count(), "order numbers are unique after moving " + d.Id);
+            }
+        }
     }
 
     public static void Hidden_sections_keep_their_slot()

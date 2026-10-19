@@ -212,7 +212,7 @@ public static class ShellViewModelTests
     // (A binding to SelectedPage.Groups made every generated page blank in the real Playnite.)
     public static void Generated_pages_bind_to_the_groups_of_the_page_they_are_hosted_in()
     {
-        string xaml = System.IO.File.ReadAllText(System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\layout-studio\src\Editor\EditorWindow.xaml"));
+        string xaml = System.IO.File.ReadAllText(System.IO.Path.Combine(TestPaths.RepoRoot(), @"layout-studio\src\Editor\EditorWindow.xaml"));
         int start = xaml.IndexOf("x:Key=\"Page.settings\"", StringComparison.Ordinal);
         Assert.True(start >= 0, "Page.settings template exists");
         string template = xaml.Substring(start, xaml.IndexOf("x:Key=\"Block.section\"", start, StringComparison.Ordinal) - start);

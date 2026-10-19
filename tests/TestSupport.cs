@@ -54,3 +54,29 @@ public static class TestSchema
   ]
 }";
 }
+
+public static class TestSections
+{
+    /// <summary>The theme's schema with the column flag of some sections removed: those sections stay in their column (the "fixed" case of the editor).</summary>
+    public static string SchemaJsonWithFixed(params string[] ids)
+    {
+        var serializer = new System.Web.Script.Serialization.JavaScriptSerializer { MaxJsonLength = int.MaxValue, RecursionLimit = 200 };
+        var root = (System.Collections.Generic.Dictionary<string, object>)serializer.DeserializeObject(System.IO.File.ReadAllText(TestPaths.SchemaPath()));
+        var defaults = new System.Collections.Generic.Dictionary<string, string>();
+        foreach (var c in (System.Collections.IEnumerable)root["constants"])
+        {
+            var cd = (System.Collections.Generic.Dictionary<string, object>)c;
+            defaults[(string)cd["key"]] = cd.ContainsKey("default") ? (string)cd["default"] : null;
+        }
+        foreach (var section in (System.Collections.IEnumerable)root["sections"])
+        {
+            var d = (System.Collections.Generic.Dictionary<string, object>)section;
+            if (System.Array.IndexOf(ids, (string)d["id"]) < 0) continue;
+            // a fixed section only knows the column it is in: drop the flag and the order constant of the other column
+            bool right = d.ContainsKey("columnKey") && defaults[(string)d["columnKey"]] == "True";
+            d.Remove("columnKey");
+            d.Remove(right ? "leftKey" : "rightKey");
+        }
+        return serializer.Serialize(root);
+    }
+}

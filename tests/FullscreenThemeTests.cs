@@ -4,7 +4,7 @@ using System.Text.RegularExpressions;
 
 public static class FullscreenThemeTests
 {
-    private static string Root { get { return Path.GetFullPath(Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, "..")); } }
+    private static string Root { get { return TestPaths.RepoRoot(); } }
 
     public static void The_fullscreen_theme_declares_its_mode_and_has_an_id_of_its_own()
     {

@@ -1,7 +1,7 @@
 {
  "version": 1,
  "stats": {
-  "constants": 456
+  "constants": 485
  },
  "pages": [
   {
@@ -2255,6 +2255,24 @@
        "titleKey": "LOCHNDOptHeroCoverHeight",
        "description": "A 2:3 ratio (230 x 345) fits most covers.",
        "tipKey": "LOCHNDTipHeroCoverHeight",
+       "choices": []
+      }
+     ]
+    },
+    {
+     "id": "details-view---artwork-header--music-player",
+     "title": "Details view - artwork header: music player",
+     "controls": [
+      {
+       "kind": "toggle",
+       "id": "HeroShowMusicPlayer",
+       "keys": [
+        "HeroShowMusicPlayer"
+       ],
+       "title": "Show the music player",
+       "titleKey": "LOCHNDOptHeroShowMusicPlayer",
+       "description": "The UniPlaySong player (cover, title, previous, play, next) at the right of the banner. It only shows while a game music plays.",
+       "tipKey": "LOCHNDTipHeroShowMusicPlayer",
        "choices": []
       }
      ]
@@ -4779,6 +4797,292 @@
      ]
     },
     {
+     "id": "details-view---every-section-can-move-to-the-other-column",
+     "title": "Details view - every section can move to the other column",
+     "controls": [
+      {
+       "kind": "toggle",
+       "id": "DetailsViewNotesInRightColumn",
+       "keys": [
+        "DetailsViewNotesInRightColumn"
+       ],
+       "title": "Play Notes in the right column",
+       "titleKey": "LOCHNDOptDetailsViewNotesInRightColumn",
+       "choices": []
+      },
+      {
+       "kind": "toggle",
+       "id": "DetailsViewNewsViewerInRightColumn",
+       "keys": [
+        "DetailsViewNewsViewerInRightColumn"
+       ],
+       "title": "News Viewer in the right column",
+       "titleKey": "LOCHNDOptDetailsViewNewsViewerInRightColumn",
+       "choices": []
+      },
+      {
+       "kind": "toggle",
+       "id": "DetailsViewVideoInRightColumn",
+       "keys": [
+        "DetailsViewVideoInRightColumn"
+       ],
+       "title": "Video in the right column",
+       "titleKey": "LOCHNDOptDetailsViewVideoInRightColumn",
+       "choices": []
+      },
+      {
+       "kind": "toggle",
+       "id": "DetailsViewGameActivityInRightColumn",
+       "keys": [
+        "DetailsViewGameActivityInRightColumn"
+       ],
+       "title": "GameActivity in the right column",
+       "titleKey": "LOCHNDOptDetailsViewGameActivityInRightColumn",
+       "choices": []
+      },
+      {
+       "kind": "toggle",
+       "id": "DetailsViewCheckDlcInRightColumn",
+       "keys": [
+        "DetailsViewCheckDlcInRightColumn"
+       ],
+       "title": "CheckDlc in the right column",
+       "titleKey": "LOCHNDOptDetailsViewCheckDlcInRightColumn",
+       "choices": []
+      },
+      {
+       "kind": "toggle",
+       "id": "DetailsViewGameRelationsInRightColumn",
+       "keys": [
+        "DetailsViewGameRelationsInRightColumn"
+       ],
+       "title": "Game Relations in the right column",
+       "titleKey": "LOCHNDOptDetailsViewGameRelationsInRightColumn",
+       "choices": []
+      },
+      {
+       "kind": "toggle",
+       "id": "DetailsViewWebInRightColumn",
+       "keys": [
+        "DetailsViewWebInRightColumn"
+       ],
+       "title": "Web Explorer in the right column",
+       "titleKey": "LOCHNDOptDetailsViewWebInRightColumn",
+       "choices": []
+      },
+      {
+       "kind": "toggle",
+       "id": "DetailsViewHowLongToBeatInRightColumn",
+       "keys": [
+        "DetailsViewHowLongToBeatInRightColumn"
+       ],
+       "title": "HowLongToBeat in the right column",
+       "titleKey": "LOCHNDOptDetailsViewHowLongToBeatInRightColumn",
+       "choices": []
+      },
+      {
+       "kind": "toggle",
+       "id": "DetailsViewAchievementsInRightColumn",
+       "keys": [
+        "DetailsViewAchievementsInRightColumn"
+       ],
+       "title": "PlayniteAchievements in the right column",
+       "titleKey": "LOCHNDOptDetailsViewAchievementsInRightColumn",
+       "choices": []
+      },
+      {
+       "kind": "toggle",
+       "id": "DetailsViewSteamScreenshotsInRightColumn",
+       "keys": [
+        "DetailsViewSteamScreenshotsInRightColumn"
+       ],
+       "title": "Steam Screenshots in the right column",
+       "titleKey": "LOCHNDOptDetailsViewSteamScreenshotsInRightColumn",
+       "choices": []
+      },
+      {
+       "kind": "toggle",
+       "id": "DetailsViewVndbInRightColumn",
+       "keys": [
+        "DetailsViewVndbInRightColumn"
+       ],
+       "title": "VNDB Nexus in the right column",
+       "titleKey": "LOCHNDOptDetailsViewVndbInRightColumn",
+       "choices": []
+      },
+      {
+       "kind": "toggle",
+       "id": "DetailsViewScreenshotsVisualizerInRightColumn",
+       "keys": [
+        "DetailsViewScreenshotsVisualizerInRightColumn"
+       ],
+       "title": "ScreenshotsVisualizer in the right column",
+       "titleKey": "LOCHNDOptDetailsViewScreenshotsVisualizerInRightColumn",
+       "choices": []
+      },
+      {
+       "kind": "toggle",
+       "id": "DetailsViewReviewViewerInRightColumn",
+       "keys": [
+        "DetailsViewReviewViewerInRightColumn"
+       ],
+       "title": "Review Viewer in the right column",
+       "titleKey": "LOCHNDOptDetailsViewReviewViewerInRightColumn",
+       "choices": []
+      },
+      {
+       "kind": "toggle",
+       "id": "DetailsViewScreenshotUtilitiesInRightColumn",
+       "keys": [
+        "DetailsViewScreenshotUtilitiesInRightColumn"
+       ],
+       "title": "Screenshot Utilities in the right column",
+       "titleKey": "LOCHNDOptDetailsViewScreenshotUtilitiesInRightColumn",
+       "choices": []
+      },
+      {
+       "kind": "number",
+       "id": "DetailsViewSectionOrderRightNotes",
+       "keys": [
+        "DetailsViewSectionOrderRightNotes"
+       ],
+       "title": "Play Notes (when in the right column)",
+       "titleKey": "LOCHNDOptDetailsViewSectionOrderRightNotes",
+       "choices": []
+      },
+      {
+       "kind": "number",
+       "id": "DetailsViewSectionOrderRightNewsViewer",
+       "keys": [
+        "DetailsViewSectionOrderRightNewsViewer"
+       ],
+       "title": "News Viewer (when in the right column)",
+       "titleKey": "LOCHNDOptDetailsViewSectionOrderRightNewsViewer",
+       "choices": []
+      },
+      {
+       "kind": "number",
+       "id": "DetailsViewSectionOrderRightVideo",
+       "keys": [
+        "DetailsViewSectionOrderRightVideo"
+       ],
+       "title": "Video (when in the right column)",
+       "titleKey": "LOCHNDOptDetailsViewSectionOrderRightVideo",
+       "choices": []
+      },
+      {
+       "kind": "number",
+       "id": "DetailsViewSectionOrderRightGameActivity",
+       "keys": [
+        "DetailsViewSectionOrderRightGameActivity"
+       ],
+       "title": "GameActivity (when in the right column)",
+       "titleKey": "LOCHNDOptDetailsViewSectionOrderRightGameActivity",
+       "choices": []
+      },
+      {
+       "kind": "number",
+       "id": "DetailsViewSectionOrderRightCheckDlc",
+       "keys": [
+        "DetailsViewSectionOrderRightCheckDlc"
+       ],
+       "title": "CheckDlc (when in the right column)",
+       "titleKey": "LOCHNDOptDetailsViewSectionOrderRightCheckDlc",
+       "choices": []
+      },
+      {
+       "kind": "number",
+       "id": "DetailsViewSectionOrderRightGameRelations",
+       "keys": [
+        "DetailsViewSectionOrderRightGameRelations"
+       ],
+       "title": "Game Relations (when in the right column)",
+       "titleKey": "LOCHNDOptDetailsViewSectionOrderRightGameRelations",
+       "choices": []
+      },
+      {
+       "kind": "number",
+       "id": "DetailsViewSectionOrderRightWeb",
+       "keys": [
+        "DetailsViewSectionOrderRightWeb"
+       ],
+       "title": "Web Explorer (when in the right column)",
+       "titleKey": "LOCHNDOptDetailsViewSectionOrderRightWeb",
+       "choices": []
+      },
+      {
+       "kind": "number",
+       "id": "DetailsViewSectionOrderLeftHowLongToBeat",
+       "keys": [
+        "DetailsViewSectionOrderLeftHowLongToBeat"
+       ],
+       "title": "HowLongToBeat (when in the left column)",
+       "titleKey": "LOCHNDOptDetailsViewSectionOrderLeftHowLongToBeat",
+       "choices": []
+      },
+      {
+       "kind": "number",
+       "id": "DetailsViewSectionOrderLeftAchievements",
+       "keys": [
+        "DetailsViewSectionOrderLeftAchievements"
+       ],
+       "title": "PlayniteAchievements (when in the left column)",
+       "titleKey": "LOCHNDOptDetailsViewSectionOrderLeftAchievements",
+       "choices": []
+      },
+      {
+       "kind": "number",
+       "id": "DetailsViewSectionOrderLeftSteamScreenshots",
+       "keys": [
+        "DetailsViewSectionOrderLeftSteamScreenshots"
+       ],
+       "title": "Steam Screenshots (when in the left column)",
+       "titleKey": "LOCHNDOptDetailsViewSectionOrderLeftSteamScreenshots",
+       "choices": []
+      },
+      {
+       "kind": "number",
+       "id": "DetailsViewSectionOrderLeftVndb",
+       "keys": [
+        "DetailsViewSectionOrderLeftVndb"
+       ],
+       "title": "VNDB Nexus (when in the left column)",
+       "titleKey": "LOCHNDOptDetailsViewSectionOrderLeftVndb",
+       "choices": []
+      },
+      {
+       "kind": "number",
+       "id": "DetailsViewSectionOrderLeftScreenshotsVisualizer",
+       "keys": [
+        "DetailsViewSectionOrderLeftScreenshotsVisualizer"
+       ],
+       "title": "ScreenshotsVisualizer (when in the left column)",
+       "titleKey": "LOCHNDOptDetailsViewSectionOrderLeftScreenshotsVisualizer",
+       "choices": []
+      },
+      {
+       "kind": "number",
+       "id": "DetailsViewSectionOrderLeftReviewViewer",
+       "keys": [
+        "DetailsViewSectionOrderLeftReviewViewer"
+       ],
+       "title": "Review Viewer (when in the left column)",
+       "titleKey": "LOCHNDOptDetailsViewSectionOrderLeftReviewViewer",
+       "choices": []
+      },
+      {
+       "kind": "number",
+       "id": "DetailsViewSectionOrderLeftScreenshotUtilities",
+       "keys": [
+        "DetailsViewSectionOrderLeftScreenshotUtilities"
+       ],
+       "title": "Screenshot Utilities (when in the left column)",
+       "titleKey": "LOCHNDOptDetailsViewSectionOrderLeftScreenshotUtilities",
+       "choices": []
+      }
+     ]
+    },
+    {
      "id": "details-view---margins-and-spacing",
      "title": "Details view - margins and spacing",
      "controls": [
@@ -6603,6 +6907,11 @@
    "step": 0.01
   },
   {
+   "key": "DetailsViewAchievementsInRightColumn",
+   "type": "Boolean",
+   "default": "True"
+  },
+  {
    "key": "DetailsViewAchievementsShowBarChart",
    "type": "Boolean",
    "default": "False"
@@ -6665,6 +6974,11 @@
   },
   {
    "key": "DetailsViewCategoriesInRightColumn",
+   "type": "Boolean",
+   "default": "False"
+  },
+  {
+   "key": "DetailsViewCheckDlcInRightColumn",
    "type": "Boolean",
    "default": "False"
   },
@@ -6797,12 +7111,52 @@
    "default": "False"
   },
   {
+   "key": "DetailsViewGameActivityInRightColumn",
+   "type": "Boolean",
+   "default": "False"
+  },
+  {
+   "key": "DetailsViewGameRelationsInRightColumn",
+   "type": "Boolean",
+   "default": "False"
+  },
+  {
    "key": "DetailsViewGenresInRightColumn",
    "type": "Boolean",
    "default": "False"
   },
   {
+   "key": "DetailsViewHowLongToBeatInRightColumn",
+   "type": "Boolean",
+   "default": "True"
+  },
+  {
    "key": "DetailsViewLibraryGameShowFavorite",
+   "type": "Boolean",
+   "default": "True"
+  },
+  {
+   "key": "DetailsViewNewsViewerInRightColumn",
+   "type": "Boolean",
+   "default": "False"
+  },
+  {
+   "key": "DetailsViewNotesInRightColumn",
+   "type": "Boolean",
+   "default": "False"
+  },
+  {
+   "key": "DetailsViewReviewViewerInRightColumn",
+   "type": "Boolean",
+   "default": "True"
+  },
+  {
+   "key": "DetailsViewScreenshotUtilitiesInRightColumn",
+   "type": "Boolean",
+   "default": "True"
+  },
+  {
+   "key": "DetailsViewScreenshotsVisualizerInRightColumn",
    "type": "Boolean",
    "default": "True"
   },
@@ -6871,6 +7225,62 @@
    "step": 1.0
   },
   {
+   "key": "DetailsViewSectionOrderLeftAchievements",
+   "type": "Int",
+   "default": "12",
+   "min": 0.0,
+   "max": 18.0,
+   "step": 1.0
+  },
+  {
+   "key": "DetailsViewSectionOrderLeftHowLongToBeat",
+   "type": "Int",
+   "default": "11",
+   "min": 0.0,
+   "max": 18.0,
+   "step": 1.0
+  },
+  {
+   "key": "DetailsViewSectionOrderLeftReviewViewer",
+   "type": "Int",
+   "default": "16",
+   "min": 0.0,
+   "max": 18.0,
+   "step": 1.0
+  },
+  {
+   "key": "DetailsViewSectionOrderLeftScreenshotUtilities",
+   "type": "Int",
+   "default": "17",
+   "min": 0.0,
+   "max": 18.0,
+   "step": 1.0
+  },
+  {
+   "key": "DetailsViewSectionOrderLeftScreenshotsVisualizer",
+   "type": "Int",
+   "default": "15",
+   "min": 0.0,
+   "max": 18.0,
+   "step": 1.0
+  },
+  {
+   "key": "DetailsViewSectionOrderLeftSteamScreenshots",
+   "type": "Int",
+   "default": "13",
+   "min": 0.0,
+   "max": 18.0,
+   "step": 1.0
+  },
+  {
+   "key": "DetailsViewSectionOrderLeftVndb",
+   "type": "Int",
+   "default": "14",
+   "min": 0.0,
+   "max": 18.0,
+   "step": 1.0
+  },
+  {
    "key": "DetailsViewSectionOrderNewsViewer",
    "type": "Int",
    "default": "5",
@@ -6903,9 +7313,33 @@
    "step": 1.0
   },
   {
+   "key": "DetailsViewSectionOrderRightCheckDlc",
+   "type": "Int",
+   "default": "15",
+   "min": 0.0,
+   "max": 18.0,
+   "step": 1.0
+  },
+  {
    "key": "DetailsViewSectionOrderRightFeatures",
    "type": "Int",
    "default": "9",
+   "min": 0.0,
+   "max": 18.0,
+   "step": 1.0
+  },
+  {
+   "key": "DetailsViewSectionOrderRightGameActivity",
+   "type": "Int",
+   "default": "14",
+   "min": 0.0,
+   "max": 18.0,
+   "step": 1.0
+  },
+  {
+   "key": "DetailsViewSectionOrderRightGameRelations",
+   "type": "Int",
+   "default": "16",
    "min": 0.0,
    "max": 18.0,
    "step": 1.0
@@ -6919,9 +7353,41 @@
    "step": 1.0
   },
   {
+   "key": "DetailsViewSectionOrderRightNewsViewer",
+   "type": "Int",
+   "default": "12",
+   "min": 0.0,
+   "max": 18.0,
+   "step": 1.0
+  },
+  {
+   "key": "DetailsViewSectionOrderRightNotes",
+   "type": "Int",
+   "default": "11",
+   "min": 0.0,
+   "max": 18.0,
+   "step": 1.0
+  },
+  {
    "key": "DetailsViewSectionOrderRightTags",
    "type": "Int",
    "default": "10",
+   "min": 0.0,
+   "max": 18.0,
+   "step": 1.0
+  },
+  {
+   "key": "DetailsViewSectionOrderRightVideo",
+   "type": "Int",
+   "default": "13",
+   "min": 0.0,
+   "max": 18.0,
+   "step": 1.0
+  },
+  {
+   "key": "DetailsViewSectionOrderRightWeb",
+   "type": "Int",
+   "default": "17",
    "min": 0.0,
    "max": 18.0,
    "step": 1.0
@@ -7108,6 +7574,11 @@
    "default": "True"
   },
   {
+   "key": "DetailsViewSteamScreenshotsInRightColumn",
+   "type": "Boolean",
+   "default": "True"
+  },
+  {
    "key": "DetailsViewTabAchievements",
    "type": "Double",
    "default": "3",
@@ -7263,6 +7734,21 @@
   },
   {
    "key": "DetailsViewUseMetadataUtilities",
+   "type": "Boolean",
+   "default": "False"
+  },
+  {
+   "key": "DetailsViewVideoInRightColumn",
+   "type": "Boolean",
+   "default": "False"
+  },
+  {
+   "key": "DetailsViewVndbInRightColumn",
+   "type": "Boolean",
+   "default": "True"
+  },
+  {
+   "key": "DetailsViewWebInRightColumn",
    "type": "Boolean",
    "default": "False"
   },
@@ -8701,6 +9187,11 @@
    "default": "True"
   },
   {
+   "key": "HeroShowMusicPlayer",
+   "type": "Boolean",
+   "default": "True"
+  },
+  {
    "key": "HeroShowPlatforms",
    "type": "Boolean",
    "default": "True"
@@ -9930,8 +10421,10 @@
    "id": "Notes",
    "title": "Play Notes",
    "leftKey": "DetailsViewSectionOrderNotes",
+   "rightKey": "DetailsViewSectionOrderRightNotes",
    "showKey": "DetailsViewShowNotesPanel",
-   "expandKey": "DetailsViewExpandNotesPanel"
+   "expandKey": "DetailsViewExpandNotesPanel",
+   "columnKey": "DetailsViewNotesInRightColumn"
   },
   {
    "id": "Genres",
@@ -9969,92 +10462,118 @@
    "id": "NewsViewer",
    "title": "News Viewer",
    "leftKey": "DetailsViewSectionOrderNewsViewer",
+   "rightKey": "DetailsViewSectionOrderRightNewsViewer",
    "showKey": "DetailsViewShowNewsPanel",
-   "expandKey": "DetailsViewExpandNewsPanel"
+   "expandKey": "DetailsViewExpandNewsPanel",
+   "columnKey": "DetailsViewNewsViewerInRightColumn"
   },
   {
    "id": "Video",
    "title": "Video",
    "leftKey": "DetailsViewSectionOrderVideo",
+   "rightKey": "DetailsViewSectionOrderRightVideo",
    "showKey": "DetailsViewShowVideoPanel",
-   "expandKey": "DetailsViewExpandVideoPanel"
+   "expandKey": "DetailsViewExpandVideoPanel",
+   "columnKey": "DetailsViewVideoInRightColumn"
   },
   {
    "id": "GameActivity",
    "title": "GameActivity",
    "leftKey": "DetailsViewSectionOrderGameActivity",
+   "rightKey": "DetailsViewSectionOrderRightGameActivity",
    "showKey": "DetailsViewShowGameActivityPanel",
-   "expandKey": "DetailsViewExpandGameActivityPanel"
+   "expandKey": "DetailsViewExpandGameActivityPanel",
+   "columnKey": "DetailsViewGameActivityInRightColumn"
   },
   {
    "id": "CheckDlc",
    "title": "CheckDlc",
    "leftKey": "DetailsViewSectionOrderCheckDlc",
+   "rightKey": "DetailsViewSectionOrderRightCheckDlc",
    "showKey": "DetailsViewShowCheckDlcPanel",
-   "expandKey": "DetailsViewExpandCheckDlcPanel"
+   "expandKey": "DetailsViewExpandCheckDlcPanel",
+   "columnKey": "DetailsViewCheckDlcInRightColumn"
   },
   {
    "id": "GameRelations",
    "title": "Game Relations",
    "leftKey": "DetailsViewSectionOrderGameRelations",
+   "rightKey": "DetailsViewSectionOrderRightGameRelations",
    "showKey": "DetailsViewShowGameRelationsPanel",
-   "expandKey": "DetailsViewExpandGameRelationsPanel"
+   "expandKey": "DetailsViewExpandGameRelationsPanel",
+   "columnKey": "DetailsViewGameRelationsInRightColumn"
   },
   {
    "id": "Web",
    "title": "Web Explorer",
    "leftKey": "DetailsViewSectionOrderWeb",
+   "rightKey": "DetailsViewSectionOrderRightWeb",
    "showKey": "DetailsViewShowWebExplorerPanel",
-   "expandKey": "DetailsViewExpandWebExplorerPanel"
+   "expandKey": "DetailsViewExpandWebExplorerPanel",
+   "columnKey": "DetailsViewWebInRightColumn"
   },
   {
    "id": "HowLongToBeat",
    "title": "HowLongToBeat",
+   "leftKey": "DetailsViewSectionOrderLeftHowLongToBeat",
    "rightKey": "DetailsViewSectionOrderHowLongToBeat",
    "showKey": "DetailsViewShowHltbPanel",
-   "expandKey": "DetailsViewShowHltbPanelDefault"
+   "expandKey": "DetailsViewShowHltbPanelDefault",
+   "columnKey": "DetailsViewHowLongToBeatInRightColumn"
   },
   {
    "id": "Achievements",
    "title": "PlayniteAchievements",
+   "leftKey": "DetailsViewSectionOrderLeftAchievements",
    "rightKey": "DetailsViewSectionOrderAchievements",
    "showKey": "DetailsViewShowAchievementsPanel",
-   "expandKey": "DetailsViewShowAchievementsPanelDefault"
+   "expandKey": "DetailsViewShowAchievementsPanelDefault",
+   "columnKey": "DetailsViewAchievementsInRightColumn"
   },
   {
    "id": "SteamScreenshots",
    "title": "Steam Screenshots",
+   "leftKey": "DetailsViewSectionOrderLeftSteamScreenshots",
    "rightKey": "DetailsViewSectionOrderSteamScreenshots",
    "showKey": "DetailsViewShowSteamScreenshotsPanel",
-   "expandKey": "DetailsViewExpandSteamScreenshotsPanel"
+   "expandKey": "DetailsViewExpandSteamScreenshotsPanel",
+   "columnKey": "DetailsViewSteamScreenshotsInRightColumn"
   },
   {
    "id": "Vndb",
    "title": "VNDB Nexus",
+   "leftKey": "DetailsViewSectionOrderLeftVndb",
    "rightKey": "DetailsViewSectionOrderVndb",
    "showKey": "DetailsViewShowVndbPanel",
-   "expandKey": "DetailsViewExpandVndbPanel"
+   "expandKey": "DetailsViewExpandVndbPanel",
+   "columnKey": "DetailsViewVndbInRightColumn"
   },
   {
    "id": "ScreenshotsVisualizer",
    "title": "ScreenshotsVisualizer",
+   "leftKey": "DetailsViewSectionOrderLeftScreenshotsVisualizer",
    "rightKey": "DetailsViewSectionOrderScreenshotsVisualizer",
    "showKey": "DetailsViewShowScreenshotsVisualizerPanel",
-   "expandKey": "DetailsViewExpandScreenshotsVisualizerPanel"
+   "expandKey": "DetailsViewExpandScreenshotsVisualizerPanel",
+   "columnKey": "DetailsViewScreenshotsVisualizerInRightColumn"
   },
   {
    "id": "ReviewViewer",
    "title": "Review Viewer",
+   "leftKey": "DetailsViewSectionOrderLeftReviewViewer",
    "rightKey": "DetailsViewSectionOrderReviewViewer",
    "showKey": "DetailsViewShowReviewsPanel",
-   "expandKey": "DetailsViewExpandReviewsPanel"
+   "expandKey": "DetailsViewExpandReviewsPanel",
+   "columnKey": "DetailsViewReviewViewerInRightColumn"
   },
   {
    "id": "ScreenshotUtilities",
    "title": "Screenshot Utilities",
+   "leftKey": "DetailsViewSectionOrderLeftScreenshotUtilities",
    "rightKey": "DetailsViewSectionOrderScreenshotUtilities",
    "showKey": "DetailsViewShowScreenshotUtilitiesPanel",
-   "expandKey": "DetailsViewExpandScreenshotUtilitiesPanel"
+   "expandKey": "DetailsViewExpandScreenshotUtilitiesPanel",
+   "columnKey": "DetailsViewScreenshotUtilitiesInRightColumn"
   }
  ]
 }

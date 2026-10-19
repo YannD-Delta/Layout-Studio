@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- **Every section can change column.** The 14 sections that host an add-on control (Play Notes, News, Video, GameActivity, CheckDlc, Game Relations, Web Explorer, HowLongToBeat, Achievements, Steam Screenshots, VNDB, ScreenshotsVisualizer, Review Viewer, Screenshot Utilities) used to be fixed in their column. They cannot be duplicated (an add-on fills its control by name, once), so the extension now moves the live block between the two columns, from the profile. Nothing changes until you move one; without the extension the theme keeps its own columns.
+- Sections page: an amber **drop line** shows where the section will land, a section that cannot go to a column gets the "no drop" cursor, every block has a **left/right button** (one undo step), and the empty area under a column accepts a drop at its end.
+- Fixed: dropping a section lower in its own column landed one place too far.
+- Build and test output (`build`, `testbed`, `backup`) can live outside the repository: set `MODULA_LOCAL` to a folder (default: the repository root, as before).
+
 ## 0.2.0
 
 - Presets are shown as picture tiles; short lists of choices are a segmented bar.

@@ -6,7 +6,10 @@
     <sys:String x:Key="LOCLS_Redo">Redo</sys:String>
     <sys:String x:Key="LOCLS_ResetPage">Reset this page</sys:String>
     <sys:String x:Key="LOCLS_NeedsRestart">Some choices (button style, top panel) apply after you restart Playnite</sys:String>
-    <sys:String x:Key="LOCLS_SectionsHint">Drag a section to reorder it or to move it to the other column (Genres, Categories, Features and Tags can switch column). The eye hides a section; the arrow sets whether it starts open.</sys:String>
+    <sys:String x:Key="LOCLS_SectionsHint">Drag a section to reorder it, or press its left/right button to send it to the other column. The eye hides a section; the arrow sets whether it starts open.</sys:String>
+    <sys:String x:Key="LOCLS_MoveToRight">Move to the right column</sys:String>
+    <sys:String x:Key="LOCLS_MoveToLeft">Move to the left column</sys:String>
+    <sys:String x:Key="LOCLS_ColumnFixed">This section stays in its column; drag it to reorder it there</sys:String>
     <sys:String x:Key="LOCLS_LeftColumn">Left column</sys:String>
     <sys:String x:Key="LOCLS_RightColumn">Right column</sys:String>
     <sys:String x:Key="LOCLS_OpenByDefault">Open by default</sys:String>

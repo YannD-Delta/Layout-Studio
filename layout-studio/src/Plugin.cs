@@ -41,6 +41,7 @@ namespace LayoutStudio
     {
         private static readonly ILogger logger = LogManager.GetLogger();
         private StudioService studio;
+        private SectionMover sectionMover;
         private Window editor;
         private ShellViewModel shellModel;
         private readonly ExposedSettings exposed = new ExposedSettings();
@@ -76,6 +77,12 @@ namespace LayoutStudio
                 exposed.Facts = new FactsViewModel(FactsSettings.From(studio.Active.Editor));
                 // the visual editor is a desktop window: in the fullscreen app the quick menu (main menu, Layout Studio) is the way in
                 if (isDesktop) exposed.OpenEditor = new LayoutStudio.Editor.RelayCommand((Action<object>)(page => OpenEditor(page as string)));
+                if (isDesktop)
+                {
+                    // moves the sections that host plugin controls between the two columns, as the profile says (see Engine\SectionMover.cs)
+                    sectionMover = new SectionMover(studio.Schema, studio.Store, line => logger.Info(line));
+                    sectionMover.Start();
+                }
                 studio.ProfileReplaced += () => exposed.Facts.Reload(studio.Active.Editor);
                 logger.Info("LayoutStudio loaded profile '" + studio.Active.Name + "' (" + studio.Store.Changed().Count + " overrides, " + ThemeGuard.ModeFolder(isDesktop).ToLowerInvariant() + ")");
             }

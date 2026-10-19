@@ -114,7 +114,7 @@ public static class RulesEditorTests
         var shell = new ShellViewModel(schema, store, history, applier, profile, k => null, new System.Globalization.CultureInfo("en-US"), null, null, null, null, null, new FactsViewModel(new FactsSettings()));
         var page = shell.Pages.First(p => p.Kind == "rules");
         Assert.True(page.Editor is RulesEditorViewModel, "the page edits the rules");
-        string xaml = File.ReadAllText(Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, @"..\layout-studio\src\Editor\EditorWindow.xaml"));
+        string xaml = File.ReadAllText(Path.Combine(TestPaths.RepoRoot(), @"layout-studio\src\Editor\EditorWindow.xaml"));
         Assert.True(xaml.Contains("x:Key=\"Page.rules\""), "Page.rules template exists");
     }
 

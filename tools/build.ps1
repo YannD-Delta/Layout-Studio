@@ -1,12 +1,13 @@
 # Builds the Layout Studio plugin and/or the test harness.
 #   tools\build.ps1 [-Target plugin|tests|all]
-# Output: build\LayoutStudio\LayoutStudio.dll (+ extension.yaml) and build\tests.exe
+# Output: <local root>\build\LayoutStudio\LayoutStudio.dll (+ extension.yaml) and <local root>\build\tests.exe (local root: tools\local-paths.ps1)
 # Compiler: tools\roslyn\csc.exe (Roslyn toolset, ignored by git); falls back to the legacy C# 5 csc.exe.
 param([ValidateSet('plugin', 'tests', 'all')][string]$Target = 'all')
 
 $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
-$out = Join-Path $root 'build'
+. (Join-Path $PSScriptRoot 'local-paths.ps1')
+$out = Get-LocalPath build -Create
 $fw = 'C:\Windows\Microsoft.NET\Framework64\v4.0.30319'
 $playnite = if ($env:PLAYNITE_DIR) { $env:PLAYNITE_DIR } else { Join-Path $env:LOCALAPPDATA 'Playnite' }
 
@@ -34,7 +35,7 @@ if ($Target -in 'tests', 'all') {
     $wpfTests = @((Join-Path $fw 'WPF\PresentationCore.dll'), (Join-Path $fw 'WPF\PresentationFramework.dll'), (Join-Path $fw 'WPF\WindowsBase.dll')) | ForEach-Object { "-r:$_" }
     Invoke-Csc (@('-nologo', '-target:exe', '-debug', "-out:$(Join-Path $out 'tests.exe')",
             '-r:System.dll', '-r:System.Core.dll', '-r:System.Xml.dll', '-r:System.Runtime.Serialization.dll', '-r:System.Web.Extensions.dll') + $wpfTests + $sources)
-    Write-Host 'built build\tests.exe'
+    Write-Host "built $(Join-Path $out 'tests.exe')"
 }
 
 if ($Target -in 'plugin', 'all') {
@@ -54,5 +55,5 @@ if ($Target -in 'plugin', 'all') {
     }
     Invoke-Csc (@('-nologo', '-target:library', '-debug', "-out:$(Join-Path $dest 'LayoutStudio.dll')") + $refs + $resources + @(Get-Sources $srcRoot))
     Copy-Item (Join-Path $root 'layout-studio\extension.yaml') $dest -Force
-    Write-Host 'built build\LayoutStudio\LayoutStudio.dll'
+    Write-Host "built $(Join-Path $dest 'LayoutStudio.dll')"
 }

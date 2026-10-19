@@ -6,7 +6,10 @@
     <sys:String x:Key="LOCLS_Redo">Rétablir</sys:String>
     <sys:String x:Key="LOCLS_ResetPage">Réinitialiser cette page</sys:String>
     <sys:String x:Key="LOCLS_NeedsRestart">Certains choix (style des boutons, barre du haut) s'appliquent après le redémarrage de Playnite</sys:String>
-    <sys:String x:Key="LOCLS_SectionsHint">Glisse une section pour la réordonner ou la passer dans l’autre colonne (Genres, Catégories, Fonctionnalités et Étiquettes peuvent changer de colonne). L’œil masque une section ; la flèche règle si elle démarre ouverte.</sys:String>
+    <sys:String x:Key="LOCLS_SectionsHint">Glisse une section pour la réordonner, ou appuie sur son bouton gauche/droite pour l’envoyer dans l’autre colonne. L’œil masque une section ; la flèche règle si elle démarre ouverte.</sys:String>
+    <sys:String x:Key="LOCLS_MoveToRight">Passer dans la colonne de droite</sys:String>
+    <sys:String x:Key="LOCLS_MoveToLeft">Passer dans la colonne de gauche</sys:String>
+    <sys:String x:Key="LOCLS_ColumnFixed">Cette section reste dans sa colonne ; glisse-la pour la réordonner</sys:String>
     <sys:String x:Key="LOCLS_LeftColumn">Colonne de gauche</sys:String>
     <sys:String x:Key="LOCLS_RightColumn">Colonne de droite</sys:String>
     <sys:String x:Key="LOCLS_OpenByDefault">Ouverte par défaut</sys:String>

@@ -50,7 +50,7 @@ public static class PlayniteSettingsTests
         Assert.True(f.Changes.Any(c => c.Key == "BackgroundImageDarkAmount" && (double)c.Value == 0.0));
     }
 
-    // Measured on the testbed with a game whose artwork differs from the page colours (build\matrix, tools	estbed-appearance-matrix.ps1):
+    // Measured on the testbed with a game whose artwork differs from the page colours (<local root>\build\matrix, tools\testbed-appearance-matrix.ps1):
     // an option that is off changes nothing on screen, the same as on with an amount of 0.
     public static void An_option_that_is_off_applies_nothing_so_it_raises_nothing()
     {

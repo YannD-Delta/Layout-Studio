@@ -385,7 +385,9 @@
             </DockPanel>
         </DataTemplate>
 
+        <!-- A section block: drag it, or press its left/right button to send it to the other column (disabled when the section is fixed in its column) -->
         <DataTemplate x:Key="Block.section">
+            <Grid>
             <Border x:Name="Block" Margin="0,0,0,6" Padding="10,8" CornerRadius="8" Background="#2AFFFFFF" Cursor="Hand"
                     ls:DragDropBehavior.DragKind="section">
                 <DockPanel LastChildFill="True">
@@ -403,6 +405,23 @@
                             </Style>
                         </ToggleButton.Style>
                     </ToggleButton>
+                    <Button DockPanel.Dock="Right" Command="{Binding MoveColumnCommand}" FontFamily="Segoe MDL2 Assets" Width="28" Margin="4,0,0,0" Cursor="Arrow"
+                            Content="&#xE76C;" ToolTip="{DynamicResource LOCLS_MoveToRight}">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Column}" Value="1">
+                                        <Setter Property="Content" Value="&#xE76B;" />
+                                        <Setter Property="ToolTip" Value="{DynamicResource LOCLS_MoveToLeft}" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding CanMove}" Value="False">
+                                        <Setter Property="Opacity" Value="0.25" />
+                                        <Setter Property="ToolTip" Value="{DynamicResource LOCLS_ColumnFixed}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
                     <ContentControl Content="{Binding}" ContentTemplate="{StaticResource Row.label}" VerticalAlignment="Center" />
                 </DockPanel>
                 <Border.Style>
@@ -415,7 +434,42 @@
                     </Style>
                 </Border.Style>
             </Border>
+            <!-- the insertion line while a section is dragged over this column: drawn over the gap above the block, so nothing moves -->
+            <Border Height="3" CornerRadius="1.5" Background="#FFFFB347" VerticalAlignment="Top" Margin="0,-5,0,0" IsHitTestVisible="False">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding DropLineAbove}" Value="True">
+                                <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+            </Border>
+            </Grid>
         </DataTemplate>
+
+        <!-- A section column: the blocks, then the insertion line for a drop after the last one (Tag = whether that line shows) -->
+        <ControlTemplate x:Key="SectionColumn" TargetType="ItemsControl">
+            <Border Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}" MinHeight="{TemplateBinding MinHeight}">
+                <StackPanel>
+                    <ItemsPresenter />
+                    <Border Height="3" CornerRadius="1.5" Background="#FFFFB347" Margin="0,-3,0,0" IsHitTestVisible="False">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                    </Border>
+                </StackPanel>
+            </Border>
+        </ControlTemplate>
 
         <DataTemplate x:Key="Page.sections">
             <Grid DataContext="{Binding Editor}" Margin="0,0,14,14">
@@ -433,15 +487,15 @@
                     <DockPanel>
                         <TextBlock DockPanel.Dock="Top" Text="{DynamicResource LOCLS_LeftColumn}" Style="{StaticResource SectionTitle}" Margin="0,0,0,6" />
                         <ScrollViewer VerticalScrollBarVisibility="Auto">
-                            <ItemsControl ItemsSource="{Binding Left}" ItemTemplate="{StaticResource Block.section}" Background="#11FFFFFF" MinHeight="120" Padding="8"
-                                          ls:DragDropBehavior.DropColumn="0" />
+                            <ItemsControl ItemsSource="{Binding Left}" ItemTemplate="{StaticResource Block.section}" Template="{StaticResource SectionColumn}" Tag="{Binding LeftDropLineAtEnd}"
+                                          Background="#11FFFFFF" MinHeight="{Binding ViewportHeight, RelativeSource={RelativeSource AncestorType=ScrollViewer}}" Padding="8" ls:DragDropBehavior.DropColumn="0" />
                         </ScrollViewer>
                     </DockPanel>
                     <DockPanel Grid.Column="2">
                         <TextBlock DockPanel.Dock="Top" Text="{DynamicResource LOCLS_RightColumn}" Style="{StaticResource SectionTitle}" Margin="0,0,0,6" />
                         <ScrollViewer VerticalScrollBarVisibility="Auto">
-                            <ItemsControl ItemsSource="{Binding Right}" ItemTemplate="{StaticResource Block.section}" Background="#11FFFFFF" MinHeight="120" Padding="8"
-                                          ls:DragDropBehavior.DropColumn="1" />
+                            <ItemsControl ItemsSource="{Binding Right}" ItemTemplate="{StaticResource Block.section}" Template="{StaticResource SectionColumn}" Tag="{Binding RightDropLineAtEnd}"
+                                          Background="#11FFFFFF" MinHeight="{Binding ViewportHeight, RelativeSource={RelativeSource AncestorType=ScrollViewer}}" Padding="8" ls:DragDropBehavior.DropColumn="1" />
                         </ScrollViewer>
                     </DockPanel>
                 </Grid>

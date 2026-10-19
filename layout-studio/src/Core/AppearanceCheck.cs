@@ -17,7 +17,7 @@ namespace LayoutStudio.Core
 
     /// <summary>
     /// Playnite processes the game artwork before it hands it to the theme: its Blur and Darken options act on that image, so they add to
-    /// the blur and darkness of Layout Studio. Measured on the testbed (tools	estbed-appearance-matrix.ps1, screenshots in build\matrix):
+    /// the blur and darkness of Layout Studio. Measured on the testbed (tools\testbed-appearance-matrix.ps1, screenshots in build\matrix under the local root):
     ///  - "show the background image on the window" OFF: the theme's window glass gets no artwork at all (it stays on a static background);
     ///  - an option OFF changes nothing on screen, exactly like ON with an amount of 0;
     ///  - Darken above 0 pulls the artwork toward a dark grey (0.85: Hollow Lantern 16,36,40 -> 12,15,17; Neon Drifter 15,16,33 -> 21,22,23), so it dims and loses its colour, before the theme's own scrim;

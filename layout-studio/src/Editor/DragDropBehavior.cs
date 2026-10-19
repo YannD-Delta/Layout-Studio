@@ -49,7 +49,12 @@ namespace LayoutStudio.Editor
                 var source = element.DataContext as IDragSource;
                 if (source == null) return;
                 pressed = null;
-                DragDrop.DoDragDrop(element, new DataObject(source.DragFormat, source.DragPayload), DragDropEffects.Move);
+                try { DragDrop.DoDragDrop(element, new DataObject(source.DragFormat, source.DragPayload), DragDropEffects.Move); }
+                finally
+                {
+                    var aware = source as IDragEndAware;
+                    if (aware != null) aware.DragEnded();
+                }
             };
         }
 
@@ -84,15 +89,31 @@ namespace LayoutStudio.Editor
             items.AllowDrop = true;
             items.DragOver += (s, a) =>
             {
-                a.Effects = a.Data.GetDataPresent(Format) ? DragDropEffects.Move : DragDropEffects.None;
+                // a section that cannot go in this column gets the "no drop" cursor and no insertion line; elsewhere the line follows the pointer
+                var editor = items.DataContext as SectionsEditorViewModel;
+                var id = a.Data.GetDataPresent(Format) ? a.Data.GetData(Format) as string : null;
+                int column = GetDropColumn(items);
+                bool accepted = editor != null && id != null && editor.CanDrop(id, column);
+                a.Effects = accepted ? DragDropEffects.Move : DragDropEffects.None;
+                if (accepted) editor.SetDropTarget(id, column, IndexAt(items, a.GetPosition(items).Y));
+                else if (editor != null) editor.ClearDropTarget();
                 a.Handled = true;
+            };
+            items.DragLeave += (s, a) =>
+            {
+                // DragLeave also bubbles up from the blocks: clear the line only once the pointer is really outside the column
+                var editor = items.DataContext as SectionsEditorViewModel;
+                var at = a.GetPosition(items);
+                if (editor != null && (at.X < 0 || at.Y < 0 || at.X > items.ActualWidth || at.Y > items.ActualHeight)) editor.ClearDropTarget();
             };
             items.Drop += (s, a) =>
             {
                 var editor = items.DataContext as SectionsEditorViewModel;
                 var id = a.Data.GetData(Format) as string;
                 if (editor == null || id == null) return;
-                editor.Drop(id, GetDropColumn(items), IndexAt(items, a.GetPosition(items).Y));
+                int column = GetDropColumn(items);
+                if (editor.CanDrop(id, column)) editor.Drop(id, column, IndexAt(items, a.GetPosition(items).Y));
+                else editor.ClearDropTarget();
                 a.Handled = true;
             };
         }
