@@ -24,22 +24,29 @@ namespace LayoutStudio.Editor
     }
 
     /// <summary>
-    /// The banner about Playnite's own settings that conflict with the theme or cost performance: one line per finding, a button to
-    /// turn each (or all) off, a restore button, and a confirmation read back from the live settings.
+    /// The banner about Playnite's own settings that conflict with the theme: one line per finding, a button to
+    /// fix each (or all), a restore button, and a confirmation read back from the live settings.
     /// </summary>
     public class PlayniteSettingsViewModel : ViewModelBase
     {
         private readonly IPlayniteSettingsAccess access;
         private readonly Dictionary<string, object> previous = new Dictionary<string, object>();   // values before the first fix
         private string status;
+        /// <summary>Whether the theme's window glass is on (the artwork option matters only then); unknown counts as on.</summary>
+        public Func<bool> ThemeGlassOn { get; set; }
         private bool isError;
 
         private readonly string backupPath;
 
+        /// <summary>The editor's texts in the user's language; the English in the code is the fallback.</summary>
+        public UiStrings Ui { get; private set; }
+
         /// <param name="backupPath">Where the original values are kept until restored, so closing the editor does not lose them (null: not kept).</param>
-        public PlayniteSettingsViewModel(IPlayniteSettingsAccess access, string backupPath = null)
+        public PlayniteSettingsViewModel(IPlayniteSettingsAccess access, string backupPath = null, UiStrings ui = null)
         {
             this.access = access;
+            Ui = ui ?? new UiStrings();
+            Ui.Changed += () => Refresh();
             this.backupPath = backupPath;
             LoadBackup();
             Findings = new ObservableCollection<SettingsFindingViewModel>();
@@ -69,20 +76,51 @@ namespace LayoutStudio.Editor
         /// <summary>Reads the live settings again and rebuilds the list.</summary>
         public void Refresh()
         {
-            var found = access == null ? new List<SettingsFinding>() : AppearanceCheck.Evaluate(Read()).ToList();
+            var found = access == null ? new List<SettingsFinding>() : AppearanceCheck.Evaluate(Read(), GlassOn()).ToList();
             Findings.Clear();
             foreach (var f in found)
             {
                 var captured = f;
                 Findings.Add(new SettingsFindingViewModel
                 {
-                    Id = f.Id, Message = f.Message, IsPerformance = f.IsPerformance,
+                    Id = f.Id, Message = Message(f), IsPerformance = f.IsPerformance,
                     FixCommand = new RelayCommand(() => Apply(new List<SettingsFinding> { captured }))
                 });
             }
             Raise("HasFindings");
             FixAllCommand.RaiseCanExecuteChanged();
             RestoreCommand.RaiseCanExecuteChanged();
+        }
+
+        /// <summary>The live settings as they are now; null when they cannot be read.</summary>
+        public IDictionary<string, object> Snapshot()
+        {
+            return access == null ? null : Read();
+        }
+
+        /// <summary>Writes the given Playnite settings (remembering the previous values for "Put back as before") and refreshes the banner.</summary>
+        public void ApplyChanges(IEnumerable<KeyValuePair<string, object>> changes)
+        {
+            var finding = new SettingsFinding { Id = "advice" };
+            finding.Changes.AddRange(changes);
+            Apply(new List<SettingsFinding> { finding });
+        }
+
+        private string Message(SettingsFinding f)
+        {
+            if (f.Id == "windowBackgroundOff") return Ui.Get("LOCLS_Banner_Off", f.Message);
+            if (f.Id != "windowBackground") return f.Message;
+            var parts = new List<string>();
+            if (f.Blur > 0) parts.Add(Ui.Format("LOCLS_Banner_PartBlur", "blur ({0})", f.Blur.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)));
+            if (f.Dark > 0) parts.Add(Ui.Format("LOCLS_Banner_PartDark", "darkening ({0})", f.Dark.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)));
+            return Ui.Format("LOCLS_Banner_Layers", "Playnite applies {0} to the artwork before the theme draws it. The theme's own blur and darkness come on top. Set the amount to 0 to leave it all to the theme.",
+                string.Join(Ui.Get("LOCLS_Banner_And", " and "), parts));
+        }
+
+        private bool GlassOn()
+        {
+            try { return ThemeGlassOn == null || ThemeGlassOn(); }
+            catch (Exception) { return true; }
         }
 
         private IDictionary<string, object> Read()
@@ -93,7 +131,7 @@ namespace LayoutStudio.Editor
 
         private void FixAll()
         {
-            Apply(AppearanceCheck.Evaluate(Read()).ToList());
+            Apply(AppearanceCheck.Evaluate(Read(), GlassOn()).ToList());
         }
 
         private void Apply(List<SettingsFinding> findings)
@@ -112,7 +150,7 @@ namespace LayoutStudio.Editor
                     if (!ok)
                     {
                         IsError = true;
-                        Status = "Playnite refused to change " + change.Key + " (" + error + "). Turn it off in Playnite's settings (Appearance).";
+                        Status = Ui.Format("LOCLS_Status_Refused", "Playnite refused to change {0} ({1}). Change it in Playnite's settings (Appearance).", change.Key, error);
                         Refresh();
                         return;
                     }
@@ -120,7 +158,7 @@ namespace LayoutStudio.Editor
             }
             Refresh();   // read back: what is still on is shown again
             IsError = false;
-            Status = HasFindings ? "Changed, but Playnite still reports some options on." : "Done. Playnite now reports those options off.";
+            Status = HasFindings ? Ui.Get("LOCLS_Status_More", "Applied. Playnite reports something else to review.") : Ui.Get("LOCLS_Status_Done", "Done. Playnite now reports the new values.");
         }
 
         private void Restore()
@@ -134,7 +172,7 @@ namespace LayoutStudio.Editor
             SaveBackup();
             Refresh();
             IsError = false;
-            Status = "Playnite's settings are back as they were.";
+            Status = Ui.Get("LOCLS_Status_Restored", "Playnite's settings are back as they were.");
         }
 
         private void LoadBackup()

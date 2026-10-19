@@ -52,10 +52,10 @@ public static class MigrationTests
         Assert.Equal("False", p.Overrides["WindowGlassEnabled"]);
     }
 
-    public static void Values_out_of_range_are_clamped()
+    public static void Values_above_the_slider_maximum_are_kept()
     {
         var p = Migration.FromThemeOptions(Config("", "\"WindowGlassBlurRadius\":{\"Type\":\"Double\",\"Value\":\"500\"}"), Theme, Schema_());
-        Assert.Equal("80", p.Overrides["WindowGlassBlurRadius"]);
+        Assert.Equal("500", p.Overrides["WindowGlassBlurRadius"]);
     }
 
     public static void Empty_or_garbage_input_gives_an_empty_profile()

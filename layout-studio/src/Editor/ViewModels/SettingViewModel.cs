@@ -121,8 +121,20 @@ namespace LayoutStudio.Editor
             }
         }
 
+        /// <summary>The template key of this setting: presets are picture tiles, a short list of choices is a segmented bar, the rest follow their kind.</summary>
+        public string TemplateName
+        {
+            get
+            {
+                if (def.Kind == "preset") return "presetTiles";
+                if (def.Kind == "choice" && def.Choices.Count <= 4) return "segmented";
+                return TemplateKind(def.Kind);
+            }
+        }
+
         public string Id { get { return def.Id; } }
         public string Kind { get { return def.Kind; } }
+        public IList<string> Keys { get { return def.Keys; } }
         public string Title { get; private set; }
         public string Description { get { return def.Description; } }
         public bool NeedsRestart { get { return def.NeedsRestart; } }
@@ -235,6 +247,8 @@ namespace LayoutStudio.Editor
         private ConstantDef Def { get { return Key == null ? null : store.Find(Key); } }
 
         public double Min { get { return Def != null && Def.Min.HasValue ? Def.Min.Value : 0; } }
+        /// <summary>The end of the slider track: the schema maximum, or the current value when a typed one went beyond it (so the slider does not pull it back).</summary>
+        public double SliderMax { get { return Key == null ? Max : Math.Max(Max, double.Parse(store.Get(Key), NumberStyles.Float, CultureInfo.InvariantCulture)); } }
         public double Max { get { return Def != null && Def.Max.HasValue ? Def.Max.Value : 100; } }
         public double Step { get { return Def != null && Def.Step.HasValue ? Def.Step.Value : 1; } }
 
@@ -259,9 +273,11 @@ namespace LayoutStudio.Editor
             set { SetRaw(ConstantValue.ToInvariant(Snap(value))); }
         }
 
-        /// <summary>A slider drag gives any double: land on the schema's step (counted from the minimum) and drop floating-point noise.</summary>
+        /// <summary>A slider drag gives any double: stay in the range, land on the schema's step (counted from the minimum) and drop floating-point noise.</summary>
         private double Snap(double value)
         {
+            // the slider and the arrows stop at the end of the range; a typed value is free (see ConstantValue)
+            if (Def != null && Def.Max.HasValue && value > Def.Max.Value) value = Def.Max.Value;
             if (Def == null || !Def.Step.HasValue || Def.Step.Value <= 0) return value;
             double origin = Def.Min ?? 0, step = Def.Step.Value;
             return Math.Round(origin + Math.Round((value - origin) / step) * step, 6);

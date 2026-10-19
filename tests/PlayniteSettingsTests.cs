@@ -50,13 +50,11 @@ public static class PlayniteSettingsTests
         Assert.True(f.Changes.Any(c => c.Key == "BackgroundImageDarkAmount" && (double)c.Value == 0.0));
     }
 
-    public static void An_option_that_is_off_still_applies_a_default_so_the_fix_is_on_with_zero()
+    // Measured on the testbed with a game whose artwork differs from the page colours (build\matrix, tools	estbed-appearance-matrix.ps1):
+    // an option that is off changes nothing on screen, the same as on with an amount of 0.
+    public static void An_option_that_is_off_applies_nothing_so_it_raises_nothing()
     {
-        var f = AppearanceCheck.Evaluate(S(false, 0, false, 0)).Single(x => x.Id == "windowBackground");
-        Assert.True(f.Message.Contains("default"), f.Message);
-        Assert.True(f.Changes.Any(c => c.Key == "BlurWindowBackgroundImage" && (bool)c.Value == true));
-        Assert.True(f.Changes.Any(c => c.Key == "BackgroundImageBlurAmount" && (double)c.Value == 0.0));
-        Assert.True(f.Changes.Any(c => c.Key == "DarkenWindowBackgroundImage" && (bool)c.Value == true));
+        Assert.False(AppearanceCheck.Evaluate(S(false, 39, false, 0.85)).Any(x => x.Id == "windowBackground"));
     }
 
     public static void Only_the_option_that_is_on_is_named()
@@ -69,14 +67,26 @@ public static class PlayniteSettingsTests
     public static void Options_that_are_off_or_zero_raise_nothing()
     {
         Assert.False(AppearanceCheck.Evaluate(S(true, 0, true, 0)).Any(x => x.Id == "windowBackground"), "on with 0 is the clean state");
-        Assert.False(AppearanceCheck.Evaluate(S(false, 39, false, 0.8, show: false)).Any(x => x.Id == "windowBackground"), "Playnite's copy is not drawn: its options do not matter");
+        Assert.False(AppearanceCheck.Evaluate(S(true, 39, true, 0.8, show: false)).Any(x => x.Id == "windowBackground"), "the artwork is not drawn at all: its blur and darkening do not matter");
     }
 
-    public static void Expensive_options_are_performance_findings()
+    // Turning "show the background image on the window" off does not remove a second copy: it removes the only image the theme's glass is fed with.
+    public static void The_window_background_option_off_is_reported_while_the_theme_glass_needs_it()
     {
-        var found = AppearanceCheck.Evaluate(S(false, 0, false, 0, hq: true, anim: true));
-        Assert.True(found.Single(x => x.Id == "highQualityBlur").IsPerformance);
-        Assert.True(found.Single(x => x.Id == "backgroundAnimation").IsPerformance);
+        var f = AppearanceCheck.Evaluate(S(true, 0, true, 0, show: false)).Single(x => x.Id == "windowBackgroundOff");
+        Assert.True(f.Changes.Any(c => c.Key == "ShowBackgroundImageOnWindow" && (bool)c.Value == true), "the fix turns it ON");
+        Assert.False(AppearanceCheck.Evaluate(S(true, 0, true, 0, show: false), false).Any(x => x.Id == "windowBackgroundOff"), "the theme glass is off: nothing is lost");
+    }
+
+    public static void The_option_that_is_on_is_never_asked_to_be_turned_off()
+    {
+        var found = AppearanceCheck.Evaluate(S(true, 39, true, 0.85));
+        Assert.False(found.Any(f => f.Changes.Any(c => c.Key == "ShowBackgroundImageOnWindow")), "turning it off empties the window background");
+    }
+
+    public static void Options_without_a_measured_effect_raise_nothing()
+    {
+        Assert.Equal(0, AppearanceCheck.Evaluate(S(true, 0, true, 0, hq: true, anim: true)).Count, "high quality blur and the animation are not judged");
     }
 
     public static void Missing_keys_raise_nothing()
@@ -90,7 +100,7 @@ public static class PlayniteSettingsTests
     public static void The_view_model_lists_the_findings_of_the_live_settings()
     {
         var vm = new PlayniteSettingsViewModel(new FakeSettings());
-        Assert.Equal(2, vm.Findings.Count);   // the window background layer, and the extra copy of the artwork
+        Assert.Equal(1, vm.Findings.Count);   // the blur and darkening Playnite applies to the artwork before the theme
         Assert.True(vm.HasFindings);
     }
 
@@ -109,10 +119,8 @@ public static class PlayniteSettingsTests
     public static void Fix_all_handles_every_finding_at_once()
     {
         var fake = new FakeSettings();
-        fake.Values["HighQualityBackgroundBlur"] = true;
-        fake.Values["BackgroundImageAnimation"] = true;
         var vm = new PlayniteSettingsViewModel(fake);
-        Assert.Equal(4, vm.Findings.Count);
+        Assert.Equal(1, vm.Findings.Count);
         vm.FixAllCommand.Execute(null);
         Assert.Equal(0, vm.Findings.Count);
     }

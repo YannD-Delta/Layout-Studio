@@ -112,7 +112,7 @@ namespace LayoutStudio.Editor
             Kind = kind;
             Editor = editor;
             ShowCount = false;
-            Group = kind == "sections" || kind == "sizes" || kind == "tiles" || kind == "corners" ? "LAYOUT"
+            Group = kind == "advice" ? "ADVICE" : kind == "sections" || kind == "sizes" || kind == "tiles" || kind == "corners" ? "LAYOUT"
                 : kind == "background" || kind == "colors" || kind == "rules" ? "LOOK" : kind == "share" ? "PROFILE" : "SETTINGS";
         }
 
@@ -171,9 +171,13 @@ namespace LayoutStudio.Editor
             this.profile = profile;
             PlayniteSettings = playniteSettings;
             SensorProblems = sensorProblems ?? new List<string>();
+            var covered = SchemaCoverage.VisualKeys(schema);
+            var allControls = schema.Pages.SelectMany(p => p.Groups).SelectMany(g => g.Controls).ToList();
+            bool hasColorsPage = allControls.Any(c => c.Id == "ColorProfile") && allControls.Any(c => c.Id == "Accent") && schema.Find("GlyphColor") != null;
+            bool hasCornersPage = schema.Corners.Count > 0;
             Pages = schema.Pages.Select(p => new PageViewModel(p.Id, p.Title, p.Groups.Select(g =>
-                new GroupViewModel(g.Title, g.Controls.Select(c =>
-                    new SettingViewModel(c, store, history, applier, profile, localize, culture)).ToList())).ToList())).ToList();
+                new GroupViewModel(SchemaCoverage.ShortTitle(g.Title), g.Controls.Where(c => !SchemaCoverage.IsCovered(c, covered) && !SchemaCoverage.IsPresetOfAVisualPage(c, hasColorsPage, hasCornersPage)).Select(c =>
+                    new SettingViewModel(c, store, history, applier, profile, localize, culture)).ToList())).Where(g => g.Settings.Count > 0).ToList())).ToList();
             var controls = schema.Pages.SelectMany(p => p.Groups).SelectMany(g => g.Controls).ToList();
             var visual = new List<PageViewModel>();
             if (schema.Sections.Count > 0) visual.Add(new PageViewModel("visual-sections", "Sections", "sections", new SectionsEditorViewModel(store, schema, history)));
@@ -185,6 +189,7 @@ namespace LayoutStudio.Editor
             if (schema.Corners.Count > 0) visual.Add(new PageViewModel("visual-corners", "Corners", "corners", new CornersEditorViewModel(store, schema, history)));
             if (facts != null) visual.Add(new PageViewModel("visual-rules", "Figure colors", "rules", new RulesEditorViewModel(facts, profile.Editor, history)));
             for (int i = 0; i < visual.Count; i++) Pages.Insert(i, visual[i]);
+            if (playniteSettings != null) Pages.Insert(0, new PageViewModel("advice", "Graphics and performance", "advice", new AdviceViewModel(playniteSettings, store, history, profile, OpenPage, playniteSettings.Ui)));
             foreach (var page in Pages) page.FilterChanged = ApplyFilter;
             OwnKeys(schema, controls);
             foreach (var page in Pages) page.Keywords = KeywordsOf(page.Kind);
@@ -233,6 +238,7 @@ namespace LayoutStudio.Editor
                 case "colors": return "colors colours accent profile palette theme";
                 case "corners": return "corners corner radius round rounded square";
                 case "rules": return "figure colors fps cpu gpu ram limit threshold score glow pulse";
+                case "advice": return "advice graphics performance gpu cpu slow lag fps blur animation darken background playnite settings problem";
                 case "share": return "profile share export import reset backup code";
                 default: return "";
             }
@@ -275,7 +281,7 @@ namespace LayoutStudio.Editor
         public IList<string> SensorProblems { get; private set; }
         public bool HasSensorProblems { get { return SensorProblems.Count > 0; } }
 
-        /// <summary>Playnite's own settings that conflict with the theme or cost performance, with buttons to turn them off; null when unavailable.</summary>
+        /// <summary>Playnite's own settings that conflict with the theme, with buttons to fix them; null when unavailable.</summary>
         public PlayniteSettingsViewModel PlayniteSettings { get; private set; }
 
         /// <summary>Why the profile fell back to defaults or is read-only; null when all is well. Shown as a banner.</summary>
@@ -297,6 +303,14 @@ namespace LayoutStudio.Editor
                 Raise("ResetPageLabel");
                 ResetPageCommand.RaiseCanExecuteChanged();
             }
+        }
+
+        /// <summary>Selects the page with this id (the theme's gear buttons open the editor on the page that holds their settings); an unknown or empty id changes nothing.</summary>
+        public void OpenPage(string id)
+        {
+            if (string.IsNullOrEmpty(id)) return;
+            var page = Pages.FirstOrDefault(p => p.Id == id);
+            if (page != null) SelectedPage = page;
         }
 
         public string Search

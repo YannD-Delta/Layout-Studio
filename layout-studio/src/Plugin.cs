@@ -42,6 +42,7 @@ namespace LayoutStudio
         private static readonly ILogger logger = LogManager.GetLogger();
         private StudioService studio;
         private Window editor;
+        private ShellViewModel shellModel;
         private readonly ExposedSettings exposed = new ExposedSettings();
 
         public override Guid Id { get; } = Guid.Parse("8757c9cb-201d-460c-8735-ffc39a617269");
@@ -74,7 +75,7 @@ namespace LayoutStudio
                 exposed.Options = new OptionsBridge(studio.Store);
                 exposed.Facts = new FactsViewModel(FactsSettings.From(studio.Active.Editor));
                 // the visual editor is a desktop window: in the fullscreen app the quick menu (main menu, Layout Studio) is the way in
-                if (isDesktop) exposed.OpenEditor = new LayoutStudio.Editor.RelayCommand(() => OpenEditor());
+                if (isDesktop) exposed.OpenEditor = new LayoutStudio.Editor.RelayCommand((Action<object>)(page => OpenEditor(page as string)));
                 studio.ProfileReplaced += () => exposed.Facts.Reload(studio.Active.Editor);
                 logger.Info("LayoutStudio loaded profile '" + studio.Active.Name + "' (" + studio.Store.Changed().Count + " overrides, " + ThemeGuard.ModeFolder(isDesktop).ToLowerInvariant() + ")");
             }
@@ -136,6 +137,7 @@ namespace LayoutStudio
             logger.Info("LayoutStudio started");
             if (studio != null) studio.ProfileApplier.Live = true;   // the window exists now: structural presets wait for a restart
             if (PlayniteApi.ApplicationInfo.Mode == ApplicationMode.Desktop) OfferThemeOptionsImport();
+            AnnounceRecommendations();
             // Testbed helper: a marker file next to the sample artwork opens the editor at start (never present on a real install).
             string sampleFlag = Path.Combine(PlayniteApi.Paths.ConfigurationPath, "add-sample-library.flag");
             if (File.Exists(sampleFlag) && SampleLibrary.Available(PlayniteApi.Paths.ConfigurationPath))
@@ -145,7 +147,29 @@ namespace LayoutStudio
             }
             string marker = Path.Combine(PlayniteApi.Paths.ConfigurationPath, "open-editor.flag");
             if (studio != null && File.Exists(Path.Combine(PlayniteApi.Paths.ConfigurationPath, "sample-bg.jpg")) && File.Exists(marker))
-                Application.Current.Dispatcher.BeginInvoke(new Action(OpenEditor));
+                Application.Current.Dispatcher.BeginInvoke(new Action(() => OpenEditor()));
+        }
+
+        /// <summary>One notification (not a dialog) naming the optional add-ons that are not installed; shown again only when that list changes.</summary>
+        private void AnnounceRecommendations()
+        {
+            try
+            {
+                if (studio == null) return;
+                var missing = Recommendations.Missing(PlayniteApi.Addons.Addons, PlayniteApi.ApplicationInfo.Mode == ApplicationMode.Desktop);
+                string text = Recommendations.Message(missing, string.Equals(PlayniteApi.ApplicationSettings.Language, "fr_FR", StringComparison.OrdinalIgnoreCase));
+                if (text.Length == 0) return;
+                string flag = Path.Combine(GetPluginUserDataPath(), "recommendations-announced.txt");
+                string signature = Recommendations.Signature(missing);
+                if (File.Exists(flag) && File.ReadAllText(flag) == signature) return;
+                PlayniteApi.Notifications.Add(new NotificationMessage("LayoutStudio.Recommendations", text, NotificationType.Info));
+                Directory.CreateDirectory(GetPluginUserDataPath());
+                File.WriteAllText(flag, signature);
+            }
+            catch (Exception ex)
+            {
+                logger.Warn(ex, "LayoutStudio could not announce the recommended add-ons");
+            }
         }
 
         /// <summary>Once, on the first start without any profile: offer to import the settings the user had in ThemeOptions.</summary>
@@ -238,14 +262,15 @@ namespace LayoutStudio
             }
         }
 
-        private void OpenEditor()
+        /// <summary>Opens the editor, or brings it to the front; <paramref name="pageId"/> (a page id such as visual-sections) selects the page to show.</summary>
+        private void OpenEditor(string pageId = null)
         {
             if (studio == null)
             {
                 PlayniteApi.Dialogs.ShowMessage("Layout Studio is idle: it works with the Modula theme, with ThemeOptions disabled. See extensions.log.");
                 return;
             }
-            if (editor != null) { editor.Activate(); return; }
+            if (editor != null) { if (shellModel != null) shellModel.OpenPage(pageId); editor.Activate(); return; }
             Action releaseHandlers = null;
             try
             {
@@ -255,10 +280,12 @@ namespace LayoutStudio
                 var shell = new ShellViewModel(studio.Schema, studio.Store, studio.History, studio.ProfileApplier, studio.Active,
                     key => Application.Current.TryFindResource(key) as string, CultureInfo.CurrentCulture, SelectedGameBackground,
                     studio, text => { try { Clipboard.SetText(text); } catch (Exception ex) { logger.Warn(ex, "clipboard unavailable"); } },
-                    new PlayniteSettingsViewModel(PlayniteSettingsAccess.Create(PlayniteApi), Path.Combine(GetPluginUserDataPath(), "playnite-settings-backup.json")),
+                    new PlayniteSettingsViewModel(PlayniteSettingsAccess.Create(PlayniteApi), Path.Combine(GetPluginUserDataPath(), "playnite-settings-backup.json")) { ThemeGlassOn = () => studio.Store.Get("WindowGlassEnabled") != "False" },
                     HwinfoCheck.Run(PlayniteApi.Paths.ExtensionsDataPath), exposed.Facts);
+                shell.OpenPage(pageId);
+                shellModel = shell;
                 editor = EditorWindowFactory.Create(shell, PlayniteApi.ApplicationSettings.Language);
-                editor.Closed += (s, e) => { releaseHandlers(); editor = null; studio.History.EndAllBatches(); studio.TrySave(); };
+                editor.Closed += (s, e) => { releaseHandlers(); editor = null; shellModel = null; studio.History.EndAllBatches(); studio.TrySave(); };
                 editor.Show();
             }
             catch (Exception ex)

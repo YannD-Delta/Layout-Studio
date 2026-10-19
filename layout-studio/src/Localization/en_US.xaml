@@ -31,4 +31,10 @@
     <sys:String x:Key="LOCLS_ResetAll">Reset everything...</sys:String>
     <sys:String x:Key="LOCLS_ResetConfirm">Yes, reset everything</sys:String>
     <sys:String x:Key="LOCLS_Cancel">Cancel</sys:String>
+    <sys:String x:Key="LOCLS_Adv_Intro">Playnite and the theme both draw the window, and some settings make that more expensive or change how it looks. Each line says what a setting does, whether it touches the graphics, the performance or both, and what it really costs. Orange needs a fix, blue is an optional saving.</sys:String>
+    <sys:String x:Key="LOCLS_Adv_ChipGraphics">Graphics</sys:String>
+    <sys:String x:Key="LOCLS_Adv_ChipPerformance">Performance</sys:String>
+    <sys:String x:Key="LOCLS_Banner_Fix">Fix</sys:String>
+    <sys:String x:Key="LOCLS_Banner_FixAll">Fix all</sys:String>
+    <sys:String x:Key="LOCLS_Banner_PutBack">Put back as before</sys:String>
 </ResourceDictionary>

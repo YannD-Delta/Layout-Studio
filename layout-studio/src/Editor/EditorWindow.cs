@@ -20,7 +20,7 @@ namespace LayoutStudio.Editor
             var element = container as FrameworkElement;
             var setting = item as SettingViewModel;
             if (element == null || setting == null) return null;
-            string key = "Template." + SettingViewModel.TemplateKind(setting.Kind);
+            string key = "Template." + setting.TemplateName;
             return (element.TryFindResource(key) ?? element.TryFindResource("Template.unsupported")) as DataTemplate;
         }
     }
@@ -86,6 +86,8 @@ namespace LayoutStudio.Editor
             var window = (Window)LoadXaml("LayoutStudio.Editor.EditorWindow.xaml");
             var strings = (ResourceDictionary)LoadXaml("LayoutStudio.Localization." + (string.Equals(language, "fr_FR", StringComparison.OrdinalIgnoreCase) ? "fr_FR" : "en_US") + ".xaml");
             window.Resources.MergedDictionaries.Add(strings);
+            // the view models word their own texts (advice page, banner) from the same dictionary
+            if (shell.PlayniteSettings != null) shell.PlayniteSettings.Ui.Lookup = key => strings.Contains(key) ? strings[key] as string : null;
             window.DataContext = shell;
             // A slider drag is one undo step: group everything between the thumb's drag start and completion.
             window.AddHandler(Thumb.DragStartedEvent, new DragStartedEventHandler((s, e) => Gesture(e.OriginalSource, true)));

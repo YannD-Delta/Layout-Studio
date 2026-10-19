@@ -19,12 +19,12 @@ public static class ConstantStoreTests
         });
     }
 
-    public static void Double_clamps_to_max()
+    public static void Double_has_no_upper_limit_but_keeps_its_lower_bound()
     {
         var s = Make();
         string error;
-        Assert.True(s.TrySet("blur", "999", out error), "clamping is not an error");
-        Assert.Equal("80", s.Get("blur"));
+        Assert.True(s.TrySet("blur", "999", out error), "the maximum is the end of the slider, not a wall");
+        Assert.Equal("999", s.Get("blur"));
         Assert.True(s.TrySet("blur", "-5", out error));
         Assert.Equal("0", s.Get("blur"));
     }
@@ -75,13 +75,13 @@ public static class ConstantStoreTests
         Assert.False(s.TrySet("glass", "yes", out error));
     }
 
-    public static void Int_truncation_is_rejected_and_range_clamped()
+    public static void Int_truncation_is_rejected_and_the_maximum_is_not_enforced()
     {
         var s = Make();
         string error;
         Assert.False(s.TrySet("slot", "2.5", out error), "an Int constant does not take decimals");
         Assert.True(s.TrySet("slot", "99", out error));
-        Assert.Equal("31", s.Get("slot"));
+        Assert.Equal("99", s.Get("slot"));
     }
 
     public static void Color_is_normalized_to_upper_case_argb()

@@ -80,7 +80,7 @@
         },
         {
          "id": "Light",
-         "name": "Light (no glow, no shadows: easiest on the GPU while a game runs)",
+         "name": "Lite (saves GPU: no glow, no shadows)",
          "locKey": "LOCHNDPresetMaterialLight",
          "constants": {
           "GlassGlowOpacity": "0",
@@ -321,16 +321,17 @@
           "LinksChipMargin": "8,1,8,1",
           "SectionBodyPadding": "8",
           "SectionHeaderMargin": "0,0,0,6",
-          "SectionBodyMargin": "0,0,0,8",
-          "InfoPanelGap": "0,0,0,8",
+          "SectionBodyMargin": "0,0,0,10",
+          "InfoPanelGap": "0,0,0,10",
+          "PageLinksMargin": "20,0,20,10",
           "InfoPanelPadding": "12,8,12,8",
           "HeroButtonGap": "6,0,0,0",
           "ListItemMargin": "4,0,4,0",
           "ListItemPadding": "10,3,6,3",
           "HeaderTilePadding": "12,8,12,8",
           "HeaderTileMargin": "0,0,8,0",
-          "HeaderTileCardGap": "0,0,10,0",
-          "HeaderTileCardGapBack": "0,0,-10,0",
+          "HeaderTileCardGap": "0,0,8,0",
+          "HeaderTileCardGapBack": "0,0,-8,0",
           "HeaderRowPadding": "0,10,0,12",
           "SectionHeaderMinHeight": "28",
           "SectionContainerMinHeight": "36"
@@ -350,16 +351,17 @@
           "LinksChipMargin": "14,2,14,2",
           "SectionBodyPadding": "16",
           "SectionHeaderMargin": "0,0,0,14",
-          "SectionBodyMargin": "0,0,0,18",
-          "InfoPanelGap": "0,0,0,18",
+          "SectionBodyMargin": "0,0,0,22",
+          "InfoPanelGap": "0,0,0,22",
+          "PageLinksMargin": "20,0,20,22",
           "InfoPanelPadding": "22,16,22,16",
           "HeroButtonGap": "12,0,0,0",
           "ListItemMargin": "8,2,8,2",
           "ListItemPadding": "14,7,10,7",
           "HeaderTilePadding": "20,14,20,14",
           "HeaderTileMargin": "0,0,16,0",
-          "HeaderTileCardGap": "0,0,18,0",
-          "HeaderTileCardGapBack": "0,0,-18,0",
+          "HeaderTileCardGap": "0,0,16,0",
+          "HeaderTileCardGapBack": "0,0,-16,0",
           "HeaderRowPadding": "0,18,0,24",
           "SectionHeaderMinHeight": "40",
           "SectionContainerMinHeight": "56"
@@ -1502,8 +1504,8 @@
    ]
   },
   {
-   "id": "details",
-   "title": "Details view",
+   "id": "header",
+   "title": "Game header",
    "groups": [
     {
      "id": "presets",
@@ -2779,6 +2781,604 @@
      ]
     },
     {
+     "id": "details-view---header-bar",
+     "title": "Details view - header bar",
+     "controls": [
+      {
+       "kind": "toggle",
+       "id": "DetailsViewShowHeaderBar",
+       "keys": [
+        "DetailsViewShowHeaderBar"
+       ],
+       "title": "Show the header bar",
+       "titleKey": "LOCHNDOptDetailsViewShowHeaderBar",
+       "description": "The bar under the artwork with the last played date, time played and completion status.",
+       "tipKey": "LOCHNDTipDetailsViewShowHeaderBar",
+       "choices": []
+      },
+      {
+       "kind": "toggle",
+       "id": "DetailsViewShowInfoButton",
+       "keys": [
+        "DetailsViewShowInfoButton"
+       ],
+       "title": "Information panel button",
+       "titleKey": "LOCHNDOptDetailsViewShowInfoButton",
+       "description": "Button that shows or hides the information panel (cover, description, details).",
+       "tipKey": "LOCHNDTipDetailsViewShowInfoButton",
+       "choices": []
+      },
+      {
+       "kind": "toggle",
+       "id": "DetailsViewShowUserRating",
+       "keys": [
+        "DetailsViewShowUserRating"
+       ],
+       "title": "Your rating with stars (ThemeExtras)",
+       "titleKey": "LOCHNDOptDetailsViewShowUserRating",
+       "description": "Your rating as clickable stars. Needs ThemeExtras.",
+       "tipKey": "LOCHNDTipDetailsViewShowUserRating",
+       "choices": []
+      },
+      {
+       "kind": "slider",
+       "id": "HeaderButtonSize",
+       "keys": [
+        "HeaderButtonSize"
+       ],
+       "title": "Size of the header bar buttons",
+       "titleKey": "LOCHNDOptHeaderButtonSize",
+       "description": "Size of the round buttons in the header bar.",
+       "tipKey": "LOCHNDTipHeaderButtonSize",
+       "choices": []
+      }
+     ]
+    },
+    {
+     "id": "details-view---artwork-card--look",
+     "title": "Details view - artwork card: look",
+     "controls": [
+      {
+       "kind": "slider",
+       "id": "HeroCardBorderOpacity",
+       "keys": [
+        "HeroCardBorderOpacity"
+       ],
+       "title": "Artwork card: outline strength",
+       "titleKey": "LOCHNDOptHeroCardBorderOpacity",
+       "choices": []
+      },
+      {
+       "kind": "slider",
+       "id": "HeroBlurRadius",
+       "keys": [
+        "HeroBlurRadius"
+       ],
+       "title": "Artwork card: strong blur at the bottom",
+       "titleKey": "LOCHNDOptHeroBlurRadius",
+       "choices": []
+      },
+      {
+       "kind": "slider",
+       "id": "HeroBlurRadiusSoft",
+       "keys": [
+        "HeroBlurRadiusSoft"
+       ],
+       "title": "Artwork card: light blur at the bottom",
+       "titleKey": "LOCHNDOptHeroBlurRadiusSoft",
+       "choices": []
+      },
+      {
+       "kind": "slider",
+       "id": "HeroBlurOpacity",
+       "keys": [
+        "HeroBlurOpacity"
+       ],
+       "title": "Artwork card: blur strength",
+       "titleKey": "LOCHNDOptHeroBlurOpacity",
+       "choices": []
+      },
+      {
+       "kind": "slider",
+       "id": "HeroBlurStart",
+       "keys": [
+        "HeroBlurStart"
+       ],
+       "title": "Artwork card: where the blur starts (0 top, 1 bottom)",
+       "titleKey": "LOCHNDOptHeroBlurStart",
+       "choices": []
+      },
+      {
+       "kind": "slider",
+       "id": "HeroBlurMid",
+       "keys": [
+        "HeroBlurMid"
+       ],
+       "title": "Artwork card: where the strong blur starts",
+       "titleKey": "LOCHNDOptHeroBlurMid",
+       "choices": []
+      },
+      {
+       "kind": "slider",
+       "id": "HeroBlurFull",
+       "keys": [
+        "HeroBlurFull"
+       ],
+       "title": "Artwork card: where the blur is complete",
+       "titleKey": "LOCHNDOptHeroBlurFull",
+       "choices": []
+      },
+      {
+       "kind": "slider",
+       "id": "HeroTintAccentOpacity",
+       "keys": [
+        "HeroTintAccentOpacity"
+       ],
+       "title": "Artwork card: accent tint over the blur",
+       "titleKey": "LOCHNDOptHeroTintAccentOpacity",
+       "choices": []
+      },
+      {
+       "kind": "slider",
+       "id": "HeroTintLightOpacity",
+       "keys": [
+        "HeroTintLightOpacity"
+       ],
+       "title": "Artwork card: white frost over the blur",
+       "titleKey": "LOCHNDOptHeroTintLightOpacity",
+       "choices": []
+      },
+      {
+       "kind": "slider",
+       "id": "HeroFadeStart",
+       "keys": [
+        "HeroFadeStart"
+       ],
+       "title": "Artwork card: where the picture fades out (1 = never)",
+       "titleKey": "LOCHNDOptHeroFadeStart",
+       "choices": []
+      }
+     ]
+    },
+    {
+     "id": "details-view---header-tiles--look",
+     "title": "Details view - header tiles: look",
+     "controls": [
+      {
+       "kind": "slider",
+       "id": "HeaderTileValueFontSize",
+       "keys": [
+        "HeaderTileValueFontSize"
+       ],
+       "title": "Header cards: value text size",
+       "titleKey": "LOCHNDOptHeaderTileValueFontSize",
+       "choices": []
+      },
+      {
+       "kind": "slider",
+       "id": "HeaderTileLabelFontSize",
+       "keys": [
+        "HeaderTileLabelFontSize"
+       ],
+       "title": "Header cards: label text size",
+       "titleKey": "LOCHNDOptHeaderTileLabelFontSize",
+       "choices": []
+      },
+      {
+       "kind": "slider",
+       "id": "HeaderTileBackgroundOpacity",
+       "keys": [
+        "HeaderTileBackgroundOpacity"
+       ],
+       "title": "Tile glass",
+       "titleKey": "LOCHNDOptHeaderTileBackgroundOpacity",
+       "description": "Fill of the header tiles.",
+       "choices": []
+      },
+      {
+       "kind": "slider",
+       "id": "HeaderRowBackgroundOpacity",
+       "keys": [
+        "HeaderRowBackgroundOpacity"
+       ],
+       "title": "Header cards: band behind the row, opacity",
+       "titleKey": "LOCHNDOptHeaderRowBackgroundOpacity",
+       "choices": []
+      },
+      {
+       "kind": "slider",
+       "id": "HeaderBarGlassOpacity",
+       "keys": [
+        "HeaderBarGlassOpacity"
+       ],
+       "title": "Header bar: glass opacity",
+       "titleKey": "LOCHNDOptHeaderBarGlassOpacity",
+       "choices": []
+      },
+      {
+       "kind": "slider",
+       "id": "HeaderBarBlurOpacity",
+       "keys": [
+        "HeaderBarBlurOpacity"
+       ],
+       "title": "Header bar: blur opacity (0 = off, cheaper)",
+       "titleKey": "LOCHNDOptHeaderBarBlurOpacity",
+       "choices": []
+      },
+      {
+       "kind": "thickness",
+       "id": "HeaderTilePadding",
+       "keys": [
+        "HeaderTilePadding"
+       ],
+       "title": "Header cards: padding inside each box",
+       "titleKey": "LOCHNDOptHeaderTilePadding",
+       "choices": []
+      },
+      {
+       "kind": "thickness",
+       "id": "HeaderTileMargin",
+       "keys": [
+        "HeaderTileMargin"
+       ],
+       "title": "Header cards: space between boxes",
+       "titleKey": "LOCHNDOptHeaderTileMargin",
+       "choices": []
+      },
+      {
+       "kind": "thickness",
+       "id": "HeaderRowPadding",
+       "keys": [
+        "HeaderRowPadding"
+       ],
+       "title": "Header cards: padding of the whole row",
+       "titleKey": "LOCHNDOptHeaderRowPadding",
+       "choices": []
+      }
+     ]
+    },
+    {
+     "id": "header-tiles",
+     "title": "Header tiles",
+     "controls": [
+      {
+       "kind": "tileSlots",
+       "id": "HeaderTiles",
+       "keys": [
+        "HeaderTileSlot1",
+        "HeaderTileSlot2",
+        "HeaderTileSlot3",
+        "HeaderTileSlot4",
+        "HeaderTileSlot5",
+        "HeaderTileSlot6",
+        "HeaderTileSlot7",
+        "HeaderTileSlot8",
+        "HeaderTileSlot9",
+        "HeaderTileSlot10",
+        "HeaderTileSlot11",
+        "HeaderTileSlot12"
+       ],
+       "extraKeys": [
+        "HeaderTileSlot1B",
+        "HeaderTileSlot1C",
+        "HeaderTileSlot1D",
+        "HeaderTileSlot2B",
+        "HeaderTileSlot2C",
+        "HeaderTileSlot2D",
+        "HeaderTileSlot3B",
+        "HeaderTileSlot3C",
+        "HeaderTileSlot3D",
+        "HeaderTileSlot4B",
+        "HeaderTileSlot4C",
+        "HeaderTileSlot4D",
+        "HeaderTileSlot5B",
+        "HeaderTileSlot5C",
+        "HeaderTileSlot5D",
+        "HeaderTileSlot6B",
+        "HeaderTileSlot6C",
+        "HeaderTileSlot6D",
+        "HeaderTileSlot7B",
+        "HeaderTileSlot7C",
+        "HeaderTileSlot7D",
+        "HeaderTileSlot8B",
+        "HeaderTileSlot8C",
+        "HeaderTileSlot8D",
+        "HeaderTileSlot9B",
+        "HeaderTileSlot9C",
+        "HeaderTileSlot9D",
+        "HeaderTileSlot10B",
+        "HeaderTileSlot10C",
+        "HeaderTileSlot10D",
+        "HeaderTileSlot11B",
+        "HeaderTileSlot11C",
+        "HeaderTileSlot11D",
+        "HeaderTileSlot12B",
+        "HeaderTileSlot12C",
+        "HeaderTileSlot12D"
+       ],
+       "title": "Header tiles",
+       "titleKey": null,
+       "choices": [
+        {
+         "id": "Empty",
+         "name": "Empty",
+         "locKey": "LOCHNDTileTypeEmpty",
+         "value": "0",
+         "constants": {},
+         "preview": "Presets/Previews/Tile_Empty.png"
+        },
+        {
+         "id": "PlayTime",
+         "name": "Time played",
+         "locKey": "LOCHNDTileTypePlayTime",
+         "value": "1",
+         "constants": {},
+         "preview": "Presets/Previews/Tile_PlayTime.png"
+        },
+        {
+         "id": "LastPlayed",
+         "name": "Last played",
+         "locKey": "LOCHNDTileTypeLastPlayed",
+         "value": "2",
+         "constants": {},
+         "preview": "Presets/Previews/Tile_LastPlayed.png"
+        },
+        {
+         "id": "CompletionStatus",
+         "name": "Completion status (editable with ThemeExtras)",
+         "locKey": "LOCHNDTileTypeCompletionStatus",
+         "value": "3",
+         "constants": {},
+         "preview": "Presets/Previews/Tile_CompletionStatus.png"
+        },
+        {
+         "id": "Achievements",
+         "name": "Achievements: count and bar",
+         "locKey": "LOCHNDTileTypeAchievements",
+         "value": "4",
+         "constants": {},
+         "preview": "Presets/Previews/Tile_Achievements.png"
+        },
+        {
+         "id": "AchievementsPercent",
+         "name": "Achievements: percentage",
+         "locKey": "LOCHNDTileTypeAchievementsPercent",
+         "value": "28",
+         "constants": {},
+         "preview": "Presets/Previews/Tile_AchievementsPercent.png"
+        },
+        {
+         "id": "LatestAchievement",
+         "name": "Latest unlocked achievement",
+         "locKey": "LOCHNDTileTypeLatestAchievement",
+         "value": "29",
+         "constants": {},
+         "preview": "Presets/Previews/Tile_LatestAchievement.png"
+        },
+        {
+         "id": "RareAchievements",
+         "name": "Rare and ultra rare achievements",
+         "locKey": "LOCHNDTileTypeRareAchievements",
+         "value": "30",
+         "constants": {},
+         "preview": "Presets/Previews/Tile_RareAchievements.png"
+        },
+        {
+         "id": "HltbMain",
+         "name": "HowLongToBeat: main story",
+         "locKey": "LOCHNDTileTypeHltbMain",
+         "value": "5",
+         "constants": {},
+         "preview": "Presets/Previews/Tile_HltbMain.png"
+        },
+        {
+         "id": "HltbMainExtra",
+         "name": "HowLongToBeat: main + extra",
+         "locKey": "LOCHNDTileTypeHltbMainExtra",
+         "value": "25",
+         "constants": {},
+         "preview": "Presets/Previews/Tile_HltbMainExtra.png"
+        },
+        {
+         "id": "HltbCompletionist",
+         "name": "HowLongToBeat: 100%",
+         "locKey": "LOCHNDTileTypeHltbCompletionist",
+         "value": "26",
+         "constants": {},
+         "preview": "Presets/Previews/Tile_HltbCompletionist.png"
+        },
+        {
+         "id": "HltbAll",
+         "name": "HowLongToBeat: all three times",
+         "locKey": "LOCHNDTileTypeHltbAll",
+         "value": "27",
+         "constants": {},
+         "preview": "Presets/Previews/Tile_HltbAll.png"
+        },
+        {
+         "id": "Scores",
+         "name": "Critic and community scores",
+         "locKey": "LOCHNDTileTypeScores",
+         "value": "6",
+         "constants": {},
+         "preview": "Presets/Previews/Tile_Scores.png"
+        },
+        {
+         "id": "CriticScore",
+         "name": "Critic score",
+         "locKey": "LOCHNDTileTypeCriticScore",
+         "value": "23",
+         "constants": {},
+         "preview": "Presets/Previews/Tile_CriticScore.png"
+        },
+        {
+         "id": "CommunityScore",
+         "name": "Community score",
+         "locKey": "LOCHNDTileTypeCommunityScore",
+         "value": "24",
+         "constants": {},
+         "preview": "Presets/Previews/Tile_CommunityScore.png"
+        },
+        {
+         "id": "UserScore",
+         "name": "Your score",
+         "locKey": "LOCHNDTileTypeUserScore",
+         "value": "22",
+         "constants": {},
+         "preview": "Presets/Previews/Tile_UserScore.png"
+        },
+        {
+         "id": "InstallSize",
+         "name": "Install size",
+         "locKey": "LOCHNDTileTypeInstallSize",
+         "value": "7",
+         "constants": {},
+         "preview": "Presets/Previews/Tile_InstallSize.png"
+        },
+        {
+         "id": "AvgFps",
+         "name": "Median FPS",
+         "locKey": "LOCHNDTileTypeAvgFps",
+         "value": "8",
+         "constants": {},
+         "preview": "Presets/Previews/Tile_AvgFps.png"
+        },
+        {
+         "id": "Cpu",
+         "name": "Median CPU load",
+         "locKey": "LOCHNDTileTypeCpu",
+         "value": "31",
+         "constants": {}
+        },
+        {
+         "id": "Gpu",
+         "name": "Median GPU load",
+         "locKey": "LOCHNDTileTypeGpu",
+         "value": "32",
+         "constants": {}
+        },
+        {
+         "id": "Ram",
+         "name": "Median RAM load",
+         "locKey": "LOCHNDTileTypeRam",
+         "value": "33",
+         "constants": {}
+        },
+        {
+         "id": "LastSession",
+         "name": "Last session length",
+         "locKey": "LOCHNDTileTypeLastSession",
+         "value": "9",
+         "constants": {},
+         "preview": "Presets/Previews/Tile_LastSession.png"
+        },
+        {
+         "id": "RecentActivity",
+         "name": "Recent activity",
+         "locKey": "LOCHNDTileTypeRecentActivity",
+         "value": "10",
+         "constants": {},
+         "preview": "Presets/Previews/Tile_RecentActivity.png"
+        },
+        {
+         "id": "PlayCount",
+         "name": "Play count",
+         "locKey": "LOCHNDTileTypePlayCount",
+         "value": "11",
+         "constants": {},
+         "preview": "Presets/Previews/Tile_PlayCount.png"
+        },
+        {
+         "id": "Added",
+         "name": "Date added",
+         "locKey": "LOCHNDTileTypeAdded",
+         "value": "12",
+         "constants": {},
+         "preview": "Presets/Previews/Tile_Added.png"
+        },
+        {
+         "id": "ReleaseDate",
+         "name": "Release date",
+         "locKey": "LOCHNDTileTypeReleaseDate",
+         "value": "13",
+         "constants": {},
+         "preview": "Presets/Previews/Tile_ReleaseDate.png"
+        },
+        {
+         "id": "Source",
+         "name": "Source (library)",
+         "locKey": "LOCHNDTileTypeSource",
+         "value": "14",
+         "constants": {},
+         "preview": "Presets/Previews/Tile_Source.png"
+        },
+        {
+         "id": "Platforms",
+         "name": "Platforms",
+         "locKey": "LOCHNDTileTypePlatforms",
+         "value": "15",
+         "constants": {},
+         "preview": "Presets/Previews/Tile_Platforms.png"
+        },
+        {
+         "id": "Developers",
+         "name": "Developers",
+         "locKey": "LOCHNDTileTypeDevelopers",
+         "value": "16",
+         "constants": {},
+         "preview": "Presets/Previews/Tile_Developers.png"
+        },
+        {
+         "id": "Publishers",
+         "name": "Publishers",
+         "locKey": "LOCHNDTileTypePublishers",
+         "value": "17",
+         "constants": {},
+         "preview": "Presets/Previews/Tile_Publishers.png"
+        },
+        {
+         "id": "Genres",
+         "name": "Genres",
+         "locKey": "LOCHNDTileTypeGenres",
+         "value": "18",
+         "constants": {},
+         "preview": "Presets/Previews/Tile_Genres.png"
+        },
+        {
+         "id": "Series",
+         "name": "Series",
+         "locKey": "LOCHNDTileTypeSeries",
+         "value": "19",
+         "constants": {},
+         "preview": "Presets/Previews/Tile_Series.png"
+        },
+        {
+         "id": "AgeRatings",
+         "name": "Age rating",
+         "locKey": "LOCHNDTileTypeAgeRatings",
+         "value": "20",
+         "constants": {},
+         "preview": "Presets/Previews/Tile_AgeRatings.png"
+        },
+        {
+         "id": "Version",
+         "name": "Version",
+         "locKey": "LOCHNDTileTypeVersion",
+         "value": "21",
+         "constants": {},
+         "preview": "Presets/Previews/Tile_Version.png"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "details",
+   "title": "Game page",
+   "groups": [
+    {
      "id": "details-view---tabs",
      "title": "Details view - tabs",
      "controls": [
@@ -3531,60 +4131,6 @@
          "constants": {}
         }
        ]
-      }
-     ]
-    },
-    {
-     "id": "details-view---header-bar",
-     "title": "Details view - header bar",
-     "controls": [
-      {
-       "kind": "toggle",
-       "id": "DetailsViewShowHeaderBar",
-       "keys": [
-        "DetailsViewShowHeaderBar"
-       ],
-       "title": "Show the header bar",
-       "titleKey": "LOCHNDOptDetailsViewShowHeaderBar",
-       "description": "The bar under the artwork with the last played date, time played and completion status.",
-       "tipKey": "LOCHNDTipDetailsViewShowHeaderBar",
-       "choices": []
-      },
-      {
-       "kind": "toggle",
-       "id": "DetailsViewShowInfoButton",
-       "keys": [
-        "DetailsViewShowInfoButton"
-       ],
-       "title": "Information panel button",
-       "titleKey": "LOCHNDOptDetailsViewShowInfoButton",
-       "description": "Button that shows or hides the information panel (cover, description, details).",
-       "tipKey": "LOCHNDTipDetailsViewShowInfoButton",
-       "choices": []
-      },
-      {
-       "kind": "toggle",
-       "id": "DetailsViewShowUserRating",
-       "keys": [
-        "DetailsViewShowUserRating"
-       ],
-       "title": "Your rating with stars (ThemeExtras)",
-       "titleKey": "LOCHNDOptDetailsViewShowUserRating",
-       "description": "Your rating as clickable stars. Needs ThemeExtras.",
-       "tipKey": "LOCHNDTipDetailsViewShowUserRating",
-       "choices": []
-      },
-      {
-       "kind": "slider",
-       "id": "HeaderButtonSize",
-       "keys": [
-        "HeaderButtonSize"
-       ],
-       "title": "Size of the header bar buttons",
-       "titleKey": "LOCHNDOptHeaderButtonSize",
-       "description": "Size of the round buttons in the header bar.",
-       "tipKey": "LOCHNDTipHeaderButtonSize",
-       "choices": []
       }
      ]
     },
@@ -4519,209 +5065,6 @@
      ]
     },
     {
-     "id": "details-view---artwork-card--look",
-     "title": "Details view - artwork card: look",
-     "controls": [
-      {
-       "kind": "slider",
-       "id": "HeroCardBorderOpacity",
-       "keys": [
-        "HeroCardBorderOpacity"
-       ],
-       "title": "Artwork card: outline strength",
-       "titleKey": "LOCHNDOptHeroCardBorderOpacity",
-       "choices": []
-      },
-      {
-       "kind": "slider",
-       "id": "HeroBlurRadius",
-       "keys": [
-        "HeroBlurRadius"
-       ],
-       "title": "Artwork card: strong blur at the bottom",
-       "titleKey": "LOCHNDOptHeroBlurRadius",
-       "choices": []
-      },
-      {
-       "kind": "slider",
-       "id": "HeroBlurRadiusSoft",
-       "keys": [
-        "HeroBlurRadiusSoft"
-       ],
-       "title": "Artwork card: light blur at the bottom",
-       "titleKey": "LOCHNDOptHeroBlurRadiusSoft",
-       "choices": []
-      },
-      {
-       "kind": "slider",
-       "id": "HeroBlurOpacity",
-       "keys": [
-        "HeroBlurOpacity"
-       ],
-       "title": "Artwork card: blur strength",
-       "titleKey": "LOCHNDOptHeroBlurOpacity",
-       "choices": []
-      },
-      {
-       "kind": "slider",
-       "id": "HeroBlurStart",
-       "keys": [
-        "HeroBlurStart"
-       ],
-       "title": "Artwork card: where the blur starts (0 top, 1 bottom)",
-       "titleKey": "LOCHNDOptHeroBlurStart",
-       "choices": []
-      },
-      {
-       "kind": "slider",
-       "id": "HeroBlurMid",
-       "keys": [
-        "HeroBlurMid"
-       ],
-       "title": "Artwork card: where the strong blur starts",
-       "titleKey": "LOCHNDOptHeroBlurMid",
-       "choices": []
-      },
-      {
-       "kind": "slider",
-       "id": "HeroBlurFull",
-       "keys": [
-        "HeroBlurFull"
-       ],
-       "title": "Artwork card: where the blur is complete",
-       "titleKey": "LOCHNDOptHeroBlurFull",
-       "choices": []
-      },
-      {
-       "kind": "slider",
-       "id": "HeroTintAccentOpacity",
-       "keys": [
-        "HeroTintAccentOpacity"
-       ],
-       "title": "Artwork card: accent tint over the blur",
-       "titleKey": "LOCHNDOptHeroTintAccentOpacity",
-       "choices": []
-      },
-      {
-       "kind": "slider",
-       "id": "HeroTintLightOpacity",
-       "keys": [
-        "HeroTintLightOpacity"
-       ],
-       "title": "Artwork card: white frost over the blur",
-       "titleKey": "LOCHNDOptHeroTintLightOpacity",
-       "choices": []
-      },
-      {
-       "kind": "slider",
-       "id": "HeroFadeStart",
-       "keys": [
-        "HeroFadeStart"
-       ],
-       "title": "Artwork card: where the picture fades out (1 = never)",
-       "titleKey": "LOCHNDOptHeroFadeStart",
-       "choices": []
-      }
-     ]
-    },
-    {
-     "id": "details-view---header-tiles--look",
-     "title": "Details view - header tiles: look",
-     "controls": [
-      {
-       "kind": "slider",
-       "id": "HeaderTileValueFontSize",
-       "keys": [
-        "HeaderTileValueFontSize"
-       ],
-       "title": "Header cards: value text size",
-       "titleKey": "LOCHNDOptHeaderTileValueFontSize",
-       "choices": []
-      },
-      {
-       "kind": "slider",
-       "id": "HeaderTileLabelFontSize",
-       "keys": [
-        "HeaderTileLabelFontSize"
-       ],
-       "title": "Header cards: label text size",
-       "titleKey": "LOCHNDOptHeaderTileLabelFontSize",
-       "choices": []
-      },
-      {
-       "kind": "slider",
-       "id": "HeaderTileBackgroundOpacity",
-       "keys": [
-        "HeaderTileBackgroundOpacity"
-       ],
-       "title": "Tile glass",
-       "titleKey": "LOCHNDOptHeaderTileBackgroundOpacity",
-       "description": "Fill of the header tiles.",
-       "choices": []
-      },
-      {
-       "kind": "slider",
-       "id": "HeaderRowBackgroundOpacity",
-       "keys": [
-        "HeaderRowBackgroundOpacity"
-       ],
-       "title": "Header cards: band behind the row, opacity",
-       "titleKey": "LOCHNDOptHeaderRowBackgroundOpacity",
-       "choices": []
-      },
-      {
-       "kind": "slider",
-       "id": "HeaderBarGlassOpacity",
-       "keys": [
-        "HeaderBarGlassOpacity"
-       ],
-       "title": "Header bar: glass opacity",
-       "titleKey": "LOCHNDOptHeaderBarGlassOpacity",
-       "choices": []
-      },
-      {
-       "kind": "slider",
-       "id": "HeaderBarBlurOpacity",
-       "keys": [
-        "HeaderBarBlurOpacity"
-       ],
-       "title": "Header bar: blur opacity (0 = off, cheaper)",
-       "titleKey": "LOCHNDOptHeaderBarBlurOpacity",
-       "choices": []
-      },
-      {
-       "kind": "thickness",
-       "id": "HeaderTilePadding",
-       "keys": [
-        "HeaderTilePadding"
-       ],
-       "title": "Header cards: padding inside each box",
-       "titleKey": "LOCHNDOptHeaderTilePadding",
-       "choices": []
-      },
-      {
-       "kind": "thickness",
-       "id": "HeaderTileMargin",
-       "keys": [
-        "HeaderTileMargin"
-       ],
-       "title": "Header cards: space between boxes",
-       "titleKey": "LOCHNDOptHeaderTileMargin",
-       "choices": []
-      },
-      {
-       "kind": "thickness",
-       "id": "HeaderRowPadding",
-       "keys": [
-        "HeaderRowPadding"
-       ],
-       "title": "Header cards: padding of the whole row",
-       "titleKey": "LOCHNDOptHeaderRowPadding",
-       "choices": []
-      }
-     ]
-    },
-    {
      "id": "details-view---glass-spacing--rounding-and-text",
      "title": "Details view - glass spacing, rounding and text",
      "controls": [
@@ -4828,341 +5171,6 @@
        "title": "Artwork chip text",
        "titleKey": "LOCHNDOptHeroChipFontSize",
        "choices": []
-      }
-     ]
-    },
-    {
-     "id": "header-tiles",
-     "title": "Header tiles",
-     "controls": [
-      {
-       "kind": "tileSlots",
-       "id": "HeaderTiles",
-       "keys": [
-        "HeaderTileSlot1",
-        "HeaderTileSlot2",
-        "HeaderTileSlot3",
-        "HeaderTileSlot4",
-        "HeaderTileSlot5",
-        "HeaderTileSlot6",
-        "HeaderTileSlot7",
-        "HeaderTileSlot8",
-        "HeaderTileSlot9",
-        "HeaderTileSlot10",
-        "HeaderTileSlot11",
-        "HeaderTileSlot12"
-       ],
-       "extraKeys": [
-        "HeaderTileSlot1B",
-        "HeaderTileSlot1C",
-        "HeaderTileSlot1D",
-        "HeaderTileSlot2B",
-        "HeaderTileSlot2C",
-        "HeaderTileSlot2D",
-        "HeaderTileSlot3B",
-        "HeaderTileSlot3C",
-        "HeaderTileSlot3D",
-        "HeaderTileSlot4B",
-        "HeaderTileSlot4C",
-        "HeaderTileSlot4D",
-        "HeaderTileSlot5B",
-        "HeaderTileSlot5C",
-        "HeaderTileSlot5D",
-        "HeaderTileSlot6B",
-        "HeaderTileSlot6C",
-        "HeaderTileSlot6D",
-        "HeaderTileSlot7B",
-        "HeaderTileSlot7C",
-        "HeaderTileSlot7D",
-        "HeaderTileSlot8B",
-        "HeaderTileSlot8C",
-        "HeaderTileSlot8D",
-        "HeaderTileSlot9B",
-        "HeaderTileSlot9C",
-        "HeaderTileSlot9D",
-        "HeaderTileSlot10B",
-        "HeaderTileSlot10C",
-        "HeaderTileSlot10D",
-        "HeaderTileSlot11B",
-        "HeaderTileSlot11C",
-        "HeaderTileSlot11D",
-        "HeaderTileSlot12B",
-        "HeaderTileSlot12C",
-        "HeaderTileSlot12D"
-       ],
-       "title": "Header tiles",
-       "titleKey": null,
-       "choices": [
-        {
-         "id": "Empty",
-         "name": "Empty",
-         "locKey": "LOCHNDTileTypeEmpty",
-         "value": "0",
-         "constants": {},
-         "preview": "Presets/Previews/Tile_Empty.png"
-        },
-        {
-         "id": "PlayTime",
-         "name": "Time played",
-         "locKey": "LOCHNDTileTypePlayTime",
-         "value": "1",
-         "constants": {},
-         "preview": "Presets/Previews/Tile_PlayTime.png"
-        },
-        {
-         "id": "LastPlayed",
-         "name": "Last played",
-         "locKey": "LOCHNDTileTypeLastPlayed",
-         "value": "2",
-         "constants": {},
-         "preview": "Presets/Previews/Tile_LastPlayed.png"
-        },
-        {
-         "id": "CompletionStatus",
-         "name": "Completion status (editable with ThemeExtras)",
-         "locKey": "LOCHNDTileTypeCompletionStatus",
-         "value": "3",
-         "constants": {},
-         "preview": "Presets/Previews/Tile_CompletionStatus.png"
-        },
-        {
-         "id": "Achievements",
-         "name": "Achievements: count and bar",
-         "locKey": "LOCHNDTileTypeAchievements",
-         "value": "4",
-         "constants": {},
-         "preview": "Presets/Previews/Tile_Achievements.png"
-        },
-        {
-         "id": "AchievementsPercent",
-         "name": "Achievements: percentage",
-         "locKey": "LOCHNDTileTypeAchievementsPercent",
-         "value": "28",
-         "constants": {},
-         "preview": "Presets/Previews/Tile_AchievementsPercent.png"
-        },
-        {
-         "id": "LatestAchievement",
-         "name": "Latest unlocked achievement",
-         "locKey": "LOCHNDTileTypeLatestAchievement",
-         "value": "29",
-         "constants": {},
-         "preview": "Presets/Previews/Tile_LatestAchievement.png"
-        },
-        {
-         "id": "RareAchievements",
-         "name": "Rare and ultra rare achievements",
-         "locKey": "LOCHNDTileTypeRareAchievements",
-         "value": "30",
-         "constants": {},
-         "preview": "Presets/Previews/Tile_RareAchievements.png"
-        },
-        {
-         "id": "HltbMain",
-         "name": "HowLongToBeat: main story",
-         "locKey": "LOCHNDTileTypeHltbMain",
-         "value": "5",
-         "constants": {},
-         "preview": "Presets/Previews/Tile_HltbMain.png"
-        },
-        {
-         "id": "HltbMainExtra",
-         "name": "HowLongToBeat: main + extra",
-         "locKey": "LOCHNDTileTypeHltbMainExtra",
-         "value": "25",
-         "constants": {},
-         "preview": "Presets/Previews/Tile_HltbMainExtra.png"
-        },
-        {
-         "id": "HltbCompletionist",
-         "name": "HowLongToBeat: 100%",
-         "locKey": "LOCHNDTileTypeHltbCompletionist",
-         "value": "26",
-         "constants": {},
-         "preview": "Presets/Previews/Tile_HltbCompletionist.png"
-        },
-        {
-         "id": "HltbAll",
-         "name": "HowLongToBeat: all three times",
-         "locKey": "LOCHNDTileTypeHltbAll",
-         "value": "27",
-         "constants": {},
-         "preview": "Presets/Previews/Tile_HltbAll.png"
-        },
-        {
-         "id": "Scores",
-         "name": "Critic and community scores",
-         "locKey": "LOCHNDTileTypeScores",
-         "value": "6",
-         "constants": {},
-         "preview": "Presets/Previews/Tile_Scores.png"
-        },
-        {
-         "id": "CriticScore",
-         "name": "Critic score",
-         "locKey": "LOCHNDTileTypeCriticScore",
-         "value": "23",
-         "constants": {},
-         "preview": "Presets/Previews/Tile_CriticScore.png"
-        },
-        {
-         "id": "CommunityScore",
-         "name": "Community score",
-         "locKey": "LOCHNDTileTypeCommunityScore",
-         "value": "24",
-         "constants": {},
-         "preview": "Presets/Previews/Tile_CommunityScore.png"
-        },
-        {
-         "id": "UserScore",
-         "name": "Your score",
-         "locKey": "LOCHNDTileTypeUserScore",
-         "value": "22",
-         "constants": {},
-         "preview": "Presets/Previews/Tile_UserScore.png"
-        },
-        {
-         "id": "InstallSize",
-         "name": "Install size",
-         "locKey": "LOCHNDTileTypeInstallSize",
-         "value": "7",
-         "constants": {},
-         "preview": "Presets/Previews/Tile_InstallSize.png"
-        },
-        {
-         "id": "AvgFps",
-         "name": "Median FPS",
-         "locKey": "LOCHNDTileTypeAvgFps",
-         "value": "8",
-         "constants": {},
-         "preview": "Presets/Previews/Tile_AvgFps.png"
-        },
-        {
-         "id": "Cpu",
-         "name": "Median CPU load",
-         "locKey": "LOCHNDTileTypeCpu",
-         "value": "31",
-         "constants": {}
-        },
-        {
-         "id": "Gpu",
-         "name": "Median GPU load",
-         "locKey": "LOCHNDTileTypeGpu",
-         "value": "32",
-         "constants": {}
-        },
-        {
-         "id": "Ram",
-         "name": "Median RAM load",
-         "locKey": "LOCHNDTileTypeRam",
-         "value": "33",
-         "constants": {}
-        },
-        {
-         "id": "LastSession",
-         "name": "Last session length",
-         "locKey": "LOCHNDTileTypeLastSession",
-         "value": "9",
-         "constants": {},
-         "preview": "Presets/Previews/Tile_LastSession.png"
-        },
-        {
-         "id": "RecentActivity",
-         "name": "Recent activity",
-         "locKey": "LOCHNDTileTypeRecentActivity",
-         "value": "10",
-         "constants": {},
-         "preview": "Presets/Previews/Tile_RecentActivity.png"
-        },
-        {
-         "id": "PlayCount",
-         "name": "Play count",
-         "locKey": "LOCHNDTileTypePlayCount",
-         "value": "11",
-         "constants": {},
-         "preview": "Presets/Previews/Tile_PlayCount.png"
-        },
-        {
-         "id": "Added",
-         "name": "Date added",
-         "locKey": "LOCHNDTileTypeAdded",
-         "value": "12",
-         "constants": {},
-         "preview": "Presets/Previews/Tile_Added.png"
-        },
-        {
-         "id": "ReleaseDate",
-         "name": "Release date",
-         "locKey": "LOCHNDTileTypeReleaseDate",
-         "value": "13",
-         "constants": {},
-         "preview": "Presets/Previews/Tile_ReleaseDate.png"
-        },
-        {
-         "id": "Source",
-         "name": "Source (library)",
-         "locKey": "LOCHNDTileTypeSource",
-         "value": "14",
-         "constants": {},
-         "preview": "Presets/Previews/Tile_Source.png"
-        },
-        {
-         "id": "Platforms",
-         "name": "Platforms",
-         "locKey": "LOCHNDTileTypePlatforms",
-         "value": "15",
-         "constants": {},
-         "preview": "Presets/Previews/Tile_Platforms.png"
-        },
-        {
-         "id": "Developers",
-         "name": "Developers",
-         "locKey": "LOCHNDTileTypeDevelopers",
-         "value": "16",
-         "constants": {},
-         "preview": "Presets/Previews/Tile_Developers.png"
-        },
-        {
-         "id": "Publishers",
-         "name": "Publishers",
-         "locKey": "LOCHNDTileTypePublishers",
-         "value": "17",
-         "constants": {},
-         "preview": "Presets/Previews/Tile_Publishers.png"
-        },
-        {
-         "id": "Genres",
-         "name": "Genres",
-         "locKey": "LOCHNDTileTypeGenres",
-         "value": "18",
-         "constants": {},
-         "preview": "Presets/Previews/Tile_Genres.png"
-        },
-        {
-         "id": "Series",
-         "name": "Series",
-         "locKey": "LOCHNDTileTypeSeries",
-         "value": "19",
-         "constants": {},
-         "preview": "Presets/Previews/Tile_Series.png"
-        },
-        {
-         "id": "AgeRatings",
-         "name": "Age rating",
-         "locKey": "LOCHNDTileTypeAgeRatings",
-         "value": "20",
-         "constants": {},
-         "preview": "Presets/Previews/Tile_AgeRatings.png"
-        },
-        {
-         "id": "Version",
-         "name": "Version",
-         "locKey": "LOCHNDTileTypeVersion",
-         "value": "21",
-         "constants": {},
-         "preview": "Presets/Previews/Tile_Version.png"
-        }
-       ]
       }
      ]
     }
@@ -5845,7 +5853,7 @@
   },
   {
    "id": "sizes",
-   "title": "Sizes, links and text",
+   "title": "Text and links",
    "groups": [
     {
      "id": "sizes--links-and-text",
@@ -5952,8 +5960,240 @@
    ]
   },
   {
+   "id": "glass",
+   "title": "Glass and popups",
+   "groups": [
+    {
+     "id": "glass-material",
+     "title": "Glass material",
+     "controls": [
+      {
+       "kind": "slider",
+       "id": "SectionGlassOpacity",
+       "keys": [
+        "SectionGlassOpacity"
+       ],
+       "title": "Glass fill",
+       "titleKey": "LOCHNDOptSectionGlassOpacity",
+       "description": "How much white the panels, sections and information panel take (0 = clear).",
+       "choices": []
+      },
+      {
+       "kind": "slider",
+       "id": "SectionGlassBorderOpacity",
+       "keys": [
+        "SectionGlassBorderOpacity"
+       ],
+       "title": "Glass rim",
+       "titleKey": "LOCHNDOptSectionGlassBorderOpacity",
+       "description": "Strength of the lit edge of every glass element (0 = no outline).",
+       "choices": []
+      },
+      {
+       "kind": "slider",
+       "id": "ChipGlassOpacity",
+       "keys": [
+        "ChipGlassOpacity"
+       ],
+       "title": "Chip glass",
+       "titleKey": "LOCHNDOptChipGlassOpacity",
+       "description": "Fill of the chips in the sections.",
+       "choices": []
+      },
+      {
+       "kind": "thickness",
+       "id": "GlassRimThickness",
+       "keys": [
+        "GlassRimThickness"
+       ],
+       "title": "Glass edge thickness",
+       "titleKey": "LOCHNDOptGlassRimThickness",
+       "description": "Width of the lit edge, in pixels.",
+       "choices": []
+      },
+      {
+       "kind": "slider",
+       "id": "GlassInnerRimOpacity",
+       "keys": [
+        "GlassInnerRimOpacity"
+       ],
+       "title": "Top highlight",
+       "titleKey": "LOCHNDOptGlassInnerRimOpacity",
+       "description": "Thin light line just inside the top edge of cards.",
+       "choices": []
+      },
+      {
+       "kind": "slider",
+       "id": "GlassGlowOpacity",
+       "keys": [
+        "GlassGlowOpacity"
+       ],
+       "title": "Accent glow",
+       "titleKey": "LOCHNDOptGlassGlowOpacity",
+       "description": "Soft glow behind hovered buttons, the selected sidebar icon and the focused search field. 0 = off.",
+       "choices": []
+      },
+      {
+       "kind": "slider",
+       "id": "GlassHoverOpacity",
+       "keys": [
+        "GlassHoverOpacity"
+       ],
+       "title": "Hover light",
+       "titleKey": "LOCHNDOptGlassHoverOpacity",
+       "description": "White wash under the mouse on list rows, top bar buttons and section titles.",
+       "choices": []
+      },
+      {
+       "kind": "slider",
+       "id": "GlassSelectionOpacity",
+       "keys": [
+        "GlassSelectionOpacity"
+       ],
+       "title": "Selection tint",
+       "titleKey": "LOCHNDOptGlassSelectionOpacity",
+       "description": "Accent fill of the selected game and the selected sidebar and top bar buttons.",
+       "choices": []
+      },
+      {
+       "kind": "slider",
+       "id": "GlassBarEdgeOpacity",
+       "keys": [
+        "GlassBarEdgeOpacity"
+       ],
+       "title": "Bar edge line",
+       "titleKey": "LOCHNDOptGlassBarEdgeOpacity",
+       "description": "Hairline between the top bar, sidebar, game list and page.",
+       "choices": []
+      },
+      {
+       "kind": "slider",
+       "id": "SearchBoxGlassOpacity",
+       "keys": [
+        "SearchBoxGlassOpacity"
+       ],
+       "title": "Search field glass",
+       "titleKey": "LOCHNDOptSearchBoxGlassOpacity",
+       "description": "1 = solid, lower = the artwork shows through.",
+       "choices": []
+      }
+     ]
+    },
+    {
+     "id": "glass-popups--cover-and-scrollbar",
+     "title": "Glass popups, cover and scrollbar",
+     "controls": [
+      {
+       "kind": "slider",
+       "id": "GlassPopupShadowBlur",
+       "keys": [
+        "GlassPopupShadowBlur"
+       ],
+       "title": "Popup shadow blur",
+       "titleKey": "LOCHNDOptGlassPopupShadowBlur",
+       "description": "Shadow of tooltips and menus. 0 = no shadow.",
+       "choices": []
+      },
+      {
+       "kind": "slider",
+       "id": "GlassPopupShadowOpacity",
+       "keys": [
+        "GlassPopupShadowOpacity"
+       ],
+       "title": "Popup shadow strength",
+       "titleKey": "LOCHNDOptGlassPopupShadowOpacity",
+       "choices": []
+      },
+      {
+       "kind": "thickness",
+       "id": "GlassPopupShadowRoom",
+       "keys": [
+        "GlassPopupShadowRoom"
+       ],
+       "title": "Popup shadow room",
+       "titleKey": "LOCHNDOptGlassPopupShadowRoom",
+       "description": "Transparent margin that keeps the shadow from being cut: keep it at half the blur or more.",
+       "choices": []
+      },
+      {
+       "kind": "slider",
+       "id": "HeroCoverShadowBlur",
+       "keys": [
+        "HeroCoverShadowBlur"
+       ],
+       "title": "Cover shadow blur",
+       "titleKey": "LOCHNDOptHeroCoverShadowBlur",
+       "description": "0 = no shadow.",
+       "choices": []
+      },
+      {
+       "kind": "slider",
+       "id": "HeroCoverShadowDepth",
+       "keys": [
+        "HeroCoverShadowDepth"
+       ],
+       "title": "Cover shadow offset",
+       "titleKey": "LOCHNDOptHeroCoverShadowDepth",
+       "choices": []
+      },
+      {
+       "kind": "slider",
+       "id": "HeroCoverShadowOpacity",
+       "keys": [
+        "HeroCoverShadowOpacity"
+       ],
+       "title": "Cover shadow strength",
+       "titleKey": "LOCHNDOptHeroCoverShadowOpacity",
+       "choices": []
+      },
+      {
+       "kind": "thickness",
+       "id": "HeroCoverBorderThickness",
+       "keys": [
+        "HeroCoverBorderThickness"
+       ],
+       "title": "Cover outline",
+       "titleKey": "LOCHNDOptHeroCoverBorderThickness",
+       "choices": []
+      },
+      {
+       "kind": "slider",
+       "id": "ScrollbarThumbWidth",
+       "keys": [
+        "ScrollbarThumbWidth"
+       ],
+       "title": "Scrollbar width",
+       "titleKey": "LOCHNDOptScrollbarThumbWidth",
+       "choices": []
+      },
+      {
+       "kind": "slider",
+       "id": "ScrollbarThumbHoverWidth",
+       "keys": [
+        "ScrollbarThumbHoverWidth"
+       ],
+       "title": "Scrollbar width on hover",
+       "titleKey": "LOCHNDOptScrollbarThumbHoverWidth",
+       "choices": []
+      },
+      {
+       "kind": "thickness",
+       "id": "GlassGlowMargin",
+       "keys": [
+        "GlassGlowMargin"
+       ],
+       "title": "Accent glow spread",
+       "titleKey": "LOCHNDOptGlassGlowMargin",
+       "description": "How far the glow spills outside its control (negative numbers).",
+       "choices": []
+      }
+     ]
+    }
+   ]
+  },
+  {
    "id": "advanced",
-   "title": "Advanced",
+   "title": "Extensions",
    "groups": [
     {
      "id": "details-view---extension-details",
@@ -6241,232 +6481,6 @@
        "titleKey": "LOCHNDOptAchievementsDataGridMaxHeight",
        "description": "Height after which the full achievements table scrolls.",
        "tipKey": "LOCHNDTipAchievementsDataGridMaxHeight",
-       "choices": []
-      }
-     ]
-    },
-    {
-     "id": "glass-material",
-     "title": "Glass material",
-     "controls": [
-      {
-       "kind": "slider",
-       "id": "SectionGlassOpacity",
-       "keys": [
-        "SectionGlassOpacity"
-       ],
-       "title": "Glass fill",
-       "titleKey": "LOCHNDOptSectionGlassOpacity",
-       "description": "How much white the panels, sections and information panel take (0 = clear).",
-       "choices": []
-      },
-      {
-       "kind": "slider",
-       "id": "SectionGlassBorderOpacity",
-       "keys": [
-        "SectionGlassBorderOpacity"
-       ],
-       "title": "Glass rim",
-       "titleKey": "LOCHNDOptSectionGlassBorderOpacity",
-       "description": "Strength of the lit edge of every glass element (0 = no outline).",
-       "choices": []
-      },
-      {
-       "kind": "slider",
-       "id": "ChipGlassOpacity",
-       "keys": [
-        "ChipGlassOpacity"
-       ],
-       "title": "Chip glass",
-       "titleKey": "LOCHNDOptChipGlassOpacity",
-       "description": "Fill of the chips in the sections.",
-       "choices": []
-      },
-      {
-       "kind": "thickness",
-       "id": "GlassRimThickness",
-       "keys": [
-        "GlassRimThickness"
-       ],
-       "title": "Glass edge thickness",
-       "titleKey": "LOCHNDOptGlassRimThickness",
-       "description": "Width of the lit edge, in pixels.",
-       "choices": []
-      },
-      {
-       "kind": "slider",
-       "id": "GlassInnerRimOpacity",
-       "keys": [
-        "GlassInnerRimOpacity"
-       ],
-       "title": "Top highlight",
-       "titleKey": "LOCHNDOptGlassInnerRimOpacity",
-       "description": "Thin light line just inside the top edge of cards.",
-       "choices": []
-      },
-      {
-       "kind": "slider",
-       "id": "GlassGlowOpacity",
-       "keys": [
-        "GlassGlowOpacity"
-       ],
-       "title": "Accent glow",
-       "titleKey": "LOCHNDOptGlassGlowOpacity",
-       "description": "Soft glow behind hovered buttons, the selected sidebar icon and the focused search field. 0 = off.",
-       "choices": []
-      },
-      {
-       "kind": "slider",
-       "id": "GlassHoverOpacity",
-       "keys": [
-        "GlassHoverOpacity"
-       ],
-       "title": "Hover light",
-       "titleKey": "LOCHNDOptGlassHoverOpacity",
-       "description": "White wash under the mouse on list rows, top bar buttons and section titles.",
-       "choices": []
-      },
-      {
-       "kind": "slider",
-       "id": "GlassSelectionOpacity",
-       "keys": [
-        "GlassSelectionOpacity"
-       ],
-       "title": "Selection tint",
-       "titleKey": "LOCHNDOptGlassSelectionOpacity",
-       "description": "Accent fill of the selected game and the selected sidebar and top bar buttons.",
-       "choices": []
-      },
-      {
-       "kind": "slider",
-       "id": "GlassBarEdgeOpacity",
-       "keys": [
-        "GlassBarEdgeOpacity"
-       ],
-       "title": "Bar edge line",
-       "titleKey": "LOCHNDOptGlassBarEdgeOpacity",
-       "description": "Hairline between the top bar, sidebar, game list and page.",
-       "choices": []
-      },
-      {
-       "kind": "slider",
-       "id": "SearchBoxGlassOpacity",
-       "keys": [
-        "SearchBoxGlassOpacity"
-       ],
-       "title": "Search field glass",
-       "titleKey": "LOCHNDOptSearchBoxGlassOpacity",
-       "description": "1 = solid, lower = the artwork shows through.",
-       "choices": []
-      }
-     ]
-    },
-    {
-     "id": "glass-popups--cover-and-scrollbar",
-     "title": "Glass popups, cover and scrollbar",
-     "controls": [
-      {
-       "kind": "slider",
-       "id": "GlassPopupShadowBlur",
-       "keys": [
-        "GlassPopupShadowBlur"
-       ],
-       "title": "Popup shadow blur",
-       "titleKey": "LOCHNDOptGlassPopupShadowBlur",
-       "description": "Shadow of tooltips and menus. 0 = no shadow.",
-       "choices": []
-      },
-      {
-       "kind": "slider",
-       "id": "GlassPopupShadowOpacity",
-       "keys": [
-        "GlassPopupShadowOpacity"
-       ],
-       "title": "Popup shadow strength",
-       "titleKey": "LOCHNDOptGlassPopupShadowOpacity",
-       "choices": []
-      },
-      {
-       "kind": "thickness",
-       "id": "GlassPopupShadowRoom",
-       "keys": [
-        "GlassPopupShadowRoom"
-       ],
-       "title": "Popup shadow room",
-       "titleKey": "LOCHNDOptGlassPopupShadowRoom",
-       "description": "Transparent margin that keeps the shadow from being cut: keep it at half the blur or more.",
-       "choices": []
-      },
-      {
-       "kind": "slider",
-       "id": "HeroCoverShadowBlur",
-       "keys": [
-        "HeroCoverShadowBlur"
-       ],
-       "title": "Cover shadow blur",
-       "titleKey": "LOCHNDOptHeroCoverShadowBlur",
-       "description": "0 = no shadow.",
-       "choices": []
-      },
-      {
-       "kind": "slider",
-       "id": "HeroCoverShadowDepth",
-       "keys": [
-        "HeroCoverShadowDepth"
-       ],
-       "title": "Cover shadow offset",
-       "titleKey": "LOCHNDOptHeroCoverShadowDepth",
-       "choices": []
-      },
-      {
-       "kind": "slider",
-       "id": "HeroCoverShadowOpacity",
-       "keys": [
-        "HeroCoverShadowOpacity"
-       ],
-       "title": "Cover shadow strength",
-       "titleKey": "LOCHNDOptHeroCoverShadowOpacity",
-       "choices": []
-      },
-      {
-       "kind": "thickness",
-       "id": "HeroCoverBorderThickness",
-       "keys": [
-        "HeroCoverBorderThickness"
-       ],
-       "title": "Cover outline",
-       "titleKey": "LOCHNDOptHeroCoverBorderThickness",
-       "choices": []
-      },
-      {
-       "kind": "slider",
-       "id": "ScrollbarThumbWidth",
-       "keys": [
-        "ScrollbarThumbWidth"
-       ],
-       "title": "Scrollbar width",
-       "titleKey": "LOCHNDOptScrollbarThumbWidth",
-       "choices": []
-      },
-      {
-       "kind": "slider",
-       "id": "ScrollbarThumbHoverWidth",
-       "keys": [
-        "ScrollbarThumbHoverWidth"
-       ],
-       "title": "Scrollbar width on hover",
-       "titleKey": "LOCHNDOptScrollbarThumbHoverWidth",
-       "choices": []
-      },
-      {
-       "kind": "thickness",
-       "id": "GlassGlowMargin",
-       "keys": [
-        "GlassGlowMargin"
-       ],
-       "title": "Accent glow spread",
-       "titleKey": "LOCHNDOptGlassGlowMargin",
-       "description": "How far the glow spills outside its control (negative numbers).",
        "choices": []
       }
      ]
@@ -7959,13 +7973,13 @@
   {
    "key": "HeaderTileCardGap",
    "type": "Thickness",
-   "default": "0,0,14,0",
+   "default": "0,0,12,0",
    "min": 0.0
   },
   {
    "key": "HeaderTileCardGapBack",
    "type": "Thickness",
-   "default": "0,0,-14,0",
+   "default": "0,0,-12,0",
    "min": 0.0
   },
   {
@@ -8932,7 +8946,7 @@
   {
    "key": "PageLinksMargin",
    "type": "Thickness",
-   "default": "20,0,20,12"
+   "default": "20,0,20,16"
   },
   {
    "key": "PageSideMargin",

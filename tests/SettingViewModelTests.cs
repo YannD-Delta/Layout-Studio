@@ -13,6 +13,9 @@ public static class SettingViewModelTests
         public Profile Profile;
         public FakePresetFiles Files;
         public ShellViewModel Shell;
+        public Schema Schema;
+        public ProfileApplier Applier;
+        public string Culture;
     }
 
     private static Env Make(string culture = "en-US")
@@ -24,8 +27,16 @@ public static class SettingViewModelTests
         e.Profile = new Profile { Name = "Default" };
         e.Files = new FakePresetFiles();
         var applier = new ProfileApplier(schema, e.Store, e.Files, @"C:\theme");
+        e.Schema = schema; e.Applier = applier; e.Culture = culture;
         e.Shell = new ShellViewModel(schema, e.Store, e.History, applier, e.Profile, k => null, new CultureInfo(culture));
         return e;
+    }
+
+    // A control a visual page already edits is not on the generated pages: build its view model directly (the Header cards page uses the same logic)
+    private static SettingViewModel Direct(Env e, string id)
+    {
+        var control = e.Schema.Pages.SelectMany(p => p.Groups).SelectMany(g => g.Controls).Single(c => c.Id == id);
+        return new SettingViewModel(control, e.Store, e.History, e.Applier, e.Profile, k => null, new CultureInfo(e.Culture));
     }
 
     private static SettingViewModel Setting(Env e, string id)
@@ -55,6 +66,27 @@ public static class SettingViewModelTests
         Assert.Equal("30", blur.Text, "the field goes back to the stored value");
         blur.Text = "20";
         Assert.Equal(null, blur.Error, "a valid value clears the error");
+    }
+
+    public static void Presets_show_as_picture_tiles_and_short_choices_as_a_segmented_bar()
+    {
+        var e = Make();
+        Assert.Equal("presetTiles", Direct(e, "Corners").TemplateName);
+        var choices = e.Schema.Pages.SelectMany(p => p.Groups).SelectMany(g => g.Controls).Where(c => c.Kind == "choice").ToList();
+        foreach (var c in choices)
+        {
+            var vm = Direct(e, c.Id);
+            Assert.Equal(c.Choices.Count <= 4 ? "segmented" : "choice", vm.TemplateName, c.Id);
+        }
+        Assert.Equal("slider", Direct(e, "WindowGlassBlurRadius").TemplateName);
+    }
+
+    public static void A_typed_value_can_go_beyond_the_slider_range()
+    {
+        var e = Make();
+        var blur = Setting(e, "WindowGlassBlurRadius");
+        blur.Text = "500";
+        Assert.Equal("500", e.Store.Get("WindowGlassBlurRadius"), "the maximum is the end of the slider, not a wall");
     }
 
     public static void Slider_value_is_clamped_to_the_schema_range()
@@ -250,7 +282,7 @@ public static class SettingViewModelTests
     public static void Tile_slots_show_the_chosen_type_per_slot()
     {
         var e = Make();
-        var tiles = Setting(e, "HeaderTiles");
+        var tiles = Direct(e, "HeaderTiles");
         Assert.Equal(2, tiles.Slots.Count);
         Assert.Equal("PlayTime", tiles.Slots[0].SelectedChoice.Id);
         Assert.Equal("LastPlayed", tiles.Slots[1].SelectedChoice.Id);
@@ -259,7 +291,7 @@ public static class SettingViewModelTests
     public static void Picking_a_tile_type_writes_the_slot_constant()
     {
         var e = Make();
-        var tiles = Setting(e, "HeaderTiles");
+        var tiles = Direct(e, "HeaderTiles");
         tiles.Slots[0].SelectedChoice = tiles.Slots[0].Choices.Single(c => c.Id == "Empty");
         Assert.Equal("0", e.Store.Get("HeaderTileSlot1"));
         tiles.Slots[1].SelectedChoice = tiles.Slots[1].Choices.Single(c => c.Id == "PlayTime");
@@ -271,7 +303,7 @@ public static class SettingViewModelTests
         var e = Make();
         string error;
         e.Store.TrySet("HeaderTileSlot1", "99", out error);
-        var tiles = Setting(e, "HeaderTiles");
+        var tiles = Direct(e, "HeaderTiles");
         Assert.Equal(null, tiles.Slots[0].SelectedChoice);
     }
 

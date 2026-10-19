@@ -100,14 +100,4 @@ public static class BackgroundModeTests
         Assert.True(e.Editor.Sliders.Any(s => s.Id == "WindowGlassBlurRadius"), "the window layer is back in window mode");
         Assert.False(e.Editor.Sliders.Any(s => s.Id == "PageGlassBlurRadius"));
     }
-
-    public static void Playnites_own_background_layer_is_reported_as_a_duplicate_with_a_fix()
-    {
-        var found = AppearanceCheck.Evaluate(new Dictionary<string, object> { { "ShowBackgroundImageOnWindow", true } });
-        var f = found.Single(x => x.Id == "playniteBackground");
-        Assert.False(f.IsPerformance);
-        Assert.True(f.Changes.Any(c => c.Key == "ShowBackgroundImageOnWindow" && (bool)c.Value == false));
-        Assert.True(f.Message.Contains("copy"), f.Message);
-        Assert.Equal(0, AppearanceCheck.Evaluate(new Dictionary<string, object> { { "ShowBackgroundImageOnWindow", false } }).Count);
-    }
 }

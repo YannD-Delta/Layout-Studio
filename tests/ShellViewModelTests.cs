@@ -40,6 +40,74 @@ public static class ShellViewModelTests
         return e.Shell.Pages.SelectMany(p => p.Groups).SelectMany(g => g.Settings).Single(s => s.Id == id);
     }
 
+    public static void OpenPage_selects_a_page_by_id_and_ignores_an_unknown_one()
+    {
+        var e = Make();
+        var second = e.Shell.Pages[1];
+        e.Shell.OpenPage(second.Id);
+        Assert.True(ReferenceEquals(second, e.Shell.SelectedPage), "the page with that id is selected");
+        e.Shell.OpenPage("no-such-page");
+        Assert.True(ReferenceEquals(second, e.Shell.SelectedPage), "an unknown id keeps the current page");
+        e.Shell.OpenPage(null);
+        Assert.True(ReferenceEquals(second, e.Shell.SelectedPage), "null keeps the current page");
+    }
+
+    private static Env MakeReal()
+    {
+        var e = new Env();
+        e.Schema = Schema.Load(System.IO.File.ReadAllText(TestPaths.SchemaPath()));
+        e.Store = new ConstantStore(e.Schema.AllConstants());
+        e.History = new History(e.Store);
+        e.Profile = new Profile { Name = "Default" };
+        e.Files = new FakePresetFiles();
+        var applier = new ProfileApplier(e.Schema, e.Store, e.Files, @"C:	heme");
+        e.Shell = new ShellViewModel(e.Schema, e.Store, e.History, applier, e.Profile, k => null, new CultureInfo("en-US"));
+        return e;
+    }
+
+    public static void Settings_pages_do_not_repeat_what_a_visual_page_edits()
+    {
+        var e = MakeReal();
+        var covered = SchemaCoverage.VisualKeys(e.Schema);
+        Assert.True(covered.Count > 50, "the visual pages cover many constants");
+        var repeated = SettingsPages(e).SelectMany(p => p.Groups).SelectMany(g => g.Settings)
+            .Where(s => s.Keys.Count > 0 && s.Keys.All(k => covered.Contains(k))).Select(s => s.Id).ToList();
+        Assert.Equal("", string.Join(",", repeated));
+        Assert.True(SettingsPages(e).SelectMany(p => p.Groups).All(g => g.Settings.Count > 0), "no empty group is left");
+    }
+
+    public static void The_advice_page_comes_first_when_playnites_settings_are_reachable()
+    {
+        var e = new Env();
+        e.Schema = Schema.Load(TestSchema.Json);
+        e.Store = new ConstantStore(e.Schema.AllConstants());
+        e.History = new History(e.Store);
+        e.Profile = new Profile { Name = "Default" };
+        e.Files = new FakePresetFiles();
+        var applier = new ProfileApplier(e.Schema, e.Store, e.Files, @"C:	heme");
+        e.Shell = new ShellViewModel(e.Schema, e.Store, e.History, applier, e.Profile, k => null, new CultureInfo("en-US"), null, null, null, new PlayniteSettingsViewModel(new FakeSettings()));
+        Assert.Equal("advice", e.Shell.Pages[0].Kind);
+        Assert.Equal("Graphics and performance", e.Shell.Pages[0].Title);
+        Assert.True(ReferenceEquals(e.Shell.Pages[0], e.Shell.SelectedPage), "the editor opens on it");
+        Assert.False(Make().Shell.Pages.Any(p => p.Kind == "advice"), "without access to Playnite's settings there is no such page");
+    }
+
+    public static void Colour_and_corner_presets_are_not_offered_twice()
+    {
+        var e = MakeReal();
+        var ids = SettingsPages(e).SelectMany(p => p.Groups).SelectMany(g => g.Settings).Select(s => s.Id).ToList();
+        foreach (var id in new[] { "ColorProfile", "Accent", "Corners" })
+            Assert.False(ids.Contains(id), id + " is edited on its own visual page");
+        Assert.True(ids.Contains("Material"), "the Material preset has no visual page and stays");
+    }
+
+    public static void Group_titles_do_not_repeat_the_page_name()
+    {
+        var e = MakeReal();
+        var bad = SettingsPages(e).SelectMany(p => p.Groups).Where(g => g.Title.StartsWith("Details view - ") || g.Title.StartsWith("Grid view - ")).Select(g => g.Title).ToList();
+        Assert.Equal("", string.Join(" | ", bad));
+    }
+
     public static void Pages_come_from_the_schema()
     {
         var e = Make();

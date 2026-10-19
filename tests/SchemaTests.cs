@@ -27,11 +27,11 @@ public static class SchemaTests
         return Schema.Load(File.ReadAllText(TestPaths.SchemaPath()));
     }
 
-    public static void Loads_converted_schema_with_seven_pages()
+    public static void Loads_converted_schema_with_nine_pages()
     {
         var s = Load();
-        Assert.Equal(7, s.Pages.Count);
-        Assert.Equal(7, s.Pages.Select(p => p.Id).Distinct().Count(), "page ids are unique");
+        Assert.Equal(9, s.Pages.Count);
+        Assert.Equal(9, s.Pages.Select(p => p.Id).Distinct().Count(), "page ids are unique");
     }
 
     public static void Constants_cover_the_known_options()

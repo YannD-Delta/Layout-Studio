@@ -143,10 +143,10 @@ namespace LayoutStudio.Core
             }
         }
 
+        /// <summary>Only the lower bound is enforced (a negative width or border would throw in WPF). The schema's maximum is the end of the slider, not a wall: a typed value can go beyond it.</summary>
         private static double Clamp(ConstantDef def, double value)
         {
             if (def.Min.HasValue && value < def.Min.Value) value = def.Min.Value;
-            if (def.Max.HasValue && value > def.Max.Value) value = def.Max.Value;
             return value;
         }
     }
