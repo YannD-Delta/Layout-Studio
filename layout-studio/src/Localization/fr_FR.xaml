@@ -1,0 +1,34 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib">
+    <sys:String x:Key="LOCLS_Search">Rechercher un réglage (nom ou constante)</sys:String>
+    <sys:String x:Key="LOCLS_Undo">Annuler</sys:String>
+    <sys:String x:Key="LOCLS_Redo">Rétablir</sys:String>
+    <sys:String x:Key="LOCLS_ResetPage">Réinitialiser cette page</sys:String>
+    <sys:String x:Key="LOCLS_NeedsRestart">Certains choix (style des boutons, barre du haut) s'appliquent après le redémarrage de Playnite</sys:String>
+    <sys:String x:Key="LOCLS_SectionsHint">Glisse une section pour la réordonner ou la passer dans l’autre colonne (Genres, Catégories, Fonctionnalités et Étiquettes peuvent changer de colonne). L’œil masque une section ; la flèche règle si elle démarre ouverte.</sys:String>
+    <sys:String x:Key="LOCLS_LeftColumn">Colonne de gauche</sys:String>
+    <sys:String x:Key="LOCLS_RightColumn">Colonne de droite</sys:String>
+    <sys:String x:Key="LOCLS_OpenByDefault">Ouverte par défaut</sys:String>
+    <sys:String x:Key="LOCLS_Visible">Affichée</sys:String>
+    <sys:String x:Key="LOCLS_NeedsRestartShort">Appliqué après le redémarrage de Playnite</sys:String>
+    <sys:String x:Key="LOCLS_SizesHint">Glisse la poignée orange d’un cadre pour redimensionner l’élément, ou tape les valeurs en pixels. Les cadres sont dessinés plus petits que la taille réelle.</sys:String>
+    <sys:String x:Key="LOCLS_BackgroundHint">L’illustration du jeu derrière toute la fenêtre. L’aperçu montre le flou, l’assombrissement et les panneaux pendant que tu bouges les curseurs.</sys:String>
+    <sys:String x:Key="LOCLS_Preview">Aperçu</sys:String>
+    <sys:String x:Key="LOCLS_TilesHint">Glisse un type de tuile de la palette vers un emplacement, ou glisse un emplacement sur un autre pour les échanger.</sys:String>
+    <sys:String x:Key="LOCLS_Slots">Emplacements (de gauche à droite)</sys:String>
+    <sys:String x:Key="LOCLS_Palette">Types de tuiles</sys:String>
+    <sys:String x:Key="LOCLS_ColorsHint">Clique sur un profil de couleurs ou un accent. L’accent personnalisé accepte n’importe quelle couleur #RRGGBB.</sys:String>
+    <sys:String x:Key="LOCLS_ColorProfiles">Profil de couleurs</sys:String>
+    <sys:String x:Key="LOCLS_Accents">Couleur d’accent</sys:String>
+    <sys:String x:Key="LOCLS_CustomAccent">Accent personnalisé</sys:String>
+    <sys:String x:Key="LOCLS_ShareHint">Votre mise en page est dans un profil enregistré automatiquement. Exportez-le en un court code texte à envoyer, ou collez un code reçu pour l’utiliser.</sys:String>
+    <sys:String x:Key="LOCLS_ShareCode">Code de partage</sys:String>
+    <sys:String x:Key="LOCLS_Export">Exporter (copier)</sys:String>
+    <sys:String x:Key="LOCLS_Import">Importer</sys:String>
+    <sys:String x:Key="LOCLS_ResetAllTitle">Tout recommencer</sys:String>
+    <sys:String x:Key="LOCLS_ResetAllHint">Remet tous les réglages aux valeurs par défaut du thème. Votre profil actuel est conservé en .bak à côté, vous pouvez le récupérer.</sys:String>
+    <sys:String x:Key="LOCLS_ResetAll">Tout réinitialiser...</sys:String>
+    <sys:String x:Key="LOCLS_ResetConfirm">Oui, tout réinitialiser</sys:String>
+    <sys:String x:Key="LOCLS_Cancel">Annuler</sys:String>
+</ResourceDictionary>

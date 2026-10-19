@@ -1,0 +1,34 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib">
+    <sys:String x:Key="LOCLS_Search">Search settings (name or constant)</sys:String>
+    <sys:String x:Key="LOCLS_Undo">Undo</sys:String>
+    <sys:String x:Key="LOCLS_Redo">Redo</sys:String>
+    <sys:String x:Key="LOCLS_ResetPage">Reset this page</sys:String>
+    <sys:String x:Key="LOCLS_NeedsRestart">Some choices (button style, top panel) apply after you restart Playnite</sys:String>
+    <sys:String x:Key="LOCLS_SectionsHint">Drag a section to reorder it or to move it to the other column (Genres, Categories, Features and Tags can switch column). The eye hides a section; the arrow sets whether it starts open.</sys:String>
+    <sys:String x:Key="LOCLS_LeftColumn">Left column</sys:String>
+    <sys:String x:Key="LOCLS_RightColumn">Right column</sys:String>
+    <sys:String x:Key="LOCLS_OpenByDefault">Open by default</sys:String>
+    <sys:String x:Key="LOCLS_Visible">Shown</sys:String>
+    <sys:String x:Key="LOCLS_NeedsRestartShort">Applied after you restart Playnite</sys:String>
+    <sys:String x:Key="LOCLS_SizesHint">Drag the orange handle of a box to resize that element, or type the pixel values. Boxes are drawn smaller than the real size.</sys:String>
+    <sys:String x:Key="LOCLS_BackgroundHint">The game artwork behind the whole window. The preview shows the blur, the darkness and the side panels as you move the sliders.</sys:String>
+    <sys:String x:Key="LOCLS_Preview">Preview</sys:String>
+    <sys:String x:Key="LOCLS_TilesHint">Drag a tile type from the palette onto a slot, or drag a slot onto another one to swap them.</sys:String>
+    <sys:String x:Key="LOCLS_Slots">Slots (left to right)</sys:String>
+    <sys:String x:Key="LOCLS_Palette">Tile types</sys:String>
+    <sys:String x:Key="LOCLS_ColorsHint">Click a color profile or an accent. The custom accent takes any #RRGGBB color.</sys:String>
+    <sys:String x:Key="LOCLS_ColorProfiles">Color profile</sys:String>
+    <sys:String x:Key="LOCLS_Accents">Accent color</sys:String>
+    <sys:String x:Key="LOCLS_CustomAccent">Custom accent</sys:String>
+    <sys:String x:Key="LOCLS_ShareHint">Your layout lives in a profile that is saved automatically. Export it as a short text code to send to someone, or paste a code you received to use it.</sys:String>
+    <sys:String x:Key="LOCLS_ShareCode">Share code</sys:String>
+    <sys:String x:Key="LOCLS_Export">Export (copy)</sys:String>
+    <sys:String x:Key="LOCLS_Import">Import</sys:String>
+    <sys:String x:Key="LOCLS_ResetAllTitle">Start over</sys:String>
+    <sys:String x:Key="LOCLS_ResetAllHint">Puts every setting back to the theme defaults. Your current profile is kept as a .bak file next to it, so it can be recovered.</sys:String>
+    <sys:String x:Key="LOCLS_ResetAll">Reset everything...</sys:String>
+    <sys:String x:Key="LOCLS_ResetConfirm">Yes, reset everything</sys:String>
+    <sys:String x:Key="LOCLS_Cancel">Cancel</sys:String>
+</ResourceDictionary>

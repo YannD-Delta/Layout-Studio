@@ -1,0 +1,1082 @@
+<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ls="clr-namespace:LayoutStudio.Editor;assembly=LayoutStudio"
+        Title="Layout Studio" Width="1080" Height="760" MinWidth="760" MinHeight="480"
+        WindowStartupLocation="CenterScreen" Background="#FF14171C" Foreground="#FFE8EAED" FontSize="13">
+    <Window.Resources>
+        <ls:ColorTextToBrushConverter x:Key="ColorBrush" />
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
+        <ls:KindTemplateSelector x:Key="KindSelector" />
+        <ls:PageContentSelector x:Key="PageSelector" />
+        <ls:PathToImageConverter x:Key="PathToImage" />
+
+        <!-- A list entry that shows a picture of the choice when the mouse rests on it -->
+        <DataTemplate x:Key="ChoiceWithPreview">
+            <TextBlock Text="{Binding Name}" ToolTipService.InitialShowDelay="120" ToolTipService.Placement="Right" ToolTipService.IsEnabled="{Binding HasPreview}">
+                <TextBlock.ToolTip>
+                    <ToolTip DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}" Padding="4" Background="#FF1D2128" BorderBrush="#44FFFFFF">
+                        <Image Source="{Binding PreviewPath, Converter={StaticResource PathToImage}}" MaxWidth="380" MaxHeight="240" Stretch="Uniform" />
+                    </ToolTip>
+                </TextBlock.ToolTip>
+            </TextBlock>
+        </DataTemplate>
+        <Style x:Key="SectionTitle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Opacity" Value="0.65" />
+            <Setter Property="Margin" Value="0,18,0,6" />
+        </Style>
+        <Style x:Key="RestartBadge" TargetType="TextBlock">
+            <Setter Property="Text" Value="&#8635;" />
+            <Setter Property="Margin" Value="8,0,0,0" />
+            <Setter Property="Foreground" Value="#FFFFB347" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="ToolTip" Value="{DynamicResource LOCLS_NeedsRestartShort}" />
+            <Setter Property="Visibility" Value="Collapsed" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding NeedsRestart}" Value="True">
+                    <Setter Property="Visibility" Value="Visible" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="Arrow.Button" TargetType="RepeatButton">
+            <Setter Property="Foreground" Value="#FFE8EAED" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RepeatButton">
+                        <Border x:Name="Face" Background="#FF2A3038" CornerRadius="3">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Face" Property="Background" Value="#FF3A424D" /></Trigger>
+                            <Trigger Property="IsPressed" Value="True"><Setter TargetName="Face" Property="Background" Value="#66FFB347" /></Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <Style x:Key="ErrorText" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#FFFF7B72" />
+            <Setter Property="FontSize" Value="11" />
+        </Style>
+
+        <!-- Back to the default value: only visible on a modified setting, but it keeps its width so values do not jump -->
+        <Style x:Key="Row.reset" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="FontFamily" Value="Segoe MDL2 Assets" />
+            <Setter Property="Content" Value="&#xE777;" />
+            <Setter Property="Width" Value="24" />
+            <Setter Property="Height" Value="24" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Margin" Value="6,0,0,0" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="ToolTip" Value="{Binding ResetTooltip}" />
+            <Setter Property="Visibility" Value="Hidden" />
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsModified}" Value="True"><Setter Property="Visibility" Value="Visible" /></DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- A row of the generated pages: orange dot when modified, title, restart badge, error, details tooltip -->
+        <DataTemplate x:Key="Row.label">
+            <StackPanel VerticalAlignment="Center" Background="Transparent" ToolTipService.InitialShowDelay="400">
+                <StackPanel.ToolTip>
+                    <ToolTip Padding="8,6" Background="#FF1D2128" BorderBrush="#44FFFFFF" DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+                        <StackPanel MaxWidth="420">
+                            <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                            <TextBlock Text="{Binding Description}" TextWrapping="Wrap" Margin="0,3,0,0" Foreground="#FFA0A7B1">
+                                <TextBlock.Style><Style TargetType="TextBlock"><Style.Triggers><DataTrigger Binding="{Binding Description}" Value="{x:Null}"><Setter Property="Visibility" Value="Collapsed" /></DataTrigger></Style.Triggers></Style></TextBlock.Style>
+                            </TextBlock>
+                            <TextBlock Text="{Binding Details}" TextWrapping="Wrap" Margin="0,5,0,0" FontSize="11" Foreground="#FF8A93A0" />
+                        </StackPanel>
+                    </ToolTip>
+                </StackPanel.ToolTip>
+                <StackPanel Orientation="Horizontal">
+                    <Ellipse Width="6" Height="6" Fill="#FFFFB347" Margin="0,0,7,0" VerticalAlignment="Center">
+                        <Ellipse.Style><Style TargetType="Ellipse"><Setter Property="Opacity" Value="0" /><Style.Triggers><DataTrigger Binding="{Binding IsModified}" Value="True"><Setter Property="Opacity" Value="1" /></DataTrigger></Style.Triggers></Style></Ellipse.Style>
+                    </Ellipse>
+                    <TextBlock Text="{Binding Title}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                    <TextBlock Style="{StaticResource RestartBadge}" />
+                </StackPanel>
+                <TextBlock Text="{Binding Error}" Margin="13,1,0,0" TextWrapping="Wrap">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock" BasedOn="{StaticResource ErrorText}"><Style.Triggers><DataTrigger Binding="{Binding Error}" Value="{x:Null}"><Setter Property="Visibility" Value="Collapsed" /></DataTrigger></Style.Triggers></Style>
+                    </TextBlock.Style>
+                </TextBlock>
+            </StackPanel>
+        </DataTemplate>
+
+        <!-- One template per control kind; KindTemplateSelector picks "Template.<kind>". -->
+        <DataTemplate x:Key="Template.toggle">
+            <DockPanel LastChildFill="False" Margin="0,5">
+                <ContentControl DockPanel.Dock="Left" Content="{Binding}" ContentTemplate="{StaticResource Row.label}" VerticalAlignment="Center" />
+                <Button DockPanel.Dock="Right" Style="{StaticResource Row.reset}" Command="{Binding ResetCommand}" />
+                <CheckBox DockPanel.Dock="Right" IsChecked="{Binding BoolValue, Mode=TwoWay}" VerticalAlignment="Center" />
+            </DockPanel>
+        </DataTemplate>
+
+        <DataTemplate x:Key="Template.slider">
+            <Grid Margin="0,5">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" MinWidth="140" />
+                    <ColumnDefinition Width="190" />
+                    <ColumnDefinition Width="64" />
+                    <ColumnDefinition Width="30" />
+                </Grid.ColumnDefinitions>
+                <ContentControl Content="{Binding}" ContentTemplate="{StaticResource Row.label}" VerticalAlignment="Center" />
+                <Slider Grid.Column="1" Minimum="{Binding Min}" Maximum="{Binding Max}" SmallChange="{Binding Step}"
+                        Value="{Binding SliderValue, Mode=TwoWay}" IsSnapToTickEnabled="False" VerticalAlignment="Center" Margin="8,0" />
+                <TextBox Grid.Column="2" Text="{Binding Text, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" HorizontalContentAlignment="Right" />
+                <Button Grid.Column="3" Style="{StaticResource Row.reset}" Command="{Binding ResetCommand}" />
+            </Grid>
+        </DataTemplate>
+
+        <DataTemplate x:Key="Template.number">
+            <Grid Margin="0,5">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" MinWidth="140" />
+                    <ColumnDefinition Width="110" />
+                    <ColumnDefinition Width="30" />
+                </Grid.ColumnDefinitions>
+                <ContentControl Content="{Binding}" ContentTemplate="{StaticResource Row.label}" VerticalAlignment="Center" />
+                <DockPanel Grid.Column="1">
+                    <StackPanel DockPanel.Dock="Right" Margin="4,0,0,0" VerticalAlignment="Stretch">
+                        <RepeatButton Style="{StaticResource Arrow.Button}" Command="{Binding StepUpCommand}" Width="22" Height="15" Padding="0" ToolTip="Increase" Focusable="False">
+                            <Path Data="M 0 4 L 4 0 L 8 4 Z" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RepeatButton}}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </RepeatButton>
+                        <RepeatButton Style="{StaticResource Arrow.Button}" Command="{Binding StepDownCommand}" Width="22" Height="15" Padding="0" Margin="0,1,0,0" ToolTip="Decrease" Focusable="False">
+                            <Path Data="M 0 0 L 4 4 L 8 0 Z" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RepeatButton}}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </RepeatButton>
+                    </StackPanel>
+                    <TextBox Text="{Binding Text, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" HorizontalContentAlignment="Right" VerticalContentAlignment="Center" />
+                </DockPanel>
+                <Button Grid.Column="2" Style="{StaticResource Row.reset}" Command="{Binding ResetCommand}" />
+            </Grid>
+        </DataTemplate>
+
+        <DataTemplate x:Key="Template.text">
+            <Grid Margin="0,5">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" MinWidth="140" />
+                    <ColumnDefinition Width="200" />
+                    <ColumnDefinition Width="30" />
+                </Grid.ColumnDefinitions>
+                <ContentControl Content="{Binding}" ContentTemplate="{StaticResource Row.label}" VerticalAlignment="Center" />
+                <TextBox Grid.Column="1" Text="{Binding Text, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
+                <Button Grid.Column="2" Style="{StaticResource Row.reset}" Command="{Binding ResetCommand}" />
+            </Grid>
+        </DataTemplate>
+
+        <DataTemplate x:Key="Template.color">
+            <Grid Margin="0,5">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" MinWidth="140" />
+                    <ColumnDefinition Width="26" />
+                    <ColumnDefinition Width="140" />
+                    <ColumnDefinition Width="30" />
+                </Grid.ColumnDefinitions>
+                <ContentControl Content="{Binding}" ContentTemplate="{StaticResource Row.label}" VerticalAlignment="Center" />
+                <Border Grid.Column="1" Width="20" Height="20" CornerRadius="4" BorderBrush="#66FFFFFF" BorderThickness="1"
+                        Background="{Binding Text, Converter={StaticResource ColorBrush}}" />
+                <TextBox Grid.Column="2" Text="{Binding Text, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" Margin="6,0,0,0" />
+                <Button Grid.Column="3" Style="{StaticResource Row.reset}" Command="{Binding ResetCommand}" />
+            </Grid>
+        </DataTemplate>
+
+        <DataTemplate x:Key="Template.choice">
+            <Grid Margin="0,5">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" MinWidth="140" />
+                    <ColumnDefinition Width="260" />
+                    <ColumnDefinition Width="30" />
+                </Grid.ColumnDefinitions>
+                <ContentControl Content="{Binding}" ContentTemplate="{StaticResource Row.label}" VerticalAlignment="Center" />
+                <ComboBox Grid.Column="1" ItemsSource="{Binding Choices}" ItemTemplate="{StaticResource ChoiceWithPreview}" SelectedItem="{Binding SelectedChoice, Mode=TwoWay}" />
+                <Button Grid.Column="2" Style="{StaticResource Row.reset}" Command="{Binding ResetCommand}" />
+            </Grid>
+        </DataTemplate>
+
+        <DataTemplate x:Key="Template.orderedList">
+            <StackPanel Margin="0,5">
+                <TextBlock Text="{Binding Title}" Margin="0,0,0,4" />
+                <ListBox ItemsSource="{Binding Items}" BorderThickness="0" Background="#22FFFFFF" MaxWidth="560" HorizontalAlignment="Left">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <DockPanel Margin="2,1" LastChildFill="True">
+                                <Button DockPanel.Dock="Right" Content="&#9660;" Width="28" Margin="2,0,0,0"
+                                        Command="{Binding DataContext.MoveDownCommand, RelativeSource={RelativeSource AncestorType=ListBox}}" CommandParameter="{Binding}" />
+                                <Button DockPanel.Dock="Right" Content="&#9650;" Width="28"
+                                        Command="{Binding DataContext.MoveUpCommand, RelativeSource={RelativeSource AncestorType=ListBox}}" CommandParameter="{Binding}" />
+                                <TextBlock Text="{Binding Title}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="4,0" />
+                            </DockPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </StackPanel>
+        </DataTemplate>
+
+        <DataTemplate x:Key="Template.tileSlots">
+            <StackPanel Margin="0,5">
+                <TextBlock Text="{Binding Title}" Margin="0,0,0,4" />
+                <ItemsControl ItemsSource="{Binding Slots}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Margin="0,2" MaxWidth="560" HorizontalAlignment="Left">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="70" />
+                                    <ColumnDefinition Width="300" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="{Binding Index, StringFormat=Tile {0}}" VerticalAlignment="Center" Opacity="0.7" />
+                                <ComboBox Grid.Column="1" ItemsSource="{Binding Choices}" ItemTemplate="{StaticResource ChoiceWithPreview}" SelectedItem="{Binding SelectedChoice, Mode=TwoWay}" />
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </DataTemplate>
+
+        <DataTemplate x:Key="Template.unsupported">
+            <TextBlock Margin="0,5" Opacity="0.5">
+                <Run Text="{Binding Title, Mode=OneWay}" /><Run Text="  (editor for this setting type: coming next)" />
+            </TextBlock>
+        </DataTemplate>
+
+        <DataTemplate x:Key="Page.settings">
+            <DockPanel>
+            <TextBlock DockPanel.Dock="Top" Text="No setting on this page matches your search." Opacity="0.6" Margin="0,4,0,8">
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed" /><Style.Triggers><DataTrigger Binding="{Binding Dimmed}" Value="True"><Setter Property="Visibility" Value="Visible" /></DataTrigger></Style.Triggers></Style>
+                </TextBlock.Style>
+            </TextBlock>
+            <ItemsControl DockPanel.Dock="Top" ItemsSource="{Binding Chips}" Margin="0,0,14,8">
+                <ItemsControl.Style>
+                    <Style TargetType="ItemsControl">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding HasChips}" Value="False"><Setter Property="Visibility" Value="Collapsed" /></DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </ItemsControl.Style>
+                <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Button Command="{Binding SelectCommand}" Padding="12,4" Margin="0,0,6,6">
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsSelected}" Value="True"><Setter Property="Background" Value="#55FFB347" /><Setter Property="Foreground" Value="#FFFFC56E" /></DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding Title}" />
+                                <TextBlock Text="{Binding Count}" Opacity="0.55" Margin="6,0,0,0" FontSize="11" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0,0,14,14" Padding="0,0,14,0">
+                <ItemsControl ItemsSource="{Binding Groups}" ItemTemplate="{DynamicResource GroupTemplate}">
+                    <ItemsControl.ItemContainerStyle>
+                        <Style TargetType="ContentPresenter">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Visible}" Value="False">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </ItemsControl.ItemContainerStyle>
+                </ItemsControl>
+            </ScrollViewer>
+            </DockPanel>
+        </DataTemplate>
+
+        <DataTemplate x:Key="Block.section">
+            <Border x:Name="Block" Margin="0,0,0,6" Padding="10,8" CornerRadius="8" Background="#2AFFFFFF" Cursor="Hand"
+                    ls:DragDropBehavior.DragKind="section">
+                <DockPanel LastChildFill="True">
+                    <ToggleButton DockPanel.Dock="Right" IsChecked="{Binding OpenByDefault, Mode=OneWay}" Command="{Binding ToggleOpenCommand}"
+                                  FontFamily="Segoe MDL2 Assets" Content="&#xE70D;" Width="28" Margin="4,0,0,0" ToolTip="{DynamicResource LOCLS_OpenByDefault}" />
+                    <ToggleButton DockPanel.Dock="Right" IsChecked="{Binding Visible, Mode=OneWay}" Command="{Binding ToggleVisibleCommand}"
+                                  FontFamily="Segoe MDL2 Assets" Content="&#xE7B3;" Width="28" Margin="4,0,0,0" ToolTip="{DynamicResource LOCLS_Visible}">
+                        <ToggleButton.Style>
+                            <Style TargetType="ToggleButton" BasedOn="{StaticResource {x:Type ToggleButton}}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding CanHide}" Value="False">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ToggleButton.Style>
+                    </ToggleButton>
+                    <ContentControl Content="{Binding}" ContentTemplate="{StaticResource Row.label}" VerticalAlignment="Center" />
+                </DockPanel>
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Visible}" Value="False">
+                                <Setter Property="Opacity" Value="0.4" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+            </Border>
+        </DataTemplate>
+
+        <DataTemplate x:Key="Page.sections">
+            <Grid DataContext="{Binding Editor}" Margin="0,0,14,14">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <TextBlock Text="{DynamicResource LOCLS_SectionsHint}" TextWrapping="Wrap" Opacity="0.65" Margin="0,0,0,10" />
+                <Grid Grid.Row="1">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="14" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <DockPanel>
+                        <TextBlock DockPanel.Dock="Top" Text="{DynamicResource LOCLS_LeftColumn}" Style="{StaticResource SectionTitle}" Margin="0,0,0,6" />
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <ItemsControl ItemsSource="{Binding Left}" ItemTemplate="{StaticResource Block.section}" Background="#11FFFFFF" MinHeight="120" Padding="8"
+                                          ls:DragDropBehavior.DropColumn="0" />
+                        </ScrollViewer>
+                    </DockPanel>
+                    <DockPanel Grid.Column="2">
+                        <TextBlock DockPanel.Dock="Top" Text="{DynamicResource LOCLS_RightColumn}" Style="{StaticResource SectionTitle}" Margin="0,0,0,6" />
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <ItemsControl ItemsSource="{Binding Right}" ItemTemplate="{StaticResource Block.section}" Background="#11FFFFFF" MinHeight="120" Padding="8"
+                                          ls:DragDropBehavior.DropColumn="1" />
+                        </ScrollViewer>
+                    </DockPanel>
+                </Grid>
+            </Grid>
+        </DataTemplate>
+
+
+        <!-- ===== Sizes page: handles by axis, ratio chips, locator, groups ===== -->
+
+        <Style x:Key="Handle.Bar" TargetType="Thumb">
+            <Setter Property="Focusable" Value="True" />
+            <Setter Property="Background" Value="#FFFFB347" />
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True"><Setter Property="Background" Value="#FFFFC56E" /></Trigger>
+                <Trigger Property="IsDragging" Value="True"><Setter Property="Background" Value="#FFFFC56E" /></Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <DataTemplate x:Key="Size.locatorSmall">
+            <Border Width="120" Height="60" CornerRadius="5" Background="#FF15181D" BorderBrush="#29FFFFFF" BorderThickness="1" ClipToBounds="True">
+                <Viewbox Stretch="Fill">
+                    <Canvas Width="200" Height="100">
+                        <Rectangle Canvas.Left="0" Canvas.Top="0" Width="4" Height="100" Fill="#10FFFFFF" />
+                        <Rectangle Canvas.Left="4" Canvas.Top="0" Width="196" Height="8.7" Fill="#14FFFFFF" />
+                        <Rectangle Canvas.Left="8.4" Canvas.Top="9.4" Width="33" Height="90" Fill="#0CFFFFFF" />
+                        <Rectangle Canvas.Left="41.6" Canvas.Top="10.4" Width="156" Height="40.8" Fill="#16FFFFFF" />
+                        <Rectangle Canvas.Left="43.8" Canvas.Top="24.5" Width="23" Height="34.9" Fill="#22FFFFFF" />
+                        <Rectangle Canvas.Left="68.6" Canvas.Top="53.9" Width="125" Height="5.5" Fill="#14FFFFFF" />
+                        <Rectangle Canvas.Left="41.6" Canvas.Top="60.2" Width="156" Height="19.5" Fill="#0EFFFFFF" />
+                        <Rectangle Canvas.Left="41.6" Canvas.Top="80.3" Width="76" Height="3" Fill="#12FFFFFF" />
+                        <Rectangle Canvas.Left="122" Canvas.Top="80.3" Width="75" Height="3" Fill="#12FFFFFF" />
+                        <!-- the zone -->
+                        <Rectangle Canvas.Left="{Binding LocatorX}" Canvas.Top="{Binding LocatorY}" Width="{Binding LocatorWidth}" Height="{Binding LocatorHeight}"
+                                   Fill="#4DFFB347" Stroke="#FFFFB347" StrokeThickness="1.2" />
+                        <Ellipse Canvas.Left="{Binding LocatorBeaconX}" Canvas.Top="{Binding LocatorBeaconY}" Width="14" Height="14" Stroke="#80FFB347" StrokeThickness="1" Visibility="{Binding LocatorIsSmall, Converter={StaticResource BoolToVis}}" />
+                    </Canvas>
+                </Viewbox>
+            </Border>
+        </DataTemplate>
+
+        <DataTemplate x:Key="Size.card">
+            <Border Width="372" Margin="0,0,12,12" Padding="14,14" CornerRadius="10" BorderThickness="1" Cursor="Arrow">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Setter Property="Background" Value="#FF1D2128" />
+                        <Setter Property="BorderBrush" Value="#14FFFFFF" />
+                        <Style.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True"><Setter Property="Background" Value="#FF20252C" /></Trigger>
+                            <DataTrigger Binding="{Binding IsActive}" Value="True"><Setter Property="BorderBrush" Value="#66FFB347" /></DataTrigger>
+                            <DataTrigger Binding="{Binding IsVisible}" Value="False"><Setter Property="Visibility" Value="Collapsed" /></DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <StackPanel>
+                    <!-- row 1: modified dot, title, badges, reset -->
+                    <DockPanel>
+                        <Button DockPanel.Dock="Right" Command="{Binding ResetCommand}" Content="Reset" Padding="8,1" FontSize="11" ToolTip="Back to the default" />
+                        <Border DockPanel.Dock="Right" Margin="0,0,8,0" Padding="7,1" CornerRadius="9" Background="#1A6FD08C" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding LiveText}" FontSize="10.5" Foreground="#FF6FD08C" />
+                        </Border>
+                        <TextBlock Style="{StaticResource RestartBadge}" DockPanel.Dock="Right" />
+                        <Ellipse Width="6" Height="6" Fill="#FFFFB347" Margin="0,0,8,0" VerticalAlignment="Center">
+                            <Ellipse.Style>
+                                <Style TargetType="Ellipse">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers><DataTrigger Binding="{Binding IsModified}" Value="True"><Setter Property="Visibility" Value="Visible" /></DataTrigger></Style.Triggers>
+                                </Style>
+                            </Ellipse.Style>
+                        </Ellipse>
+                        <TextBlock Text="{Binding Title}" FontSize="14" FontWeight="SemiBold" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                    </DockPanel>
+                    <TextBlock Text="{Binding Description}" FontSize="12" Foreground="#FFA0A7B1" TextWrapping="Wrap" Margin="0,4,0,10" />
+
+                    <!-- row 3: locator and where -->
+                    <StackPanel Orientation="Horizontal">
+                        <ContentControl Content="{Binding}" ContentTemplate="{StaticResource Size.locatorSmall}" />
+                        <StackPanel Margin="12,0,0,0" VerticalAlignment="Center" Width="210">
+                            <TextBlock Text="WHERE" FontSize="10.5" FontWeight="SemiBold" Foreground="#FF8A93A0" />
+                            <TextBlock Text="{Binding WhereLabel}" FontSize="12" TextWrapping="Wrap" Margin="0,2,0,4" />
+                            <Border HorizontalAlignment="Left" Padding="8,1" CornerRadius="9" Background="#FF252A32">
+                                <TextBlock Text="{Binding ViewChip}" FontSize="10.5" Foreground="#FFA0A7B1" />
+                            </Border>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- stage: the box, its maximum, the handles of its axes -->
+                    <Border Margin="0,12,0,10" Padding="10,10,20,20" CornerRadius="8" Background="#FF15181D" BorderBrush="#14FFFFFF" BorderThickness="1" Height="{Binding StageHeight}">
+                        <Grid HorizontalAlignment="Left" VerticalAlignment="Top">
+                            <Rectangle Width="{Binding MaxOutlineWidth}" Height="{Binding MaxOutlineHeight}" HorizontalAlignment="Left" VerticalAlignment="Top"
+                                       Stroke="#33FFFFFF" StrokeThickness="1" StrokeDashArray="4 3" />
+                            <Border Width="{Binding DisplayWidth}" Height="{Binding DisplayHeight}" HorizontalAlignment="Left" VerticalAlignment="Top"
+                                    Background="#26FFFFFF" BorderBrush="#99FFFFFF" BorderThickness="1.5" CornerRadius="3" />
+
+                            <!-- right bar: the width -->
+                            <Thumb Tag="resize-w" Width="14" Height="{Binding DisplayHeight}" HorizontalAlignment="Left" VerticalAlignment="Top" Cursor="SizeWE" Style="{StaticResource Handle.Bar}"
+                                   Margin="{Binding RightBarMargin}" AutomationProperties.Name="{Binding Title}">
+                                <Thumb.Visibility><Binding Path="HasRightBar" Converter="{StaticResource BoolToVis}" /></Thumb.Visibility>
+                                <Thumb.Template>
+                                    <ControlTemplate TargetType="Thumb">
+                                        <Grid Background="Transparent">
+                                            <Border Width="4" Height="28" CornerRadius="2" Background="{TemplateBinding Background}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        </Grid>
+                                    </ControlTemplate>
+                                </Thumb.Template>
+                            </Thumb>
+                            <!-- bottom bar: the height -->
+                            <Thumb Tag="resize-h" Height="14" Width="{Binding DisplayWidth}" HorizontalAlignment="Left" VerticalAlignment="Top" Cursor="SizeNS" Style="{StaticResource Handle.Bar}"
+                                   Margin="{Binding BottomBarMargin}" AutomationProperties.Name="{Binding Title}">
+                                <Thumb.Visibility><Binding Path="HasBottomBar" Converter="{StaticResource BoolToVis}" /></Thumb.Visibility>
+                                <Thumb.Template>
+                                    <ControlTemplate TargetType="Thumb">
+                                        <Grid Background="Transparent">
+                                            <Border Width="28" Height="4" CornerRadius="2" Background="{TemplateBinding Background}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        </Grid>
+                                    </ControlTemplate>
+                                </Thumb.Template>
+                            </Thumb>
+                            <!-- corner bracket: both axes (or the side of a square) -->
+                            <Thumb Tag="resize-wh" Width="18" Height="18" HorizontalAlignment="Left" VerticalAlignment="Top" Cursor="SizeNWSE" Style="{StaticResource Handle.Bar}"
+                                   Margin="{Binding CornerMargin}" AutomationProperties.Name="{Binding Title}">
+                                <Thumb.Visibility><Binding Path="HasCorner" Converter="{StaticResource BoolToVis}" /></Thumb.Visibility>
+                                <Thumb.Template>
+                                    <ControlTemplate TargetType="Thumb">
+                                        <Grid Background="Transparent">
+                                            <Path Data="M 3 11 L 11 11 L 11 3" Stroke="{TemplateBinding Background}" StrokeThickness="3" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        </Grid>
+                                    </ControlTemplate>
+                                </Thumb.Template>
+                            </Thumb>
+                            <!-- value bubble while dragging -->
+                            <Border Margin="{Binding BubbleMargin}" Padding="6,2" CornerRadius="4" Background="#FF0E1013" BorderBrush="#FFFFB347" BorderThickness="1"
+                                    HorizontalAlignment="Left" VerticalAlignment="Top" IsHitTestVisible="False">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                        <Style.Triggers><DataTrigger Binding="{Binding IsDragging}" Value="True"><Setter Property="Visibility" Value="Visible" /></DataTrigger></Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <TextBlock Text="{Binding BubbleText}" FontSize="11" FontWeight="SemiBold" />
+                            </Border>
+                        </Grid>
+                    </Border>
+
+                    <!-- fields -->
+                    <StackPanel Orientation="Horizontal">
+                        <StackPanel Orientation="Horizontal" Visibility="{Binding HasWidth, Converter={StaticResource BoolToVis}}">
+                            <TextBlock Text="W" VerticalAlignment="Center" Foreground="#FFA0A7B1" Margin="0,0,6,0" />
+                            <TextBox Width="70" Text="{Binding WidthText, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" HorizontalContentAlignment="Right" />
+                            <StackPanel Margin="3,0,0,0">
+                                <RepeatButton Style="{StaticResource Arrow.Button}" Command="{Binding WidthUpCommand}" Width="20" Height="13" Padding="0" Focusable="False"><Path Data="M 0 3 L 3.5 0 L 7 3 Z" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RepeatButton}}" HorizontalAlignment="Center" VerticalAlignment="Center" /></RepeatButton>
+                                <RepeatButton Style="{StaticResource Arrow.Button}" Command="{Binding WidthDownCommand}" Width="20" Height="13" Padding="0" Margin="0,1,0,0" Focusable="False"><Path Data="M 0 0 L 3.5 3 L 7 0 Z" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RepeatButton}}" HorizontalAlignment="Center" VerticalAlignment="Center" /></RepeatButton>
+                            </StackPanel>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="14,0,0,0" Visibility="{Binding ShowHeightField, Converter={StaticResource BoolToVis}}">
+                            <TextBlock Text="H" VerticalAlignment="Center" Foreground="#FFA0A7B1" Margin="0,0,6,0" />
+                            <TextBox Width="70" Text="{Binding HeightText, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" HorizontalContentAlignment="Right" />
+                            <StackPanel Margin="3,0,0,0">
+                                <RepeatButton Style="{StaticResource Arrow.Button}" Command="{Binding HeightUpCommand}" Width="20" Height="13" Padding="0" Focusable="False"><Path Data="M 0 3 L 3.5 0 L 7 3 Z" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RepeatButton}}" HorizontalAlignment="Center" VerticalAlignment="Center" /></RepeatButton>
+                                <RepeatButton Style="{StaticResource Arrow.Button}" Command="{Binding HeightDownCommand}" Width="20" Height="13" Padding="0" Margin="0,1,0,0" Focusable="False"><Path Data="M 0 0 L 3.5 3 L 7 0 Z" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RepeatButton}}" HorizontalAlignment="Center" VerticalAlignment="Center" /></RepeatButton>
+                            </StackPanel>
+                        </StackPanel>
+                        <TextBlock Text="{Binding ScaleLabel}" VerticalAlignment="Center" Margin="14,0,0,0" FontSize="10.5" Foreground="#FF8A93A0" ToolTip="Drawing scale" />
+                    </StackPanel>
+                    <TextBlock Text="{Binding RangeText}" FontSize="11" Foreground="#FF8A93A0" Margin="0,5,0,0" TextWrapping="Wrap" />
+
+                    <!-- ratio chips and lock -->
+                    <StackPanel Margin="0,8,0,0">
+                        <StackPanel.Style>
+                            <Style TargetType="StackPanel">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers><DataTrigger Binding="{Binding HasRatio}" Value="True"><Setter Property="Visibility" Value="Visible" /></DataTrigger></Style.Triggers>
+                            </Style>
+                        </StackPanel.Style>
+                        <DockPanel>
+                            <Button DockPanel.Dock="Left" Command="{Binding ToggleLockCommand}" Padding="8,2" Margin="0,0,8,0" VerticalAlignment="Top" ToolTip="Keep the ratio while you resize (Alt = ignore for one drag)">
+                                <TextBlock FontSize="11">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Text" Value="Ratio: free" />
+                                            <Style.Triggers><DataTrigger Binding="{Binding IsRatioLocked}" Value="True"><Setter Property="Text" Value="Ratio: locked" /></DataTrigger></Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </Button>
+                            <ItemsControl ItemsSource="{Binding Ratios}">
+                                <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Button Command="{Binding SelectCommand}" Content="{Binding Label}" Padding="9,1" Margin="0,0,5,5" FontSize="11" ToolTip="{Binding DisabledReason}">
+                                            <Button.Style>
+                                                <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsSelected}" Value="True"><Setter Property="Background" Value="#55FFB347" /><Setter Property="Foreground" Value="#FFFFC56E" /></DataTrigger>
+                                                        <DataTrigger Binding="{Binding IsEnabled}" Value="False"><Setter Property="Opacity" Value="0.35" /></DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Button.Style>
+                                        </Button>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </DockPanel>
+                    </StackPanel>
+                    <TextBlock Text="{Binding Error}" Style="{StaticResource ErrorText}" />
+                </StackPanel>
+            </Border>
+        </DataTemplate>
+
+        <DataTemplate x:Key="Page.sizes">
+            <DockPanel DataContext="{Binding Editor}">
+                <!-- header: hint, filter, changed only -->
+                <StackPanel DockPanel.Dock="Top" Margin="0,0,14,6">
+                    <TextBlock Text="{DynamicResource LOCLS_SizesHint}" TextWrapping="Wrap" Foreground="#FFA0A7B1" Margin="0,0,0,8" />
+                    <DockPanel>
+                        <CheckBox DockPanel.Dock="Right" IsChecked="{Binding ChangedOnly, Mode=TwoWay}" Content="Changed only" VerticalAlignment="Center" Margin="12,0,0,0" />
+                        <TextBox Text="{Binding Filter, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Height="28" VerticalContentAlignment="Center" ToolTip="Filter by name, description or place" />
+                    </DockPanel>
+                </StackPanel>
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0,0,14,14">
+                    <StackPanel>
+                        <TextBlock Text="No size matches this filter." Foreground="#FFA0A7B1" Margin="0,24,0,0" HorizontalAlignment="Center">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers><DataTrigger Binding="{Binding IsEmpty}" Value="True"><Setter Property="Visibility" Value="Visible" /></DataTrigger></Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        <ItemsControl ItemsSource="{Binding Groups}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Visibility="{Binding IsVisible, Converter={StaticResource BoolToVis}}">
+                                        <TextBlock Margin="0,8,0,8">
+                                            <Run Text="{Binding Title, Mode=OneWay}" FontSize="15" FontWeight="SemiBold" />
+                                            <Run Text="{Binding VisibleCount, Mode=OneWay}" Foreground="#FF8A93A0" FontSize="12" />
+                                        </TextBlock>
+                                        <ItemsControl ItemsSource="{Binding Items}" ItemTemplate="{DynamicResource Size.card}">
+                                            <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </ScrollViewer>
+            </DockPanel>
+        </DataTemplate>
+
+        <DataTemplate x:Key="Page.corners">
+            <ScrollViewer DataContext="{Binding Editor}" VerticalScrollBarVisibility="Auto" Margin="0,0,14,14">
+                <StackPanel MaxWidth="700" HorizontalAlignment="Left">
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                        <TextBlock Text="Look" VerticalAlignment="Center" Margin="0,0,12,0" Opacity="0.7" />
+                        <Button Command="{Binding SharpCommand}" Content="Sharp" Padding="14,4" Margin="0,0,6,0" ToolTip="Every corner square" />
+                        <Button Command="{Binding SoftCommand}" Content="Soft" Padding="14,4" Margin="0,0,6,0" ToolTip="60 % of the designed radii" />
+                        <Button Command="{Binding AppleCommand}" Content="Designed" Padding="14,4" Margin="0,0,6,0" ToolTip="The designed set: 28 on the card, 20 on sections, 18 on tiles and cover, 16 buttons, 14 chips, nested corners stepping down like a product design" />
+                        <Button Command="{Binding PillCommand}" Content="Pill" Padding="14,4" ToolTip="150 % of the designed radii: very round" />
+                    </StackPanel>
+                    <TextBlock Text="Round every corner of the theme at once with the master slider (0 = square, 100 = the Round look, up to 150), or set each element yourself. The slider is continuous: no jump between presets." TextWrapping="Wrap" Foreground="#FFA0A7B1" Margin="0,0,0,12" />
+                    <Border Padding="16,14" CornerRadius="10" Background="#FF1D2128" BorderBrush="#14FFFFFF" BorderThickness="1">
+                        <DockPanel>
+                            <TextBlock DockPanel.Dock="Left" Text="All corners" FontSize="14" FontWeight="SemiBold" Width="150" VerticalAlignment="Center" />
+                            <TextBox DockPanel.Dock="Right" Width="56" Text="{Binding Master, Mode=TwoWay, UpdateSourceTrigger=LostFocus, StringFormat={}{0:0}}" HorizontalContentAlignment="Right" VerticalContentAlignment="Center" Margin="10,0,0,0" />
+                            <Slider Minimum="0" Maximum="150" LargeChange="10" SmallChange="1" Value="{Binding Master, Mode=TwoWay}" VerticalAlignment="Center" />
+                        </DockPanel>
+                    </Border>
+                    <ItemsControl ItemsSource="{Binding Items}" Margin="0,12,0,0">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Padding="16,10" Margin="0,0,0,8" CornerRadius="10" Background="#FF1D2128" BorderBrush="#14FFFFFF" BorderThickness="1">
+                                    <DockPanel>
+                                        <Border DockPanel.Dock="Left" Width="64" Height="40" Margin="0,0,14,0" Background="#26FFFFFF" BorderBrush="#99FFFFFF" BorderThickness="1.5" CornerRadius="{Binding Shape}" />
+                                        <Button DockPanel.Dock="Right" Command="{Binding ResetCommand}" Content="Reset" Padding="8,1" FontSize="11" Margin="10,0,0,0" VerticalAlignment="Center" />
+                                        <TextBox DockPanel.Dock="Right" Width="48" Text="{Binding Radius, Mode=TwoWay, UpdateSourceTrigger=LostFocus, StringFormat={}{0:0}}" HorizontalContentAlignment="Right" VerticalContentAlignment="Center" Margin="10,0,0,0" />
+                                        <StackPanel Width="180" DockPanel.Dock="Left" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Title}" FontWeight="SemiBold" />
+                                            <TextBlock Text="corners differ: moving the slider makes them equal" FontSize="10.5" Foreground="#FF8A93A0" Visibility="{Binding IsCustom, Converter={StaticResource BoolToVis}}" />
+                                        </StackPanel>
+                                        <Slider Minimum="0" Maximum="60" LargeChange="5" SmallChange="1" Value="{Binding Radius, Mode=TwoWay}" VerticalAlignment="Center" />
+                                    </DockPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </ScrollViewer>
+        </DataTemplate>
+
+        <DataTemplate x:Key="Page.rules">
+            <ScrollViewer DataContext="{Binding Editor}" VerticalScrollBarVisibility="Auto" Margin="0,0,14,14">
+                <StackPanel MaxWidth="700" HorizontalAlignment="Left">
+                    <TextBlock Text="When the median FPS and the CPU, GPU and RAM figures turn red, orange, green or blue, and which colours those are. Changes show in the theme at once." TextWrapping="Wrap" Foreground="#FFA0A7B1" Margin="0,0,0,12" />
+                    <ItemsControl ItemsSource="{Binding Rows}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Padding="16,10" Margin="0,0,0,8" CornerRadius="10" Background="#FF1D2128" BorderBrush="#14FFFFFF" BorderThickness="1">
+                                    <DockPanel>
+                                        <TextBox DockPanel.Dock="Right" Width="56" Text="{Binding Value, Mode=TwoWay, UpdateSourceTrigger=LostFocus, StringFormat={}{0:0}}" HorizontalContentAlignment="Right" VerticalContentAlignment="Center" Margin="10,0,0,0" />
+                                        <StackPanel Width="210" DockPanel.Dock="Left" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Group}" FontSize="10.5" Foreground="#FF8A93A0" />
+                                            <TextBlock Text="{Binding Title}" FontWeight="SemiBold" />
+                                            <TextBlock Text="{Binding Hint}" FontSize="10.5" Foreground="#FF8A93A0" TextWrapping="Wrap" />
+                                        </StackPanel>
+                                        <Slider Minimum="{Binding Min}" Maximum="{Binding Max}" LargeChange="5" SmallChange="1" Value="{Binding Value, Mode=TwoWay}" VerticalAlignment="Center" />
+                                    </DockPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <TextBlock Text="Colours" FontSize="14" FontWeight="SemiBold" Margin="0,10,0,6" />
+                    <ItemsControl ItemsSource="{Binding Colors}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Padding="16,8" Margin="0,0,0,8" CornerRadius="10" Background="#FF1D2128" BorderBrush="#14FFFFFF" BorderThickness="1">
+                                    <DockPanel>
+                                        <Border DockPanel.Dock="Left" Width="26" Height="26" CornerRadius="6" BorderBrush="#66FFFFFF" BorderThickness="1" Margin="0,0,12,0" Background="{Binding Swatch}" />
+                                        <TextBox DockPanel.Dock="Right" Width="96" Text="{Binding Hex, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" VerticalContentAlignment="Center" />
+                                        <StackPanel VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Title}" FontWeight="SemiBold" />
+                                            <TextBlock Text="{Binding Error}" Style="{StaticResource ErrorText}" />
+                                        </StackPanel>
+                                    </DockPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <Button Command="{Binding ResetCommand}" Content="Reset to defaults" HorizontalAlignment="Left" Padding="12,4" Margin="0,6,0,0" />
+                </StackPanel>
+            </ScrollViewer>
+        </DataTemplate>
+
+        <DataTemplate x:Key="Page.background">
+            <ScrollViewer DataContext="{Binding Editor}" VerticalScrollBarVisibility="Auto" Margin="0,0,14,14">
+                <StackPanel>
+                    <TextBlock Text="{DynamicResource LOCLS_BackgroundHint}" TextWrapping="Wrap" Opacity="0.65" Margin="0,0,0,6" />
+                    <TextBlock Text="{DynamicResource LOCLS_Preview}" Style="{StaticResource SectionTitle}" Margin="0,8,0,6" />
+                    <Border Width="400" Height="250" HorizontalAlignment="Left" CornerRadius="8" ClipToBounds="True" Background="#FF1A1E26" Margin="0,0,0,14">
+                        <Grid ClipToBounds="True">
+                            <Grid ClipToBounds="True">
+                                <Border>
+                                    <Border.Background>
+                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                            <GradientStop Color="#FFE8883A" Offset="0" />
+                                            <GradientStop Color="#FF3550C8" Offset="1" />
+                                        </LinearGradientBrush>
+                                    </Border.Background>
+                                </Border>
+                                <Image Source="{Binding PreviewImagePath, Converter={StaticResource PathToImage}}" Stretch="UniformToFill">
+                                    <Image.Effect>
+                                        <BlurEffect Radius="{Binding PreviewBlurRadius}" KernelType="Gaussian" RenderingBias="Performance" />
+                                    </Image.Effect>
+                                </Image>
+                                <Border Background="Black" Opacity="{Binding PreviewScrimOpacity}" />
+                                <Grid.Style>
+                                    <Style TargetType="Grid">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding PreviewEnabled}" Value="False">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Grid.Style>
+                            </Grid>
+                            <Border HorizontalAlignment="Left" Width="84" Background="#FF14171C" Opacity="{Binding PreviewSidebarOpacity}" />
+                            <Border HorizontalAlignment="Stretch" VerticalAlignment="Top" Height="30" Background="#FF14171C" Opacity="{Binding PreviewTopOpacity}" />
+                        </Grid>
+                    </Border>
+                    <TextBlock Text="WHERE THE ARTWORK SHOWS" FontSize="10.5" FontWeight="SemiBold" Foreground="#FF8A93A0" Margin="0,0,0,6" />
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                        <Button Command="{Binding SetWindowCommand}" Content="Whole window" Padding="14,5" Margin="0,0,6,0">
+                            <Button.Style><Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}"><Style.Triggers><DataTrigger Binding="{Binding IsModeWindow}" Value="True"><Setter Property="Background" Value="#55FFB347" /><Setter Property="Foreground" Value="#FFFFC56E" /></DataTrigger></Style.Triggers></Style></Button.Style>
+                        </Button>
+                        <Button Command="{Binding SetPageCommand}" Content="Game page only" Padding="14,5" Margin="0,0,6,0">
+                            <Button.Style><Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}"><Style.Triggers><DataTrigger Binding="{Binding IsModePage}" Value="True"><Setter Property="Background" Value="#55FFB347" /><Setter Property="Foreground" Value="#FFFFC56E" /></DataTrigger></Style.Triggers></Style></Button.Style>
+                        </Button>
+                        <Button Command="{Binding SetOffCommand}" Content="Nowhere" Padding="14,5">
+                            <Button.Style><Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}"><Style.Triggers><DataTrigger Binding="{Binding IsModeOff}" Value="True"><Setter Property="Background" Value="#55FFB347" /><Setter Property="Foreground" Value="#FFFFC56E" /></DataTrigger></Style.Triggers></Style></Button.Style>
+                        </Button>
+                    </StackPanel>
+                    <ItemsControl ItemsSource="{Binding Sliders}" ItemTemplateSelector="{StaticResource KindSelector}" />
+                </StackPanel>
+            </ScrollViewer>
+        </DataTemplate>
+
+        <DataTemplate x:Key="Page.tiles">
+            <ScrollViewer DataContext="{Binding Editor}" VerticalScrollBarVisibility="Auto" Margin="0,0,14,14">
+                <StackPanel>
+                    <TextBlock Text="{DynamicResource LOCLS_TilesHint}" TextWrapping="Wrap" Opacity="0.65" Margin="0,0,0,6" />
+                    <TextBlock Text="Each cell shows up to four cards side by side. Pick the first card; a second list appears next to it, then a third and a fourth (for example FPS, RAM, CPU, GPU in one cell). Choose Empty to remove a card and the ones after it." TextWrapping="Wrap" Opacity="0.65" Margin="0,0,0,8" />
+                    <TextBlock Text="{DynamicResource LOCLS_Slots}" Style="{StaticResource SectionTitle}" />
+                    <ItemsControl ItemsSource="{Binding Slots}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Margin="0,0,0,8" Padding="12,8" CornerRadius="10" Background="#2AFFFFFF" Cursor="Hand"
+                                        ls:DragDropBehavior.DragKind="slot" ls:DragDropBehavior.DropSlot="True">
+                                    <DockPanel>
+                                        <TextBlock DockPanel.Dock="Left" Text="{Binding Number, StringFormat=Cell {0}}" FontWeight="SemiBold" Width="64" VerticalAlignment="Center" />
+                                        <ItemsControl ItemsSource="{Binding Cards}">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <ComboBox Width="148" Margin="0,0,8,2" ItemsSource="{Binding Palette}" ItemTemplate="{StaticResource ChoiceWithPreview}" SelectedItem="{Binding Selected, Mode=TwoWay}">
+                                                        <ComboBox.Style>
+                                                            <Style TargetType="ComboBox" BasedOn="{StaticResource {x:Type ComboBox}}">
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding IsVisible}" Value="False"><Setter Property="Visibility" Value="Collapsed" /></DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </ComboBox.Style>
+                                                    </ComboBox>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </DockPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <TextBlock Text="{DynamicResource LOCLS_Palette}" Style="{StaticResource SectionTitle}" />
+                    <ItemsControl ItemsSource="{Binding Palette}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Margin="0,0,8,8" Padding="12,6" CornerRadius="15" Background="#33FFFFFF" Cursor="Hand" ls:DragDropBehavior.DragKind="tile">
+                                    <TextBlock Text="{Binding Name}" />
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </ScrollViewer>
+        </DataTemplate>
+
+        <DataTemplate x:Key="Swatch.template">
+            <Button Command="{Binding SelectCommand}" Width="132" Margin="0,0,10,10" Padding="0" ToolTip="{Binding Name}" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch">
+                <Border Height="66" CornerRadius="8" BorderThickness="2" Padding="8,6">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                            <GradientStop Color="{Binding Background1}" Offset="0" />
+                            <GradientStop Color="{Binding Background2}" Offset="1" />
+                        </LinearGradientBrush>
+                    </Border.Background>
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="BorderBrush" Value="Transparent" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                    <Setter Property="BorderBrush" Value="White" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <DockPanel>
+                        <Ellipse DockPanel.Dock="Right" Width="18" Height="18" Fill="{Binding Accent, Converter={StaticResource ColorBrush}}" VerticalAlignment="Top" />
+                        <TextBlock Text="{Binding Name}" Foreground="{Binding Text, Converter={StaticResource ColorBrush}}" VerticalAlignment="Bottom" TextTrimming="CharacterEllipsis" />
+                    </DockPanel>
+                </Border>
+            </Button>
+        </DataTemplate>
+
+        <DataTemplate x:Key="Page.colors">
+            <ScrollViewer DataContext="{Binding Editor}" VerticalScrollBarVisibility="Auto" Margin="0,0,14,14">
+                <StackPanel>
+                    <TextBlock Text="{DynamicResource LOCLS_ColorsHint}" TextWrapping="Wrap" Opacity="0.65" Margin="0,0,0,6" />
+                    <TextBlock Text="{DynamicResource LOCLS_ColorProfiles}" Style="{StaticResource SectionTitle}" />
+                    <ItemsControl ItemsSource="{Binding Profiles}" ItemTemplate="{StaticResource Swatch.template}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                    </ItemsControl>
+                    <TextBlock Text="{DynamicResource LOCLS_Accents}" Style="{StaticResource SectionTitle}" />
+                    <ItemsControl ItemsSource="{Binding Accents}" ItemTemplate="{StaticResource Swatch.template}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                    </ItemsControl>
+                    <TextBlock Text="{DynamicResource LOCLS_CustomAccent}" Style="{StaticResource SectionTitle}" />
+                    <StackPanel Orientation="Horizontal">
+                        <Border Width="26" Height="26" CornerRadius="6" BorderBrush="#66FFFFFF" BorderThickness="1" Margin="0,0,10,0"
+                                Background="{Binding CustomAccent, Converter={StaticResource ColorBrush}}" />
+                        <TextBox Width="150" Text="{Binding CustomAccent, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
+                    </StackPanel>
+                    <TextBlock Text="{Binding Error}" Style="{StaticResource ErrorText}" Margin="0,4,0,0" />
+                </StackPanel>
+            </ScrollViewer>
+        </DataTemplate>
+
+        <DataTemplate x:Key="Page.share">
+            <ScrollViewer DataContext="{Binding Editor}" VerticalScrollBarVisibility="Auto" Margin="0,0,14,14">
+                <StackPanel MaxWidth="640" HorizontalAlignment="Left">
+                    <TextBlock Text="{DynamicResource LOCLS_ShareHint}" TextWrapping="Wrap" Opacity="0.65" Margin="0,0,0,6" />
+                    <TextBlock Text="{DynamicResource LOCLS_ShareCode}" Style="{StaticResource SectionTitle}" />
+                    <TextBox Text="{Binding Code, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap"
+                             Height="110" VerticalScrollBarVisibility="Auto" FontFamily="Consolas" />
+                    <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                        <Button Command="{Binding ExportCommand}" Content="{DynamicResource LOCLS_Export}" Padding="14,5" Margin="0,0,8,0" />
+                        <Button Command="{Binding ImportCommand}" Content="{DynamicResource LOCLS_Import}" Padding="14,5" />
+                    </StackPanel>
+                    <TextBlock Text="{Binding Message}" TextWrapping="Wrap" Margin="0,8,0,0" Opacity="0.85">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsError}" Value="True">
+                                        <Setter Property="Foreground" Value="#FFFF7B72" />
+                                        <Setter Property="Opacity" Value="1" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+
+                    <TextBlock Text="{DynamicResource LOCLS_ResetAllTitle}" Style="{StaticResource SectionTitle}" Margin="0,22,0,6" />
+                    <TextBlock Text="{DynamicResource LOCLS_ResetAllHint}" TextWrapping="Wrap" Opacity="0.65" Margin="0,0,0,8" />
+                    <Button Command="{Binding AskResetCommand}" Content="{DynamicResource LOCLS_ResetAll}" Padding="14,5" HorizontalAlignment="Left">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ResetPending}" Value="True">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                    <StackPanel Orientation="Horizontal">
+                        <StackPanel.Style>
+                            <Style TargetType="StackPanel">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ResetPending}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </StackPanel.Style>
+                        <Button Command="{Binding ConfirmResetCommand}" Content="{DynamicResource LOCLS_ResetConfirm}" Padding="14,5" Margin="0,0,8,0" />
+                        <Button Command="{Binding CancelResetCommand}" Content="{DynamicResource LOCLS_Cancel}" Padding="14,5" />
+                    </StackPanel>
+                </StackPanel>
+            </ScrollViewer>
+        </DataTemplate>
+
+        <DataTemplate x:Key="GroupTemplate">
+            <StackPanel>
+                <TextBlock Text="{Binding Title}" Style="{StaticResource SectionTitle}" />
+                <ItemsControl ItemsSource="{Binding Settings}" ItemTemplateSelector="{StaticResource KindSelector}">
+                    <ItemsControl.ItemContainerStyle>
+                        <Style TargetType="ContentPresenter">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Visible}" Value="False">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </ItemsControl.ItemContainerStyle>
+                </ItemsControl>
+            </StackPanel>
+        </DataTemplate>
+    </Window.Resources>
+
+    <Window.InputBindings>
+        <KeyBinding Key="Z" Modifiers="Ctrl" Command="{Binding UndoCommand}" />
+        <KeyBinding Key="Y" Modifiers="Ctrl" Command="{Binding RedoCommand}" />
+    </Window.InputBindings>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Top bar: search, undo/redo, reset page -->
+        <Grid Margin="14,12,14,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Grid Margin="0,0,14,0">
+                <TextBox x:Name="SearchBox" Text="{Binding Search, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Height="30" VerticalContentAlignment="Center" Padding="4,0,28,0"
+                         ToolTip="{DynamicResource LOCLS_Search}" />
+                <TextBlock Text="Search settings: blur, corner, tab, fps..." IsHitTestVisible="False" Foreground="#FF8A93A0" Margin="9,0,0,0" VerticalAlignment="Center">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed" /><Style.Triggers><DataTrigger Binding="{Binding Search}" Value=""><Setter Property="Visibility" Value="Visible" /></DataTrigger></Style.Triggers></Style>
+                    </TextBlock.Style>
+                </TextBlock>
+                <Button Command="{Binding ClearSearchCommand}" Content="&#xE894;" FontFamily="Segoe MDL2 Assets" HorizontalAlignment="Right" Width="26" Height="24" Margin="0,0,3,0" Padding="0" ToolTip="Clear (Esc)">
+                    <Button.Style>
+                        <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}"><Setter Property="Visibility" Value="Visible" /><Style.Triggers><DataTrigger Binding="{Binding Search}" Value=""><Setter Property="Visibility" Value="Collapsed" /></DataTrigger></Style.Triggers></Style>
+                    </Button.Style>
+                </Button>
+            </Grid>
+            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                <Button Command="{Binding UndoCommand}" Content="{DynamicResource LOCLS_Undo}" Padding="12,4" Margin="0,0,6,0" />
+                <Button Command="{Binding RedoCommand}" Content="{DynamicResource LOCLS_Redo}" Padding="12,4" Margin="0,0,14,0" />
+                <ToggleButton IsChecked="{Binding ShowChangedOnly, Mode=TwoWay}" Padding="12,4" Margin="0,0,14,0" ToolTip="Show only the settings you changed, on every page">
+                    <StackPanel Orientation="Horizontal"><TextBlock Text="Changed" /><TextBlock Text="{Binding ChangedTotal}" Foreground="#FFFFB347" Margin="6,0,0,0" FontWeight="SemiBold" /></StackPanel>
+                </ToggleButton>
+                <Button Command="{Binding ResetPageCommand}" Content="{Binding ResetPageLabel}" Padding="12,4" />
+            </StackPanel>
+        </Grid>
+
+        <StackPanel Grid.Row="1">
+        <Border Margin="14,0,14,10" Padding="12,8" CornerRadius="6" Background="#33FF7B72">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="Visibility" Value="Visible" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding ProfileWarning}" Value="{x:Null}">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+            <TextBlock Text="{Binding ProfileWarning}" TextWrapping="Wrap" />
+        </Border>
+        <Border Margin="14,0,14,10" Padding="12,8" CornerRadius="6" Background="#22FFB347" DataContext="{Binding PlayniteSettings}">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                    <Style.Triggers>
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions><Condition Binding="{Binding HasFindings}" Value="False" /><Condition Binding="{Binding HasStatus}" Value="False" /></MultiDataTrigger.Conditions>
+                            <Setter Property="Visibility" Value="Collapsed" />
+                        </MultiDataTrigger>
+                        <DataTrigger Binding="{Binding HasFindings}" Value="True"><Setter Property="Visibility" Value="Visible" /></DataTrigger>
+                        <DataTrigger Binding="{Binding HasStatus}" Value="True"><Setter Property="Visibility" Value="Visible" /></DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+            <StackPanel>
+                <ItemsControl ItemsSource="{Binding Findings}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <DockPanel Margin="0,0,0,6">
+                                <Button DockPanel.Dock="Right" Command="{Binding FixCommand}" Content="Turn off" Padding="12,3" Margin="12,0,0,0" VerticalAlignment="Top" />
+                                <TextBlock Text="{Binding Message}" TextWrapping="Wrap" />
+                            </DockPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <StackPanel Orientation="Horizontal">
+                    <Button Command="{Binding FixAllCommand}" Content="Turn all off" Padding="12,3" Margin="0,0,8,0" />
+                    <Button Command="{Binding RestoreCommand}" Content="Put back as before" Padding="12,3" Margin="0,0,12,0" />
+                    <TextBlock Text="{Binding Status}" VerticalAlignment="Center" TextWrapping="Wrap" />
+                </StackPanel>
+            </StackPanel>
+        </Border>
+        <Border Margin="14,0,14,10" Padding="12,8" CornerRadius="6" Background="#2A8AB4F8">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                    <Style.Triggers><DataTrigger Binding="{Binding HasSensorProblems}" Value="True"><Setter Property="Visibility" Value="Visible" /></DataTrigger></Style.Triggers>
+                </Style>
+            </Border.Style>
+            <StackPanel>
+                <TextBlock Text="HWiNFO gadget and GameActivity do not match: the FPS, CPU, GPU and RAM numbers it logs may be wrong. In HWiNFO, tick 'Report value in Gadget' for the right sensors in the order GameActivity expects, or change the positions in GameActivity's settings." TextWrapping="Wrap" FontWeight="SemiBold" Margin="0,0,0,6" />
+                <ItemsControl ItemsSource="{Binding SensorProblems}">
+                    <ItemsControl.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" TextWrapping="Wrap" Margin="0,0,0,3" /></DataTemplate></ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </Border>
+        <Border Margin="14,0,14,10" Padding="12,8" CornerRadius="6" Background="#33FFB347">
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding RestartRequired}" Value="True">
+                            <Setter Property="Visibility" Value="Visible" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+            <TextBlock Text="{DynamicResource LOCLS_NeedsRestart}" TextWrapping="Wrap" />
+        </Border>
+        </StackPanel>
+
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="230" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <ListBox ItemsSource="{Binding PagesView}" SelectedItem="{Binding SelectedPage, Mode=TwoWay}" Margin="14,0,8,14"
+                     BorderThickness="0" Background="Transparent">
+                <ListBox.GroupStyle>
+                    <GroupStyle>
+                        <GroupStyle.HeaderTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Name}" FontSize="10.5" FontWeight="SemiBold" Foreground="#FF8A93A0" Margin="6,12,0,2" />
+                            </DataTemplate>
+                        </GroupStyle.HeaderTemplate>
+                    </GroupStyle>
+                </ListBox.GroupStyle>
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <DockPanel Margin="4,6" LastChildFill="True">
+                            <TextBlock DockPanel.Dock="Right" Text="{Binding ChangedCount}" Foreground="#FFFFB347" FontWeight="SemiBold" Margin="8,0,0,0" ToolTip="Settings changed on this page">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                        <Style.Triggers><DataTrigger Binding="{Binding HasChanges}" Value="True"><Setter Property="Visibility" Value="Visible" /></DataTrigger></Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                            <TextBlock DockPanel.Dock="Right" Text="{Binding MatchCount}" Opacity="0.5" Margin="8,0,0,0">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding ShowCount}" Value="False">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                            <TextBlock Text="{Binding Title}" TextTrimming="CharacterEllipsis">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock"><Style.Triggers><DataTrigger Binding="{Binding Dimmed}" Value="True"><Setter Property="Opacity" Value="0.35" /></DataTrigger></Style.Triggers></Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </DockPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+
+            <ContentControl Grid.Column="1" Content="{Binding SelectedPage}" ContentTemplateSelector="{StaticResource PageSelector}" />
+        </Grid>
+    </Grid>
+</Window>
