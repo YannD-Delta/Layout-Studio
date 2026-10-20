@@ -92,6 +92,8 @@ namespace LayoutStudio
                 }
                 studio.ProfileReplaced += () => exposed.Facts.Reload(studio.Active.Editor);
                 ShotService.StartIfRequested(Application.Current.Dispatcher, line => logger.Info(line));
+                // the editor's Background page shows the real window (artwork, glass layers, panels) instead of a drawing of them
+                if (isDesktop) LayoutStudio.Editor.BackgroundEditorViewModel.LiveCapture = () => LivePreview.Capture(640);
                 logger.Info("LayoutStudio loaded profile '" + studio.Active.Name + "' (" + studio.Store.Changed().Count + " overrides, " + ThemeGuard.ModeFolder(isDesktop).ToLowerInvariant() + "), schema " + createMs + " ms, profile " + loadMs + " ms, total " + clock.ElapsedMilliseconds + " ms");
             }
             catch (Exception ex)

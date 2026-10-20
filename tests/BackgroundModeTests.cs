@@ -27,6 +27,71 @@ public static class BackgroundModeTests
         return e;
     }
 
+    // --- the preview is a live picture of the real window (same artwork, same layers, same panels), not a drawing -------------------------
+
+    private static System.Windows.Media.ImageSource Pixel()
+    {
+        var bmp = System.Windows.Media.Imaging.BitmapSource.Create(1, 1, 96, 96, System.Windows.Media.PixelFormats.Bgra32, null, new byte[4], 4);
+        bmp.Freeze();
+        return bmp;
+    }
+
+    public static void Without_a_live_capture_the_preview_is_the_stand_in_drawing()
+    {
+        BackgroundEditorViewModel.LiveCapture = null;
+        var e = Make();
+        e.Editor.RefreshLive();
+        Assert.False(e.Editor.HasLivePreview);
+        Assert.True(e.Editor.LivePreview == null);
+    }
+
+    public static void A_live_capture_becomes_the_preview()
+    {
+        var shot = Pixel();
+        BackgroundEditorViewModel.LiveCapture = () => shot;
+        try
+        {
+            var e = Make();
+            e.Editor.RefreshLive();
+            Assert.True(e.Editor.HasLivePreview);
+            Assert.True(ReferenceEquals(shot, e.Editor.LivePreview), "the captured picture is shown as is");
+        }
+        finally { BackgroundEditorViewModel.LiveCapture = null; }
+    }
+
+    public static void A_capture_that_finds_no_window_keeps_the_stand_in_drawing()
+    {
+        BackgroundEditorViewModel.LiveCapture = () => null;
+        try
+        {
+            var e = Make();
+            e.Editor.RefreshLive();
+            Assert.False(e.Editor.HasLivePreview);
+        }
+        finally { BackgroundEditorViewModel.LiveCapture = null; }
+    }
+
+    public static void Moving_a_glass_slider_asks_for_a_new_capture_after_the_theme_has_applied_it()
+    {
+        var queued = new List<System.Action>();
+        var shots = 0;
+        BackgroundEditorViewModel.LiveCapture = () => { shots++; return Pixel(); };
+        BackgroundEditorViewModel.LiveSchedule = a => queued.Add(a);
+        try
+        {
+            var e = Make();
+            foreach (var first in queued.ToList()) first();   // the start-up refresh runs
+            queued.Clear(); shots = 0;
+            string error;
+            e.Store.TrySet("WindowGlassBlurRadius", "40", out error);
+            Assert.True(queued.Count >= 1, "a change of a glass setting schedules a refresh");
+            Assert.Equal(0, shots);   // nothing is captured before the scheduler runs it (the applier needs a moment)
+            foreach (var a in queued.ToList()) a();
+            Assert.True(shots >= 1 && e.Editor.HasLivePreview);
+        }
+        finally { BackgroundEditorViewModel.LiveCapture = null; BackgroundEditorViewModel.LiveSchedule = null; }
+    }
+
     public static void The_default_look_is_the_artwork_behind_the_whole_window()
     {
         var e = Make();

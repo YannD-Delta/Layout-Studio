@@ -1344,7 +1344,26 @@
                 <StackPanel>
                     <TextBlock Text="{DynamicResource LOCLS_BackgroundHint}" TextWrapping="Wrap" Opacity="0.65" Margin="0,0,0,6" />
                     <TextBlock Text="{DynamicResource LOCLS_Preview}" Style="{StaticResource SectionTitle}" Margin="0,8,0,6" />
+                    <!-- The real window, drawn by Playnite itself: same artwork, same glass layers, same panels. It follows the sliders a moment after you move them. -->
+                    <Border HorizontalAlignment="Left" CornerRadius="8" ClipToBounds="True" Background="#FF0A0B0D" Margin="0,0,0,14" MaxWidth="640">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding HasLivePreview}" Value="True"><Setter Property="Visibility" Value="Visible" /></DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <Image Source="{Binding LivePreview}" Stretch="Uniform" />
+                    </Border>
                     <Border Width="400" Height="250" HorizontalAlignment="Left" CornerRadius="8" ClipToBounds="True" Background="#FF1A1E26" Margin="0,0,0,14">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding HasLivePreview}" Value="True"><Setter Property="Visibility" Value="Collapsed" /></DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
                         <Grid ClipToBounds="True">
                             <Grid ClipToBounds="True">
                                 <Border>

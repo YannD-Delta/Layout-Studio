@@ -20,6 +20,7 @@
 - A shared **Look** (`look.profile.json`): accent, corners, glass and motion are chosen once and drive both the desktop and the Fullscreen theme. The Fullscreen radii, glass and the Accent / Corners / Glass / Window darkness presets are generated from the desktop ones (`tools/sync_tokens.py`, checked by `tools/check-sync.py`: 18 tokens in sync, 7 partial, 4 to do).
 - Performance review (`docs/reviews/perf-2026-10-20.md`): the section mover costs about 5 ms per session and was left alone; profile writes were already debounced. Measurement tools for the testbed (`tools/perf-*.ps1`).
 - Developer tools: in-process screenshots and key injection for the testbed (`ShotService`, `tools/fs-shot.ps1`, `tools/fs-keys.ps1`), which also work while the monitor sleeps.
+- The **Background** page shows the real window (the game's own artwork through the real glass layers, scrims and panels) instead of a drawing, and follows the sliders.
 - Build and test output (`build`, `testbed`, `backup`) can live outside the repository: set `MODULA_LOCAL` to a folder (default: the repository root, as before).
 
 ## 0.2.0
