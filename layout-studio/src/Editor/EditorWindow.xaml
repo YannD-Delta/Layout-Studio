@@ -1,4 +1,4 @@
-﻿<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:ls="clr-namespace:LayoutStudio.Editor;assembly=LayoutStudio"
         Title="Layout Studio" Width="1080" Height="900" MinWidth="760" MinHeight="480"
@@ -9,6 +9,9 @@
         <ls:KindTemplateSelector x:Key="KindSelector" />
         <ls:PageContentSelector x:Key="PageSelector" />
         <ls:PathToImageConverter x:Key="PathToImage" />
+        <ls:ChoiceCropConverter x:Key="ChoiceCrop" />
+        <ls:GlyphTemplateSelector x:Key="GlyphSelector" />
+        <ls:SceneTemplateSelector x:Key="SceneSelector" />
 
         <!-- A list entry that shows a picture of the choice when the mouse rests on it -->
         <DataTemplate x:Key="ChoiceWithPreview">
@@ -81,6 +84,13 @@
                 <StackPanel.ToolTip>
                     <ToolTip Padding="8,6" Background="#FF1D2128" BorderBrush="#44FFFFFF" DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
                         <StackPanel MaxWidth="420">
+                            <!-- hovering a setting that has a schematic shows it larger -->
+                            <ContentControl Content="{Binding}" ContentTemplateSelector="{StaticResource GlyphSelector}" HorizontalAlignment="Left" Margin="0,0,0,10">
+                                <ContentControl.LayoutTransform><ScaleTransform ScaleX="1.8" ScaleY="1.8" /></ContentControl.LayoutTransform>
+                                <ContentControl.Style>
+                                    <Style TargetType="ContentControl"><Setter Property="Visibility" Value="Collapsed" /><Style.Triggers><DataTrigger Binding="{Binding HasGlyph}" Value="True"><Setter Property="Visibility" Value="Visible" /></DataTrigger></Style.Triggers></Style>
+                                </ContentControl.Style>
+                            </ContentControl>
                             <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextWrapping="Wrap" />
                             <TextBlock Text="{Binding Description}" TextWrapping="Wrap" Margin="0,3,0,0" Foreground="#FFA0A7B1">
                                 <TextBlock.Style><Style TargetType="TextBlock"><Style.Triggers><DataTrigger Binding="{Binding Description}" Value="{x:Null}"><Setter Property="Visibility" Value="Collapsed" /></DataTrigger></Style.Triggers></Style></TextBlock.Style>
@@ -113,19 +123,146 @@
             </DockPanel>
         </DataTemplate>
 
+        <!-- Small schematics next to a slider: a card with a picture, and the effect the setting controls drawn from its current value.
+             Fraction is where the slider sits (0 to 1), FractionInverse its opposite, GlyphTopMargin pushes a marker down the 44 px picture. -->
+        <ControlTemplate x:Key="GlyphFrame" TargetType="ContentControl">
+            <Border Width="72" Height="44" CornerRadius="6" ClipToBounds="True" BorderBrush="#33FFFFFF" BorderThickness="1">
+                <Border.Background>
+                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                        <GradientStop Color="#FF6F9BC8" Offset="0" />
+                        <GradientStop Color="#FF2E4A6E" Offset="0.55" />
+                        <GradientStop Color="#FF1B2433" Offset="1" />
+                    </LinearGradientBrush>
+                </Border.Background>
+                <Grid>
+                    <Path Data="M0,30 L18,16 L32,26 L50,10 L72,28 L72,44 L0,44 Z" Fill="#66101C2C" />
+                    <ContentPresenter />
+                </Grid>
+            </Border>
+        </ControlTemplate>
+
+        <DataTemplate x:Key="Glyph.outline">
+            <ContentControl Template="{StaticResource GlyphFrame}">
+                <Border BorderBrush="White" BorderThickness="2" CornerRadius="5" Opacity="{Binding Fraction}" />
+            </ContentControl>
+        </DataTemplate>
+
+        <DataTemplate x:Key="Glyph.blur-strong">
+            <ContentControl Template="{StaticResource GlyphFrame}">
+                <Grid>
+                    <Path Stroke="White" StrokeThickness="2" Data="M8,22 V44 M18,22 V44 M28,22 V44 M38,22 V44 M48,22 V44 M58,22 V44 M67,22 V44" Opacity="{Binding FractionInverse}" />
+                    <Path Stroke="White" StrokeThickness="2" Data="M8,22 V44 M18,22 V44 M28,22 V44 M38,22 V44 M48,22 V44 M58,22 V44 M67,22 V44" Opacity="{Binding Fraction}"><Path.Effect><BlurEffect Radius="9" /></Path.Effect></Path>
+                </Grid>
+            </ContentControl>
+        </DataTemplate>
+
+        <DataTemplate x:Key="Glyph.blur-light">
+            <ContentControl Template="{StaticResource GlyphFrame}">
+                <Grid>
+                    <Path Stroke="White" StrokeThickness="2" Data="M8,22 V44 M18,22 V44 M28,22 V44 M38,22 V44 M48,22 V44 M58,22 V44 M67,22 V44" Opacity="{Binding FractionInverse}" />
+                    <Path Stroke="White" StrokeThickness="2" Data="M8,22 V44 M18,22 V44 M28,22 V44 M38,22 V44 M48,22 V44 M58,22 V44 M67,22 V44" Opacity="{Binding Fraction}"><Path.Effect><BlurEffect Radius="3" /></Path.Effect></Path>
+                </Grid>
+            </ContentControl>
+        </DataTemplate>
+
+        <DataTemplate x:Key="Glyph.blur-opacity">
+            <ContentControl Template="{StaticResource GlyphFrame}">
+                <Grid>
+                    <Path Stroke="White" StrokeThickness="2" Data="M8,22 V44 M18,22 V44 M28,22 V44 M38,22 V44 M48,22 V44 M58,22 V44 M67,22 V44" />
+                    <Rectangle Margin="0,22,0,0" Fill="#FF2A3C58" Opacity="{Binding Fraction}" />
+                    <Path Stroke="White" StrokeThickness="2" Data="M8,22 V44 M18,22 V44 M28,22 V44 M38,22 V44 M48,22 V44 M58,22 V44 M67,22 V44" Opacity="{Binding Fraction}"><Path.Effect><BlurEffect Radius="6" /></Path.Effect></Path>
+                </Grid>
+            </ContentControl>
+        </DataTemplate>
+
+        <!-- where something starts or ends along the height of the card: a line at that height, the blurred part below it -->
+        <DataTemplate x:Key="Glyph.blur-start">
+            <ContentControl Template="{StaticResource GlyphFrame}">
+                <Grid Margin="{Binding GlyphTopMargin}">
+                    <Rectangle Fill="#44FFFFFF" />
+                    <Rectangle Height="2" VerticalAlignment="Top" Fill="#FFFFB347" />
+                </Grid>
+            </ContentControl>
+        </DataTemplate>
+
+        <DataTemplate x:Key="Glyph.blur-mid">
+            <ContentControl Template="{StaticResource GlyphFrame}">
+                <Grid Margin="{Binding GlyphTopMargin}">
+                    <Rectangle Fill="#66FFFFFF" />
+                    <Rectangle Height="2" VerticalAlignment="Top" Fill="#FFFFB347" />
+                </Grid>
+            </ContentControl>
+        </DataTemplate>
+
+        <DataTemplate x:Key="Glyph.blur-full">
+            <ContentControl Template="{StaticResource GlyphFrame}">
+                <Grid>
+                    <Rectangle Fill="#44FFFFFF" Margin="0,18,0,0" />
+                    <Grid Margin="{Binding GlyphTopMargin}"><Rectangle Fill="#99FFFFFF" /><Rectangle Height="2" VerticalAlignment="Top" Fill="#FFFFB347" /></Grid>
+                </Grid>
+            </ContentControl>
+        </DataTemplate>
+
+        <DataTemplate x:Key="Glyph.tint-accent">
+            <ContentControl Template="{StaticResource GlyphFrame}">
+                <Rectangle Margin="0,20,0,0" Fill="#FF3D9BFF" Opacity="{Binding Fraction}" />
+            </ContentControl>
+        </DataTemplate>
+
+        <DataTemplate x:Key="Glyph.frost">
+            <ContentControl Template="{StaticResource GlyphFrame}">
+                <Rectangle Margin="0,20,0,0" Fill="White" Opacity="{Binding Fraction}" />
+            </ContentControl>
+        </DataTemplate>
+
+        <!-- the picture fades into the page from the marker down; at the end of the slider it never fades -->
+        <DataTemplate x:Key="Glyph.fade">
+            <ContentControl Template="{StaticResource GlyphFrame}">
+                <Rectangle Margin="{Binding GlyphTopMargin}">
+                    <Rectangle.Fill>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                            <GradientStop Color="#0014171C" Offset="0" />
+                            <GradientStop Color="#FF14171C" Offset="1" />
+                        </LinearGradientBrush>
+                    </Rectangle.Fill>
+                </Rectangle>
+            </ContentControl>
+        </DataTemplate>
+
+        <!-- an opacity: a veil over the picture, as strong as the slider says -->
+        <DataTemplate x:Key="Glyph.opacity">
+            <ContentControl Template="{StaticResource GlyphFrame}">
+                <Border Margin="10,8" CornerRadius="5" Background="White" Opacity="{Binding Fraction}" />
+            </ContentControl>
+        </DataTemplate>
+
+        <!-- a font size: a sample of text at that size -->
+        <DataTemplate x:Key="Glyph.text-size">
+            <ContentControl Template="{StaticResource GlyphFrame}">
+                <TextBlock Text="Aa" FontSize="{Binding SliderValue}" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </ContentControl>
+        </DataTemplate>
+
         <DataTemplate x:Key="Template.slider">
             <Grid Margin="0,5">
                 <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" MinWidth="140" />
                     <ColumnDefinition Width="190" />
                     <ColumnDefinition Width="64" />
                     <ColumnDefinition Width="30" />
                 </Grid.ColumnDefinitions>
-                <ContentControl Content="{Binding}" ContentTemplate="{StaticResource Row.label}" VerticalAlignment="Center" />
-                <Slider Grid.Column="1" Minimum="{Binding Min}" Maximum="{Binding SliderMax}" SmallChange="{Binding Step}"
+                <!-- a schematic of the effect, for the settings that have one (the artwork card look) -->
+                <ContentControl Content="{Binding}" ContentTemplateSelector="{StaticResource GlyphSelector}" Margin="0,0,12,0" VerticalAlignment="Center">
+                    <ContentControl.Style>
+                        <Style TargetType="ContentControl"><Setter Property="Visibility" Value="Collapsed" /><Style.Triggers><DataTrigger Binding="{Binding HasGlyph}" Value="True"><Setter Property="Visibility" Value="Visible" /></DataTrigger></Style.Triggers></Style>
+                    </ContentControl.Style>
+                </ContentControl>
+                <ContentControl Grid.Column="1" Content="{Binding}" ContentTemplate="{StaticResource Row.label}" VerticalAlignment="Center" />
+                <Slider Grid.Column="2" Minimum="{Binding Min}" Maximum="{Binding SliderMax}" SmallChange="{Binding Step}"
                         Value="{Binding SliderValue, Mode=TwoWay}" IsSnapToTickEnabled="False" VerticalAlignment="Center" Margin="8,0" />
-                <TextBox Grid.Column="2" Text="{Binding Text, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" HorizontalContentAlignment="Right" />
-                <Button Grid.Column="3" Style="{StaticResource Row.reset}" Command="{Binding ResetCommand}" />
+                <TextBox Grid.Column="3" Text="{Binding Text, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" HorizontalContentAlignment="Right" />
+                <Button Grid.Column="4" Style="{StaticResource Row.reset}" Command="{Binding ResetCommand}" />
             </Grid>
         </DataTemplate>
 
@@ -165,6 +302,75 @@
             </Grid>
         </DataTemplate>
 
+        <!-- Margins and paddings: four boxes around a small picture of a box in its frame; the box moves as the numbers change, and the side being typed lights up -->
+        <Style x:Key="SideBox" TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+            <Setter Property="Width" Value="54" />
+            <Setter Property="Tag" Value="side" />
+            <Setter Property="ToolTip" Value="{DynamicResource LOCLS_SideBoxTip}" />
+            <Setter Property="HorizontalContentAlignment" Value="Right" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+        <Style x:Key="SideCaption" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="10" />
+            <Setter Property="Opacity" Value="0.6" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+        </Style>
+        <Style x:Key="SideLight" TargetType="Rectangle">
+            <Setter Property="Fill" Value="#FFFFB347" />
+            <Setter Property="Visibility" Value="Collapsed" />
+            <Setter Property="IsHitTestVisible" Value="False" />
+        </Style>
+
+        <DataTemplate x:Key="Template.sides">
+            <Grid Margin="0,6">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" MinWidth="140" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="30" />
+                </Grid.ColumnDefinitions>
+                <ContentControl Content="{Binding}" ContentTemplate="{StaticResource Row.label}" VerticalAlignment="Center" />
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <!-- the picture: a box in its frame; its margins follow the four numbers, and the side being typed lights up -->
+                    <Border Width="84" Height="48" Margin="0,0,12,0" BorderBrush="#66FFFFFF" BorderThickness="1" Background="#14FFFFFF" CornerRadius="4" VerticalAlignment="Bottom">
+                        <Grid>
+                            <Border Margin="{Binding SidesPreview}" Background="#553D9BFF" BorderBrush="#FF3D9BFF" BorderThickness="1" CornerRadius="2" />
+                            <Rectangle Width="3" HorizontalAlignment="Left" Margin="-2,0,0,0"><Rectangle.Style><Style TargetType="Rectangle" BasedOn="{StaticResource SideLight}"><Style.Triggers><DataTrigger Binding="{Binding IsKeyboardFocused, ElementName=BoxLeft}" Value="True"><Setter Property="Visibility" Value="Visible" /></DataTrigger></Style.Triggers></Style></Rectangle.Style></Rectangle>
+                            <Rectangle Width="3" HorizontalAlignment="Right" Margin="0,0,-2,0"><Rectangle.Style><Style TargetType="Rectangle" BasedOn="{StaticResource SideLight}"><Style.Triggers><DataTrigger Binding="{Binding IsKeyboardFocused, ElementName=BoxRight}" Value="True"><Setter Property="Visibility" Value="Visible" /></DataTrigger></Style.Triggers></Style></Rectangle.Style></Rectangle>
+                            <Rectangle Height="3" VerticalAlignment="Top" Margin="0,-2,0,0"><Rectangle.Style><Style TargetType="Rectangle" BasedOn="{StaticResource SideLight}"><Style.Triggers><DataTrigger Binding="{Binding IsKeyboardFocused, ElementName=BoxTop}" Value="True"><Setter Property="Visibility" Value="Visible" /></DataTrigger></Style.Triggers></Style></Rectangle.Style></Rectangle>
+                            <Rectangle Height="3" VerticalAlignment="Bottom" Margin="0,0,0,-2"><Rectangle.Style><Style TargetType="Rectangle" BasedOn="{StaticResource SideLight}"><Style.Triggers><DataTrigger Binding="{Binding IsKeyboardFocused, ElementName=BoxBottom}" Value="True"><Setter Property="Visibility" Value="Visible" /></DataTrigger></Style.Triggers></Style></Rectangle.Style></Rectangle>
+                        </Grid>
+                    </Border>
+                    <StackPanel Margin="0,0,5,0"><TextBlock Style="{StaticResource SideCaption}" Text="{Binding Side1Label}" /><TextBox x:Name="BoxLeft" Style="{StaticResource SideBox}" Text="{Binding Side1Text, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" /></StackPanel>
+                    <StackPanel Margin="0,0,5,0"><TextBlock Style="{StaticResource SideCaption}" Text="{Binding Side2Label}" /><TextBox x:Name="BoxTop" Style="{StaticResource SideBox}" Text="{Binding Side2Text, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" /></StackPanel>
+                    <StackPanel Margin="0,0,5,0"><TextBlock Style="{StaticResource SideCaption}" Text="{Binding Side3Label}" /><TextBox x:Name="BoxRight" Style="{StaticResource SideBox}" Text="{Binding Side3Text, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" /></StackPanel>
+                    <StackPanel Margin="0,0,12,0"><TextBlock Style="{StaticResource SideCaption}" Text="{Binding Side4Label}" /><TextBox x:Name="BoxBottom" Style="{StaticResource SideBox}" Text="{Binding Side4Text, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" /></StackPanel>
+                    <StackPanel><TextBlock Style="{StaticResource SideCaption}" Text="{Binding AllLabel}" /><TextBox Style="{StaticResource SideBox}" Text="{Binding AllText, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" /></StackPanel>
+                </StackPanel>
+                <Button Grid.Column="2" Style="{StaticResource Row.reset}" Command="{Binding ResetCommand}" VerticalAlignment="Bottom" />
+            </Grid>
+        </DataTemplate>
+
+        <!-- Corner radii: a rounded picture and one box per corner, clockwise from the top left -->
+        <DataTemplate x:Key="Template.corners">
+            <Grid Margin="0,6">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" MinWidth="140" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="30" />
+                </Grid.ColumnDefinitions>
+                <ContentControl Content="{Binding}" ContentTemplate="{StaticResource Row.label}" VerticalAlignment="Center" />
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <Border Width="84" Height="48" Margin="0,0,12,0" BorderBrush="#FF3D9BFF" BorderThickness="1" Background="#553D9BFF" CornerRadius="{Binding CornersPreview}" VerticalAlignment="Bottom" />
+                    <StackPanel Margin="0,0,5,0"><TextBlock Style="{StaticResource SideCaption}" Text="{Binding Side1Label}" /><TextBox Style="{StaticResource SideBox}" Text="{Binding Side1Text, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" /></StackPanel>
+                    <StackPanel Margin="0,0,5,0"><TextBlock Style="{StaticResource SideCaption}" Text="{Binding Side2Label}" /><TextBox Style="{StaticResource SideBox}" Text="{Binding Side2Text, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" /></StackPanel>
+                    <StackPanel Margin="0,0,5,0"><TextBlock Style="{StaticResource SideCaption}" Text="{Binding Side3Label}" /><TextBox Style="{StaticResource SideBox}" Text="{Binding Side3Text, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" /></StackPanel>
+                    <StackPanel Margin="0,0,12,0"><TextBlock Style="{StaticResource SideCaption}" Text="{Binding Side4Label}" /><TextBox Style="{StaticResource SideBox}" Text="{Binding Side4Text, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" /></StackPanel>
+                    <StackPanel><TextBlock Style="{StaticResource SideCaption}" Text="{Binding AllLabel}" /><TextBox Style="{StaticResource SideBox}" Text="{Binding AllText, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" /></StackPanel>
+                </StackPanel>
+                <Button Grid.Column="2" Style="{StaticResource Row.reset}" Command="{Binding ResetCommand}" VerticalAlignment="Bottom" />
+            </Grid>
+        </DataTemplate>
+
         <DataTemplate x:Key="Template.color">
             <Grid Margin="0,5">
                 <Grid.ColumnDefinitions>
@@ -174,8 +380,37 @@
                     <ColumnDefinition Width="30" />
                 </Grid.ColumnDefinitions>
                 <ContentControl Content="{Binding}" ContentTemplate="{StaticResource Row.label}" VerticalAlignment="Center" />
-                <Border Grid.Column="1" Width="20" Height="20" CornerRadius="4" BorderBrush="#66FFFFFF" BorderThickness="1"
-                        Background="{Binding Text, Converter={StaticResource ColorBrush}}" />
+                <ToggleButton Grid.Column="1" Width="26" Height="24" Padding="2" IsChecked="{Binding PickerOpen, Mode=TwoWay}" ToolTip="{DynamicResource LOCLS_Color_Pick}" x:Name="PickerToggle">
+                    <Border Width="18" Height="16" CornerRadius="3" BorderBrush="#66FFFFFF" BorderThickness="1" Background="{Binding Text, Converter={StaticResource ColorBrush}}" />
+                </ToggleButton>
+                <Popup IsOpen="{Binding PickerOpen, Mode=TwoWay}" PlacementTarget="{Binding ElementName=PickerToggle}" Placement="Bottom" StaysOpen="False" AllowsTransparency="True">
+                    <Border Background="#FF1D2128" BorderBrush="#55FFFFFF" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,4,0,8">
+                        <StackPanel Width="236">
+                            <WrapPanel Margin="0,0,0,8">
+                                <Button Width="22" Height="22" Margin="2" Padding="0" Command="{Binding SetColorCommand}" CommandParameter="#FFFFFF" ToolTip="#FFFFFF"><Border Width="16" Height="16" CornerRadius="3" Background="#FFFFFF" /></Button>
+                                    <Button Width="22" Height="22" Margin="2" Padding="0" Command="{Binding SetColorCommand}" CommandParameter="#E8EAED" ToolTip="#E8EAED"><Border Width="16" Height="16" CornerRadius="3" Background="#E8EAED" /></Button>
+                                    <Button Width="22" Height="22" Margin="2" Padding="0" Command="{Binding SetColorCommand}" CommandParameter="#9AA3AE" ToolTip="#9AA3AE"><Border Width="16" Height="16" CornerRadius="3" Background="#9AA3AE" /></Button>
+                                    <Button Width="22" Height="22" Margin="2" Padding="0" Command="{Binding SetColorCommand}" CommandParameter="#4A5260" ToolTip="#4A5260"><Border Width="16" Height="16" CornerRadius="3" Background="#4A5260" /></Button>
+                                    <Button Width="22" Height="22" Margin="2" Padding="0" Command="{Binding SetColorCommand}" CommandParameter="#000000" ToolTip="#000000"><Border Width="16" Height="16" CornerRadius="3" Background="#000000" /></Button>
+                                    <Button Width="22" Height="22" Margin="2" Padding="0" Command="{Binding SetColorCommand}" CommandParameter="#FF5252" ToolTip="#FF5252"><Border Width="16" Height="16" CornerRadius="3" Background="#FF5252" /></Button>
+                                    <Button Width="22" Height="22" Margin="2" Padding="0" Command="{Binding SetColorCommand}" CommandParameter="#FF9800" ToolTip="#FF9800"><Border Width="16" Height="16" CornerRadius="3" Background="#FF9800" /></Button>
+                                    <Button Width="22" Height="22" Margin="2" Padding="0" Command="{Binding SetColorCommand}" CommandParameter="#FFD54F" ToolTip="#FFD54F"><Border Width="16" Height="16" CornerRadius="3" Background="#FFD54F" /></Button>
+                                    <Button Width="22" Height="22" Margin="2" Padding="0" Command="{Binding SetColorCommand}" CommandParameter="#4CAF50" ToolTip="#4CAF50"><Border Width="16" Height="16" CornerRadius="3" Background="#4CAF50" /></Button>
+                                    <Button Width="22" Height="22" Margin="2" Padding="0" Command="{Binding SetColorCommand}" CommandParameter="#26C6DA" ToolTip="#26C6DA"><Border Width="16" Height="16" CornerRadius="3" Background="#26C6DA" /></Button>
+                                    <Button Width="22" Height="22" Margin="2" Padding="0" Command="{Binding SetColorCommand}" CommandParameter="#1E90FF" ToolTip="#1E90FF"><Border Width="16" Height="16" CornerRadius="3" Background="#1E90FF" /></Button>
+                                    <Button Width="22" Height="22" Margin="2" Padding="0" Command="{Binding SetColorCommand}" CommandParameter="#7C4DFF" ToolTip="#7C4DFF"><Border Width="16" Height="16" CornerRadius="3" Background="#7C4DFF" /></Button>
+                                    <Button Width="22" Height="22" Margin="2" Padding="0" Command="{Binding SetColorCommand}" CommandParameter="#E040FB" ToolTip="#E040FB"><Border Width="16" Height="16" CornerRadius="3" Background="#E040FB" /></Button>
+                                    <Button Width="22" Height="22" Margin="2" Padding="0" Command="{Binding SetColorCommand}" CommandParameter="#FF4081" ToolTip="#FF4081"><Border Width="16" Height="16" CornerRadius="3" Background="#FF4081" /></Button>
+                                    <Button Width="22" Height="22" Margin="2" Padding="0" Command="{Binding SetColorCommand}" CommandParameter="#1A9FFF" ToolTip="#1A9FFF"><Border Width="16" Height="16" CornerRadius="3" Background="#1A9FFF" /></Button>
+                                    <Button Width="22" Height="22" Margin="2" Padding="0" Command="{Binding SetColorCommand}" CommandParameter="#2BB943" ToolTip="#2BB943"><Border Width="16" Height="16" CornerRadius="3" Background="#2BB943" /></Button>
+                            </WrapPanel>
+                            <DockPanel Margin="0,2"><TextBlock DockPanel.Dock="Left" Text="A" Width="16" Opacity="0.7" VerticalAlignment="Center" /><TextBlock DockPanel.Dock="Right" Text="{Binding ColorA, StringFormat={}{0:0}}" Width="30" TextAlignment="Right" VerticalAlignment="Center" /><Slider Minimum="0" Maximum="255" SmallChange="1" LargeChange="16" Value="{Binding ColorA, Mode=TwoWay}" /></DockPanel>
+                            <DockPanel Margin="0,2"><TextBlock DockPanel.Dock="Left" Text="R" Width="16" Foreground="#FFFF7B72" VerticalAlignment="Center" /><TextBlock DockPanel.Dock="Right" Text="{Binding ColorR, StringFormat={}{0:0}}" Width="30" TextAlignment="Right" VerticalAlignment="Center" /><Slider Minimum="0" Maximum="255" SmallChange="1" LargeChange="16" Value="{Binding ColorR, Mode=TwoWay}" /></DockPanel>
+                            <DockPanel Margin="0,2"><TextBlock DockPanel.Dock="Left" Text="G" Width="16" Foreground="#FF6FD08C" VerticalAlignment="Center" /><TextBlock DockPanel.Dock="Right" Text="{Binding ColorG, StringFormat={}{0:0}}" Width="30" TextAlignment="Right" VerticalAlignment="Center" /><Slider Minimum="0" Maximum="255" SmallChange="1" LargeChange="16" Value="{Binding ColorG, Mode=TwoWay}" /></DockPanel>
+                            <DockPanel Margin="0,2"><TextBlock DockPanel.Dock="Left" Text="B" Width="16" Foreground="#FF8AB4F8" VerticalAlignment="Center" /><TextBlock DockPanel.Dock="Right" Text="{Binding ColorB, StringFormat={}{0:0}}" Width="30" TextAlignment="Right" VerticalAlignment="Center" /><Slider Minimum="0" Maximum="255" SmallChange="1" LargeChange="16" Value="{Binding ColorB, Mode=TwoWay}" /></DockPanel>
+                        </StackPanel>
+                    </Border>
+                </Popup>
                 <TextBox Grid.Column="2" Text="{Binding Text, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" Margin="6,0,0,0" />
                 <Button Grid.Column="3" Style="{StaticResource Row.reset}" Command="{Binding ResetCommand}" />
             </Grid>
@@ -259,13 +494,27 @@
                     <ListBox.ItemTemplate>
                         <DataTemplate>
                             <StackPanel Width="168">
-                                <Border Height="84" CornerRadius="8" ClipToBounds="True">
-                                    <Border.Background>
-                                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1"><GradientStop Color="#FF2B3340" Offset="0" /><GradientStop Color="#FF1A1F27" Offset="1" /></LinearGradientBrush>
-                                    </Border.Background>
-                                    <Image Source="{Binding PreviewPath, Converter={StaticResource PathToImage}}" Stretch="UniformToFill" />
+                                <!-- only the part of the picture that differs between the choices of the group, enlarged; nothing when there is no difference to show -->
+                                <Border CornerRadius="6" ClipToBounds="True" Background="#FF1A1F27" Margin="0,0,0,4">
+                                    <Image Source="{Binding Converter={StaticResource ChoiceCrop}}" Stretch="Uniform" MaxHeight="64" RenderOptions.BitmapScalingMode="HighQuality" />
                                 </Border>
-                                <TextBlock Text="{Binding Name}" Margin="2,6,2,0" FontSize="12" TextWrapping="Wrap" MaxHeight="34" TextTrimming="CharacterEllipsis" />
+                                <TextBlock Text="{Binding Name}" Margin="2,2,2,0" FontSize="12" TextWrapping="Wrap" MaxHeight="34" TextTrimming="CharacterEllipsis" />
+                                <!-- what the choice sets, folded: clicking the arrow does not pick the tile -->
+                                <Expander Header="{Binding VariablesHeader}" FontSize="11" Margin="0,3,0,0" Foreground="#FFA0A7B1">
+                                    <Expander.Style>
+                                        <Style TargetType="Expander"><Setter Property="Visibility" Value="Collapsed" /><Style.Triggers><DataTrigger Binding="{Binding HasVariables}" Value="True"><Setter Property="Visibility" Value="Visible" /></DataTrigger></Style.Triggers></Style>
+                                    </Expander.Style>
+                                    <ItemsControl ItemsSource="{Binding Variables}" Margin="4,2,0,0">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <DockPanel Margin="0,1">
+                                                    <TextBlock DockPanel.Dock="Right" Text="{Binding Value}" Margin="6,0,0,0" Foreground="#FFFFC56E" FontSize="10.5" />
+                                                    <TextBlock Text="{Binding Name}" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" FontSize="10.5" Foreground="#FFC4CAD2" />
+                                                </DockPanel>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </Expander>
                             </StackPanel>
                         </DataTemplate>
                     </ListBox.ItemTemplate>
@@ -337,7 +586,7 @@
 
         <DataTemplate x:Key="Page.settings">
             <DockPanel>
-            <TextBlock DockPanel.Dock="Top" Text="No setting on this page matches your search." Opacity="0.6" Margin="0,4,0,8">
+            <TextBlock DockPanel.Dock="Top" Text="{DynamicResource LOCLS_NoSettingMatches}" Opacity="0.6" Margin="0,4,0,8">
                 <TextBlock.Style>
                     <Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed" /><Style.Triggers><DataTrigger Binding="{Binding Dimmed}" Value="True"><Setter Property="Visibility" Value="Visible" /></DataTrigger></Style.Triggers></Style>
                 </TextBlock.Style>
@@ -391,6 +640,14 @@
             <Border x:Name="Block" Margin="0,0,0,6" Padding="10,8" CornerRadius="8" Background="#2AFFFFFF" Cursor="Hand"
                     ls:DragDropBehavior.DragKind="section">
                 <DockPanel LastChildFill="True">
+                    <Button DockPanel.Dock="Right" Command="{Binding OptionsCommand}" FontFamily="Segoe MDL2 Assets" Content="&#xE712;" Width="28" Margin="4,0,0,0" Cursor="Arrow" ToolTip="{DynamicResource LOCLS_AllOptions}">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers><DataTrigger Binding="{Binding HasOptions}" Value="True"><Setter Property="Visibility" Value="Visible" /></DataTrigger></Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
                     <ToggleButton DockPanel.Dock="Right" IsChecked="{Binding OpenByDefault, Mode=OneWay}" Command="{Binding ToggleOpenCommand}"
                                   FontFamily="Segoe MDL2 Assets" Content="&#xE70D;" Width="28" Margin="4,0,0,0" ToolTip="{DynamicResource LOCLS_OpenByDefault}" />
                     <ToggleButton DockPanel.Dock="Right" IsChecked="{Binding Visible, Mode=OneWay}" Command="{Binding ToggleVisibleCommand}"
@@ -704,19 +961,104 @@
             </Border>
         </DataTemplate>
 
+        <!-- The preview dock draws a non-live size in its context: "Scene.<size id>", or the plain box. Bindings are those of the size card. -->
+        <DataTemplate x:Key="Scene.box">
+            <Border Width="{Binding DisplayWidth}" Height="{Binding DisplayHeight}" Background="#448AB4F8" BorderBrush="#FF8AB4F8" BorderThickness="1.5" CornerRadius="4">
+                <TextBlock Text="{Binding ScaleLabel}" FontSize="11" Foreground="#FFC4CAD2" HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Border>
+        </DataTemplate>
+
+        <!-- the Links section with three rows: the icon is the size being set -->
+        <DataTemplate x:Key="Scene.linkIcon">
+            <Border Width="240" Background="#FF1D2128" CornerRadius="8" Padding="12,8" BorderBrush="#22FFFFFF" BorderThickness="1">
+                <StackPanel>
+                    <TextBlock Text="LINKS" FontSize="11" FontWeight="SemiBold" Foreground="#FF8A93A0" Margin="0,0,0,6" />
+                    <StackPanel Orientation="Horizontal" Margin="0,3"><Border Width="{Binding DisplayWidth}" Height="{Binding DisplayHeight}" Background="#668AB4F8" BorderBrush="#FF8AB4F8" BorderThickness="1" CornerRadius="3" /><TextBlock Text="Official website" Margin="10,0,0,0" VerticalAlignment="Center" /></StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,3"><Border Width="{Binding DisplayWidth}" Height="{Binding DisplayHeight}" Background="#668AB4F8" BorderBrush="#FF8AB4F8" BorderThickness="1" CornerRadius="3" /><TextBlock Text="Wiki" Margin="10,0,0,0" VerticalAlignment="Center" /></StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,3"><Border Width="{Binding DisplayWidth}" Height="{Binding DisplayHeight}" Background="#668AB4F8" BorderBrush="#FF8AB4F8" BorderThickness="1" CornerRadius="3" /><TextBlock Text="Store page" Margin="10,0,0,0" VerticalAlignment="Center" /></StackPanel>
+                </StackPanel>
+            </Border>
+        </DataTemplate>
+
+        <!-- the description: a block of text lines as wide as the setting -->
+        <DataTemplate x:Key="Scene.description">
+            <Border Width="{Binding DisplayWidth}" Background="#FF1D2128" CornerRadius="6" Padding="10,8" BorderBrush="#FF8AB4F8" BorderThickness="1">
+                <StackPanel>
+                    <Rectangle Height="6" Fill="#55FFFFFF" Margin="0,0,0,6" RadiusX="3" RadiusY="3" />
+                    <Rectangle Height="6" Fill="#55FFFFFF" Margin="0,0,14,6" RadiusX="3" RadiusY="3" />
+                    <Rectangle Height="6" Fill="#55FFFFFF" Margin="0,0,0,6" RadiusX="3" RadiusY="3" />
+                    <Rectangle Height="6" Fill="#55FFFFFF" Margin="0,0,40,0" RadiusX="3" RadiusY="3" />
+                </StackPanel>
+            </Border>
+        </DataTemplate>
+
+        <!-- the game logo on the banner: the box is the largest it may be -->
+        <DataTemplate x:Key="Scene.gameLogo">
+            <Border Width="{Binding DisplayWidth}" Height="{Binding DisplayHeight}" Background="#33000000" BorderBrush="#FF8AB4F8" BorderThickness="1.5" CornerRadius="4">
+                <TextBlock Text="GAME LOGO" FontSize="13" FontWeight="Bold" Foreground="#FFE8EAED" HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Border>
+        </DataTemplate>
         <DataTemplate x:Key="Page.sizes">
             <DockPanel DataContext="{Binding Editor}">
                 <!-- header: hint, filter, changed only -->
                 <StackPanel DockPanel.Dock="Top" Margin="0,0,14,6">
                     <TextBlock Text="{DynamicResource LOCLS_SizesHint}" TextWrapping="Wrap" Foreground="#FFA0A7B1" Margin="0,0,0,8" />
                     <DockPanel>
-                        <CheckBox DockPanel.Dock="Right" IsChecked="{Binding ChangedOnly, Mode=TwoWay}" Content="Changed only" VerticalAlignment="Center" Margin="12,0,0,0" />
+                        <CheckBox DockPanel.Dock="Right" IsChecked="{Binding ChangedOnly, Mode=TwoWay}" Content="{DynamicResource LOCLS_ChangedOnly}" VerticalAlignment="Center" Margin="12,0,0,0" />
                         <TextBox Text="{Binding Filter, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Height="28" VerticalContentAlignment="Center" ToolTip="Filter by name, description or place" />
                     </DockPanel>
                 </StackPanel>
+                <!-- preview dock: a slim notice when the selected size is on screen; a drawing of its box when it is not (or when pinned) -->
+                <Border DockPanel.Dock="Top" Margin="0,0,14,8" Padding="12,8" CornerRadius="10" Background="#FF1A1F27" BorderBrush="#338AB4F8" BorderThickness="1">
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding DockState}" Value="Slim"><Setter Property="Visibility" Value="Visible" /></DataTrigger>
+                                <DataTrigger Binding="{Binding DockState}" Value="Full"><Setter Property="Visibility" Value="Visible" /></DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <DockPanel>
+                        <Button DockPanel.Dock="Right" Command="{Binding CloseDockCommand}" Content="&#xE894;" FontFamily="Segoe MDL2 Assets" Width="26" Height="24" Padding="0" Margin="8,0,0,0" VerticalAlignment="Top" ToolTip="Close the preview" />
+                        <CheckBox DockPanel.Dock="Right" IsChecked="{Binding PinPreview, Mode=TwoWay}" Content="{DynamicResource LOCLS_PinPreview}" VerticalAlignment="Top" Margin="8,3,0,0" />
+                        <!-- where the item sits in the window, lit on the same miniature as the card's -->
+                        <ContentControl DockPanel.Dock="Left" Content="{Binding Active}" ContentTemplate="{StaticResource Size.locatorSmall}" Margin="0,0,14,0" VerticalAlignment="Top">
+                            <ContentControl.Style>
+                                <Style TargetType="ContentControl">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                    <Style.Triggers><DataTrigger Binding="{Binding DockState}" Value="Full"><Setter Property="Visibility" Value="Visible" /></DataTrigger></Style.Triggers>
+                                </Style>
+                            </ContentControl.Style>
+                        </ContentControl>
+                        <Ellipse DockPanel.Dock="Left" Width="9" Height="9" Margin="0,5,10,0" VerticalAlignment="Top">
+                            <Ellipse.Style>
+                                <Style TargetType="Ellipse">
+                                    <Setter Property="Fill" Value="#FF6FD08C" />
+                                    <Style.Triggers><DataTrigger Binding="{Binding DockState}" Value="Full"><Setter Property="Fill" Value="#FF8AB4F8" /></DataTrigger></Style.Triggers>
+                                </Style>
+                            </Ellipse.Style>
+                        </Ellipse>
+                        <StackPanel>
+                            <TextBlock Text="{Binding DockText}" TextWrapping="Wrap" />
+                            <!-- the box at the item's scale, with its numbers; it moves with the fields of the card -->
+                            <Grid DataContext="{Binding Active}" Margin="0,8,0,0" HorizontalAlignment="Left">
+                                <Grid.Style>
+                                    <Style TargetType="Grid">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                        <Style.Triggers><DataTrigger Binding="{Binding DataContext.DockState, RelativeSource={RelativeSource AncestorType=DockPanel}}" Value="Full"><Setter Property="Visibility" Value="Visible" /></DataTrigger></Style.Triggers>
+                                    </Style>
+                                </Grid.Style>
+                                <Viewbox MaxWidth="300" MaxHeight="120" StretchDirection="DownOnly" HorizontalAlignment="Left">
+                                    <ContentControl Content="{Binding}" ContentTemplateSelector="{StaticResource SceneSelector}" />
+                                </Viewbox>
+                            </Grid>
+                        </StackPanel>
+                    </DockPanel>
+                </Border>
                 <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0,0,14,14">
                     <StackPanel>
-                        <TextBlock Text="No size matches this filter." Foreground="#FFA0A7B1" Margin="0,24,0,0" HorizontalAlignment="Center">
+                        <TextBlock Text="{DynamicResource LOCLS_NoSizeMatches}" Foreground="#FFA0A7B1" Margin="0,24,0,0" HorizontalAlignment="Center">
                             <TextBlock.Style>
                                 <Style TargetType="TextBlock">
                                     <Setter Property="Visibility" Value="Collapsed" />
@@ -809,20 +1151,125 @@
             </ScrollViewer>
         </DataTemplate>
 
+        <!-- Items: a card per piece of information or section, with every option the theme has for it -->
+        <DataTemplate x:Key="Page.items">
+            <DockPanel DataContext="{Binding Editor}">
+                <DockPanel DockPanel.Dock="Top" Margin="0,0,14,8" MaxWidth="700" HorizontalAlignment="Left">
+                    <DockPanel.Style>
+                        <Style TargetType="DockPanel"><Setter Property="Visibility" Value="Collapsed" /><Style.Triggers><DataTrigger Binding="{Binding IsFocused}" Value="True"><Setter Property="Visibility" Value="Visible" /></DataTrigger></Style.Triggers></Style>
+                    </DockPanel.Style>
+                    <Button DockPanel.Dock="Right" Command="{Binding ShowAllCommand}" Content="{DynamicResource LOCLS_ShowAllItems}" Padding="12,3" Margin="12,0,0,0" />
+                    <TextBlock VerticalAlignment="Center" Foreground="#FFFFC56E"><Run Text="{DynamicResource LOCLS_ShowingOnly}" /><Run Text=" " /><Run Text="{Binding FocusedTitle, Mode=OneWay}" FontWeight="SemiBold" /></TextBlock>
+                </DockPanel>
+                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,14,8">
+                    <Button Command="{Binding ExpandAllCommand}" Content="{DynamicResource LOCLS_ExpandAll}" Padding="12,3" Margin="0,0,6,0" />
+                    <Button Command="{Binding CollapseAllCommand}" Content="{DynamicResource LOCLS_CollapseAll}" Padding="12,3" />
+                </StackPanel>
+                <TextBlock DockPanel.Dock="Top" Text="{DynamicResource LOCLS_ItemsHint}" TextWrapping="Wrap" Foreground="#FFA0A7B1" Margin="0,0,14,10" MaxWidth="700" HorizontalAlignment="Left" />
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0,0,14,14" Padding="0,0,14,0">
+                    <StackPanel>
+                    <!-- Information shown once: items that show on several surfaces, which one keeps them, and the button that hides the other copies -->
+                    <Border DataContext="{Binding Once}" Margin="0,0,0,10" Padding="14,8" CornerRadius="10" Background="#FF1D2128" BorderBrush="#33FFB347" BorderThickness="1" MaxWidth="760" HorizontalAlignment="Left">
+                        <StackPanel Width="690">
+                            <DockPanel>
+                                <Button DockPanel.Dock="Right" Command="{Binding ShowAllCommand}" Content="{DynamicResource LOCLS_Once_ShowAll}" Padding="12,3" />
+                                <TextBlock Text="{Binding Summary}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                            </DockPanel>
+                            <ItemsControl ItemsSource="{Binding Rows}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Margin="0,8,0,0" Padding="0,6,0,0" BorderBrush="#14FFFFFF" BorderThickness="0,1,0,0">
+                                            <StackPanel>
+                                                <DockPanel>
+                                                    <Button DockPanel.Dock="Right" Command="{Binding ShowOnceCommand}" Content="{DynamicResource LOCLS_Once_ShowOnce}" Padding="12,3" Margin="8,0,0,0" />
+                                                    <CheckBox DockPanel.Dock="Right" IsChecked="{Binding Forced, Mode=TwoWay}" Content="{DynamicResource LOCLS_Once_Force}" VerticalAlignment="Center" Margin="8,0,0,0" ToolTip="{DynamicResource LOCLS_Once_ForceTip}" />
+                                                    <ComboBox DockPanel.Dock="Right" Width="150" ItemsSource="{Binding KeepChoices}" DisplayMemberPath="Title" SelectedValuePath="Id" SelectedValue="{Binding Keep, Mode=TwoWay}" ToolTip="{DynamicResource LOCLS_Once_Keep}" />
+                                                    <TextBlock Text="{Binding Title}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                                                </DockPanel>
+                                                <TextBlock Text="{Binding WhereText}" FontSize="11" Foreground="#FFA0A7B1" Margin="0,2,0,0" />
+                                                <TextBlock Text="{Binding BlockedText}" FontSize="11" Foreground="#FFFFC56E" TextWrapping="Wrap" Margin="0,2,0,0">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed" /><Style.Triggers><DataTrigger Binding="{Binding HasBlocked}" Value="True"><Setter Property="Visibility" Value="Visible" /></DataTrigger></Style.Triggers></Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+                    <ItemsControl ItemsSource="{Binding Cards}">
+                        <ItemsControl.ItemContainerStyle>
+                            <Style TargetType="ContentPresenter"><Style.Triggers><DataTrigger Binding="{Binding Visible}" Value="False"><Setter Property="Visibility" Value="Collapsed" /></DataTrigger></Style.Triggers></Style>
+                        </ItemsControl.ItemContainerStyle>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Margin="0,0,0,8" Padding="14,6" CornerRadius="10" Background="#FF1D2128" BorderBrush="#14FFFFFF" BorderThickness="1" MaxWidth="760" HorizontalAlignment="Left">
+                                    <Expander IsExpanded="{Binding IsExpanded, Mode=TwoWay}" Foreground="#FFE8EAED">
+                                        <Expander.Header>
+                                            <DockPanel Width="640">
+                                                <TextBlock DockPanel.Dock="Right" Text="{Binding OptionsText}" Opacity="0.55" FontSize="11" VerticalAlignment="Center" Margin="10,0,0,0" />
+                                                <TextBlock DockPanel.Dock="Right" Text="{DynamicResource LOCLS_TwiceBadge}" Foreground="#FFFFC56E" FontSize="11" VerticalAlignment="Center" Margin="10,0,0,0">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed" /><Style.Triggers><DataTrigger Binding="{Binding ShowsTwice}" Value="True"><Setter Property="Visibility" Value="Visible" /></DataTrigger></Style.Triggers></Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                                <TextBlock DockPanel.Dock="Right" Text="{Binding ChangedCount, StringFormat={}{0} changed}" Foreground="#FFFFB347" FontSize="11" VerticalAlignment="Center" Margin="10,0,0,0">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed" /><Style.Triggers><DataTrigger Binding="{Binding HasChanges}" Value="True"><Setter Property="Visibility" Value="Visible" /></DataTrigger></Style.Triggers></Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                                <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center" />
+                                            </DockPanel>
+                                        </Expander.Header>
+                                        <StackPanel>
+                                        <DockPanel Margin="0,4,0,2">
+                                            <DockPanel.Style>
+                                                <Style TargetType="DockPanel"><Setter Property="Visibility" Value="Collapsed" /><Style.Triggers><DataTrigger Binding="{Binding ShowsTwice}" Value="True"><Setter Property="Visibility" Value="Visible" /></DataTrigger></Style.Triggers></Style>
+                                            </DockPanel.Style>
+                                            <Button DockPanel.Dock="Right" Command="{Binding FoldSectionCommand}" Content="{Binding FoldText}" Padding="12,3" Margin="12,0,0,0" />
+                                            <TextBlock Text="{Binding TwiceText}" TextWrapping="Wrap" Foreground="#FFFFC56E" VerticalAlignment="Center" />
+                                        </DockPanel>
+                                        <ItemsControl ItemsSource="{Binding Surfaces}" Margin="4,0,0,8">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <StackPanel>
+                                                        <TextBlock Text="{Binding Title}" Style="{StaticResource SectionTitle}" Margin="0,10,0,2" />
+                                                        <ItemsControl ItemsSource="{Binding Settings}" ItemTemplateSelector="{StaticResource KindSelector}">
+                                                            <ItemsControl.ItemContainerStyle>
+                                                                <Style TargetType="ContentPresenter"><Style.Triggers><DataTrigger Binding="{Binding Visible}" Value="False"><Setter Property="Visibility" Value="Collapsed" /></DataTrigger></Style.Triggers></Style>
+                                                            </ItemsControl.ItemContainerStyle>
+                                                        </ItemsControl>
+                                                    </StackPanel>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                        </StackPanel>
+                                    </Expander>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    </StackPanel>
+                </ScrollViewer>
+            </DockPanel>
+        </DataTemplate>
+
         <DataTemplate x:Key="Page.corners">
             <ScrollViewer DataContext="{Binding Editor}" VerticalScrollBarVisibility="Auto" Margin="0,0,14,14">
                 <StackPanel MaxWidth="700" HorizontalAlignment="Left">
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                        <TextBlock Text="Look" VerticalAlignment="Center" Margin="0,0,12,0" Opacity="0.7" />
-                        <Button Command="{Binding SharpCommand}" Content="Sharp" Padding="14,4" Margin="0,0,6,0" ToolTip="Every corner square" />
-                        <Button Command="{Binding SoftCommand}" Content="Soft" Padding="14,4" Margin="0,0,6,0" ToolTip="60 % of the designed radii" />
-                        <Button Command="{Binding AppleCommand}" Content="Designed" Padding="14,4" Margin="0,0,6,0" ToolTip="The designed set: 28 on the card, 20 on sections, 18 on tiles and cover, 16 buttons, 14 chips, nested corners stepping down like a product design" />
-                        <Button Command="{Binding PillCommand}" Content="Pill" Padding="14,4" ToolTip="150 % of the designed radii: very round" />
+                        <TextBlock Text="{DynamicResource LOCLS_Corners_Look}" VerticalAlignment="Center" Margin="0,0,12,0" Opacity="0.7" />
+                        <Button Command="{Binding SharpCommand}" Content="{DynamicResource LOCLS_Corners_Sharp}" Padding="14,4" Margin="0,0,6,0" ToolTip="{DynamicResource LOCLS_Corners_SharpTip}" />
+                        <Button Command="{Binding SoftCommand}" Content="{DynamicResource LOCLS_Corners_Soft}" Padding="14,4" Margin="0,0,6,0" ToolTip="{DynamicResource LOCLS_Corners_SoftTip}" />
+                        <Button Command="{Binding AppleCommand}" Content="{DynamicResource LOCLS_Corners_Designed}" Padding="14,4" Margin="0,0,6,0" ToolTip="{DynamicResource LOCLS_Corners_DesignedTip}" />
+                        <Button Command="{Binding PillCommand}" Content="{DynamicResource LOCLS_Corners_Pill}" Padding="14,4" ToolTip="{DynamicResource LOCLS_Corners_PillTip}" />
                     </StackPanel>
-                    <TextBlock Text="Round every corner of the theme at once with the master slider (0 = square, 100 = the Round look, up to 150), or set each element yourself. The slider is continuous: no jump between presets." TextWrapping="Wrap" Foreground="#FFA0A7B1" Margin="0,0,0,12" />
+                    <TextBlock Text="{DynamicResource LOCLS_Corners_Hint}" TextWrapping="Wrap" Foreground="#FFA0A7B1" Margin="0,0,0,12" />
                     <Border Padding="16,14" CornerRadius="10" Background="#FF1D2128" BorderBrush="#14FFFFFF" BorderThickness="1">
                         <DockPanel>
-                            <TextBlock DockPanel.Dock="Left" Text="All corners" FontSize="14" FontWeight="SemiBold" Width="150" VerticalAlignment="Center" />
+                            <TextBlock DockPanel.Dock="Left" Text="{DynamicResource LOCLS_Corners_All}" FontSize="14" FontWeight="SemiBold" Width="150" VerticalAlignment="Center" />
                             <TextBox DockPanel.Dock="Right" Width="56" Text="{Binding Master, Mode=TwoWay, UpdateSourceTrigger=LostFocus, StringFormat={}{0:0}}" HorizontalContentAlignment="Right" VerticalContentAlignment="Center" Margin="10,0,0,0" />
                             <Slider Minimum="0" Maximum="150" LargeChange="10" SmallChange="1" Value="{Binding Master, Mode=TwoWay}" VerticalAlignment="Center" />
                         </DockPanel>
@@ -837,9 +1284,9 @@
                                         <TextBox DockPanel.Dock="Right" Width="48" Text="{Binding Radius, Mode=TwoWay, UpdateSourceTrigger=LostFocus, StringFormat={}{0:0}}" HorizontalContentAlignment="Right" VerticalContentAlignment="Center" Margin="10,0,0,0" />
                                         <StackPanel Width="180" DockPanel.Dock="Left" VerticalAlignment="Center">
                                             <TextBlock Text="{Binding Title}" FontWeight="SemiBold" />
-                                            <TextBlock Text="corners differ: moving the slider makes them equal" FontSize="10.5" Foreground="#FF8A93A0" Visibility="{Binding IsCustom, Converter={StaticResource BoolToVis}}" />
+                                            <TextBlock Text="{DynamicResource LOCLS_Corners_Differ}" FontSize="10.5" Foreground="#FF8A93A0" Visibility="{Binding IsCustom, Converter={StaticResource BoolToVis}}" />
                                         </StackPanel>
-                                        <Slider Minimum="0" Maximum="60" LargeChange="5" SmallChange="1" Value="{Binding Radius, Mode=TwoWay}" VerticalAlignment="Center" />
+                                        <Slider Minimum="0" Maximum="60" LargeChange="5" SmallChange="1" Value="{Binding SliderRadius, Mode=TwoWay}" VerticalAlignment="Center" />
                                     </DockPanel>
                                 </Border>
                             </DataTemplate>
@@ -864,7 +1311,7 @@
                                             <TextBlock Text="{Binding Title}" FontWeight="SemiBold" />
                                             <TextBlock Text="{Binding Hint}" FontSize="10.5" Foreground="#FF8A93A0" TextWrapping="Wrap" />
                                         </StackPanel>
-                                        <Slider Minimum="{Binding Min}" Maximum="{Binding Max}" LargeChange="5" SmallChange="1" Value="{Binding Value, Mode=TwoWay}" VerticalAlignment="Center" />
+                                        <Slider Minimum="{Binding Min}" Maximum="{Binding Max}" LargeChange="5" SmallChange="1" Value="{Binding SliderValue, Mode=TwoWay}" VerticalAlignment="Center" />
                                     </DockPanel>
                                 </Border>
                             </DataTemplate>
@@ -994,6 +1441,38 @@
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
+                    <!-- every information chip of the artwork card as one row: shown, and new line before -->
+                    <TextBlock Text="{DynamicResource LOCLS_Header_Chips}" Style="{StaticResource SectionTitle}" Margin="0,22,0,6" />
+                    <TextBlock Text="{DynamicResource LOCLS_Header_ChipsHint}" TextWrapping="Wrap" Opacity="0.65" Margin="0,0,0,8" />
+                    <Grid Margin="0,0,0,4" MaxWidth="640" HorizontalAlignment="Left">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="90" /><ColumnDefinition Width="230" /></Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="1" Text="{DynamicResource LOCLS_Header_ColShow}" Opacity="0.6" FontSize="11" HorizontalAlignment="Center" />
+                        <TextBlock Grid.Column="2" Text="{DynamicResource LOCLS_Header_ColBreak}" Opacity="0.6" FontSize="11" />
+                    </Grid>
+                    <ItemsControl ItemsSource="{Binding Extras.Chips}" MaxWidth="640" HorizontalAlignment="Left">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Padding="0,5" BorderBrush="#14FFFFFF" BorderThickness="0,0,0,1">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="90" /><ColumnDefinition Width="230" /></Grid.ColumnDefinitions>
+                                        <TextBlock Text="{Binding Title}" VerticalAlignment="Center" />
+                                        <CheckBox Grid.Column="1" IsChecked="{Binding Show.BoolValue, Mode=TwoWay}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        <ItemsControl Grid.Column="2" ItemsSource="{Binding Breaks}">
+                                            <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <CheckBox IsChecked="{Binding BoolValue, Mode=TwoWay}" Margin="0,0,14,0" ToolTip="{Binding Title}" />
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <!-- the rest of the header parameters (artwork card, look, buttons, header bar, tile look...), the same settings as the Game header page -->
+                    <TextBlock Text="{DynamicResource LOCLS_Header_All}" Style="{StaticResource SectionTitle}" Margin="0,26,0,0" />
+                    <ItemsControl ItemsSource="{Binding Extras.Groups}" ItemTemplate="{DynamicResource GroupTemplate}" />
                 </StackPanel>
             </ScrollViewer>
         </DataTemplate>
@@ -1043,8 +1522,19 @@
                     </ItemsControl>
                     <TextBlock Text="{DynamicResource LOCLS_CustomAccent}" Style="{StaticResource SectionTitle}" />
                     <StackPanel Orientation="Horizontal">
-                        <Border Width="26" Height="26" CornerRadius="6" BorderBrush="#66FFFFFF" BorderThickness="1" Margin="0,0,10,0"
-                                Background="{Binding CustomAccent, Converter={StaticResource ColorBrush}}" />
+                        <ToggleButton x:Name="AccentPickerToggle" Width="34" Height="30" Padding="3" Margin="0,0,10,0" IsChecked="{Binding PickerOpen, Mode=TwoWay}" ToolTip="{DynamicResource LOCLS_Color_Pick}">
+                            <Border CornerRadius="5" BorderBrush="#66FFFFFF" BorderThickness="1" Background="{Binding CustomAccent, Converter={StaticResource ColorBrush}}" Width="24" Height="20" />
+                        </ToggleButton>
+                        <Popup IsOpen="{Binding PickerOpen, Mode=TwoWay}" PlacementTarget="{Binding ElementName=AccentPickerToggle}" Placement="Bottom" StaysOpen="False" AllowsTransparency="True">
+                            <Border Background="#FF1D2128" BorderBrush="#55FFFFFF" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,4,0,8">
+                                <StackPanel Width="236">
+                                    <WrapPanel Margin="0,0,0,8"><Button Width="22" Height="22" Margin="2" Padding="0" Command="{Binding SetAccentCommand}" CommandParameter="#FFFFFF" ToolTip="#FFFFFF"><Border Width="16" Height="16" CornerRadius="3" Background="#FFFFFF" /></Button> <Button Width="22" Height="22" Margin="2" Padding="0" Command="{Binding SetAccentCommand}" CommandParameter="#9AA3AE" ToolTip="#9AA3AE"><Border Width="16" Height="16" CornerRadius="3" Background="#9AA3AE" /></Button> <Button Width="22" Height="22" Margin="2" Padding="0" Command="{Binding SetAccentCommand}" CommandParameter="#FF5252" ToolTip="#FF5252"><Border Width="16" Height="16" CornerRadius="3" Background="#FF5252" /></Button> <Button Width="22" Height="22" Margin="2" Padding="0" Command="{Binding SetAccentCommand}" CommandParameter="#FF9800" ToolTip="#FF9800"><Border Width="16" Height="16" CornerRadius="3" Background="#FF9800" /></Button> <Button Width="22" Height="22" Margin="2" Padding="0" Command="{Binding SetAccentCommand}" CommandParameter="#FFD54F" ToolTip="#FFD54F"><Border Width="16" Height="16" CornerRadius="3" Background="#FFD54F" /></Button> <Button Width="22" Height="22" Margin="2" Padding="0" Command="{Binding SetAccentCommand}" CommandParameter="#4CAF50" ToolTip="#4CAF50"><Border Width="16" Height="16" CornerRadius="3" Background="#4CAF50" /></Button> <Button Width="22" Height="22" Margin="2" Padding="0" Command="{Binding SetAccentCommand}" CommandParameter="#26C6DA" ToolTip="#26C6DA"><Border Width="16" Height="16" CornerRadius="3" Background="#26C6DA" /></Button> <Button Width="22" Height="22" Margin="2" Padding="0" Command="{Binding SetAccentCommand}" CommandParameter="#1E90FF" ToolTip="#1E90FF"><Border Width="16" Height="16" CornerRadius="3" Background="#1E90FF" /></Button> <Button Width="22" Height="22" Margin="2" Padding="0" Command="{Binding SetAccentCommand}" CommandParameter="#7C4DFF" ToolTip="#7C4DFF"><Border Width="16" Height="16" CornerRadius="3" Background="#7C4DFF" /></Button> <Button Width="22" Height="22" Margin="2" Padding="0" Command="{Binding SetAccentCommand}" CommandParameter="#E040FB" ToolTip="#E040FB"><Border Width="16" Height="16" CornerRadius="3" Background="#E040FB" /></Button> <Button Width="22" Height="22" Margin="2" Padding="0" Command="{Binding SetAccentCommand}" CommandParameter="#FF4081" ToolTip="#FF4081"><Border Width="16" Height="16" CornerRadius="3" Background="#FF4081" /></Button> <Button Width="22" Height="22" Margin="2" Padding="0" Command="{Binding SetAccentCommand}" CommandParameter="#1A9FFF" ToolTip="#1A9FFF"><Border Width="16" Height="16" CornerRadius="3" Background="#1A9FFF" /></Button></WrapPanel>
+                                    <DockPanel Margin="0,2"><TextBlock DockPanel.Dock="Left" Text="R" Width="16" Foreground="#FFFF7B72" /><TextBlock DockPanel.Dock="Right" Text="{Binding AccentR, StringFormat={}{0:0}}" Width="30" TextAlignment="Right" /><Slider Minimum="0" Maximum="255" SmallChange="1" LargeChange="16" Value="{Binding AccentR, Mode=TwoWay}" /></DockPanel>
+                                    <DockPanel Margin="0,2"><TextBlock DockPanel.Dock="Left" Text="G" Width="16" Foreground="#FF6FD08C" /><TextBlock DockPanel.Dock="Right" Text="{Binding AccentG, StringFormat={}{0:0}}" Width="30" TextAlignment="Right" /><Slider Minimum="0" Maximum="255" SmallChange="1" LargeChange="16" Value="{Binding AccentG, Mode=TwoWay}" /></DockPanel>
+                                    <DockPanel Margin="0,2"><TextBlock DockPanel.Dock="Left" Text="B" Width="16" Foreground="#FF8AB4F8" /><TextBlock DockPanel.Dock="Right" Text="{Binding AccentB, StringFormat={}{0:0}}" Width="30" TextAlignment="Right" /><Slider Minimum="0" Maximum="255" SmallChange="1" LargeChange="16" Value="{Binding AccentB, Mode=TwoWay}" /></DockPanel>
+                                </StackPanel>
+                            </Border>
+                        </Popup>
                         <TextBox Width="150" Text="{Binding CustomAccent, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
                     </StackPanel>
                     <TextBlock Text="{Binding Error}" Style="{StaticResource ErrorText}" Margin="0,4,0,0" />
@@ -1052,9 +1542,78 @@
             </ScrollViewer>
         </DataTemplate>
 
+        <!-- Diagnostics: what Layout Studio sees, to read or to copy into a bug report -->
+        <DataTemplate x:Key="Page.diagnostics">
+            <ScrollViewer DataContext="{Binding Editor}" VerticalScrollBarVisibility="Auto" Margin="0,0,14,14">
+                <StackPanel MaxWidth="720" HorizontalAlignment="Left">
+                    <TextBlock Text="{DynamicResource LOCLS_DiagnosticsHint}" TextWrapping="Wrap" Foreground="#FFA0A7B1" Margin="0,0,0,10" />
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                        <Button Command="{Binding RefreshCommand}" Content="{DynamicResource LOCLS_Refresh}" Padding="14,5" Margin="0,0,8,0" />
+                        <Button Command="{Binding CopyCommand}" Content="{DynamicResource LOCLS_CopyDiagnostics}" Padding="14,5" Margin="0,0,12,0" />
+                        <TextBlock Text="{Binding Message}" VerticalAlignment="Center" Opacity="0.7" />
+                    </StackPanel>
+                    <ItemsControl ItemsSource="{Binding Lines}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Padding="14,8" Margin="0,0,0,6" CornerRadius="8" Background="#FF1D2128" BorderBrush="#14FFFFFF" BorderThickness="1">
+                                    <DockPanel>
+                                        <Ellipse DockPanel.Dock="Left" Width="9" Height="9" Margin="0,5,12,0" VerticalAlignment="Top">
+                                            <Ellipse.Style>
+                                                <Style TargetType="Ellipse">
+                                                    <Setter Property="Fill" Value="#FF6B7480" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsOk}" Value="True"><Setter Property="Fill" Value="#FF4FC82F" /></DataTrigger>
+                                                        <DataTrigger Binding="{Binding IsWarning}" Value="True"><Setter Property="Fill" Value="#FFFFB347" /></DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Ellipse.Style>
+                                        </Ellipse>
+                                        <StackPanel>
+                                            <DockPanel>
+                                                <TextBlock DockPanel.Dock="Right" Text="{Binding Value}" TextWrapping="Wrap" MaxWidth="360" Margin="12,0,0,0" TextAlignment="Right" />
+                                                <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                                            </DockPanel>
+                                            <TextBlock Text="{Binding Detail}" TextWrapping="Wrap" FontSize="11" Foreground="#FF8A93A0" Margin="0,2,0,0">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed" /><Style.Triggers><DataTrigger Binding="{Binding HasDetail}" Value="True"><Setter Property="Visibility" Value="Visible" /></DataTrigger></Style.Triggers></Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                        </StackPanel>
+                                    </DockPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </ScrollViewer>
+        </DataTemplate>
+
         <DataTemplate x:Key="Page.share">
             <ScrollViewer DataContext="{Binding Editor}" VerticalScrollBarVisibility="Auto" Margin="0,0,14,14">
                 <StackPanel MaxWidth="640" HorizontalAlignment="Left">
+                    <!-- profiles: switch between saved looks, or start a new one from the current -->
+                    <StackPanel>
+                        <StackPanel.Style><Style TargetType="StackPanel"><Setter Property="Visibility" Value="Collapsed" /><Style.Triggers><DataTrigger Binding="{Binding HasSwitcher}" Value="True"><Setter Property="Visibility" Value="Visible" /></DataTrigger></Style.Triggers></Style></StackPanel.Style>
+                        <TextBlock Text="{DynamicResource LOCLS_Profiles}" Style="{StaticResource SectionTitle}" Margin="0,0,0,6" />
+                        <ItemsControl ItemsSource="{Binding Profiles}">
+                            <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Button Command="{Binding SwitchCommand}" Content="{Binding Name}" Padding="14,5" Margin="0,0,6,6">
+                                        <Button.Style>
+                                            <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                                                <Style.Triggers><DataTrigger Binding="{Binding IsActive}" Value="True"><Setter Property="Background" Value="#55FFB347" /><Setter Property="Foreground" Value="#FFFFC56E" /></DataTrigger></Style.Triggers>
+                                            </Style>
+                                        </Button.Style>
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <DockPanel Margin="0,4,0,18" Width="420" HorizontalAlignment="Left">
+                            <Button DockPanel.Dock="Right" Command="{Binding NewProfileCommand}" Content="{DynamicResource LOCLS_NewProfile}" Padding="14,5" Margin="8,0,0,0" />
+                            <TextBox Text="{Binding NewProfileName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Height="28" VerticalContentAlignment="Center" />
+                        </DockPanel>
+                    </StackPanel>
                     <TextBlock Text="{DynamicResource LOCLS_ShareHint}" TextWrapping="Wrap" Opacity="0.65" Margin="0,0,0,6" />
                     <TextBlock Text="{DynamicResource LOCLS_ShareCode}" Style="{StaticResource SectionTitle}" />
                     <TextBox Text="{Binding Code, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap"
@@ -1146,24 +1705,35 @@
             <Grid Margin="0,0,14,0">
                 <TextBox x:Name="SearchBox" Text="{Binding Search, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Height="30" VerticalContentAlignment="Center" Padding="4,0,28,0"
                          ToolTip="{DynamicResource LOCLS_Search}" />
-                <TextBlock Text="Search settings: blur, corner, tab, fps..." IsHitTestVisible="False" Foreground="#FF8A93A0" Margin="9,0,0,0" VerticalAlignment="Center">
+                <TextBlock Text="{DynamicResource LOCLS_SearchPlaceholder}" IsHitTestVisible="False" Foreground="#FF8A93A0" Margin="9,0,0,0" VerticalAlignment="Center">
                     <TextBlock.Style>
                         <Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed" /><Style.Triggers><DataTrigger Binding="{Binding Search}" Value=""><Setter Property="Visibility" Value="Visible" /></DataTrigger></Style.Triggers></Style>
                     </TextBlock.Style>
                 </TextBlock>
-                <Button Command="{Binding ClearSearchCommand}" Content="&#xE894;" FontFamily="Segoe MDL2 Assets" HorizontalAlignment="Right" Width="26" Height="24" Margin="0,0,3,0" Padding="0" ToolTip="Clear (Esc)">
+                <Button Command="{Binding ClearSearchCommand}" Content="&#xE894;" FontFamily="Segoe MDL2 Assets" HorizontalAlignment="Right" Width="26" Height="24" Margin="0,0,3,0" Padding="0" ToolTip="{DynamicResource LOCLS_ClearSearch}">
                     <Button.Style>
                         <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}"><Setter Property="Visibility" Value="Visible" /><Style.Triggers><DataTrigger Binding="{Binding Search}" Value=""><Setter Property="Visibility" Value="Collapsed" /></DataTrigger></Style.Triggers></Style>
                     </Button.Style>
                 </Button>
             </Grid>
             <StackPanel Grid.Column="1" Orientation="Horizontal">
-                <Button Command="{Binding UndoCommand}" Content="{DynamicResource LOCLS_Undo}" Padding="12,4" Margin="0,0,6,0" />
-                <Button Command="{Binding RedoCommand}" Content="{DynamicResource LOCLS_Redo}" Padding="12,4" Margin="0,0,14,0" />
-                <ToggleButton IsChecked="{Binding ShowChangedOnly, Mode=TwoWay}" Padding="12,4" Margin="0,0,14,0" ToolTip="Show only the settings you changed, on every page">
-                    <StackPanel Orientation="Horizontal"><TextBlock Text="Changed" /><TextBlock Text="{Binding ChangedTotal}" Foreground="#FFFFB347" Margin="6,0,0,0" FontWeight="SemiBold" /></StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,0,14,0">
+                    <StackPanel.Style>
+                        <Style TargetType="StackPanel"><Setter Property="Visibility" Value="Collapsed" /><Style.Triggers><DataTrigger Binding="{Binding HasModes}" Value="True"><Setter Property="Visibility" Value="Visible" /></DataTrigger></Style.Triggers></Style>
+                    </StackPanel.Style>
+                    <Button Command="{Binding ShowDesktopCommand}" Content="{DynamicResource LOCLS_Mode_Desktop}" Padding="12,4" Margin="0,0,2,0">
+                        <Button.Style><Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}"><Style.Triggers><DataTrigger Binding="{Binding IsDesktopMode}" Value="True"><Setter Property="Background" Value="#55FFB347" /><Setter Property="Foreground" Value="#FFFFC56E" /></DataTrigger></Style.Triggers></Style></Button.Style>
+                    </Button>
+                    <Button Command="{Binding ShowFullscreenCommand}" Content="{DynamicResource LOCLS_Mode_Fullscreen}" Padding="12,4" ToolTip="{DynamicResource LOCLS_Mode_FullscreenTip}">
+                        <Button.Style><Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}"><Style.Triggers><DataTrigger Binding="{Binding IsFullscreenMode}" Value="True"><Setter Property="Background" Value="#55FFB347" /><Setter Property="Foreground" Value="#FFFFC56E" /></DataTrigger></Style.Triggers></Style></Button.Style>
+                    </Button>
+                </StackPanel>
+                <Button Command="{Binding UndoCommand}" Content="{Binding UndoLabel}" ToolTip="Ctrl+Z" MaxWidth="260" Padding="12,4" Margin="0,0,6,0" />
+                <Button Command="{Binding RedoCommand}" Content="{Binding RedoLabel}" ToolTip="Ctrl+Y" MaxWidth="260" Padding="12,4" Margin="0,0,14,0" />
+                <ToggleButton IsChecked="{Binding ShowChangedOnly, Mode=TwoWay}" Padding="12,4" Margin="0,0,14,0" ToolTip="{DynamicResource LOCLS_ChangedTip}">
+                    <StackPanel Orientation="Horizontal"><TextBlock Text="{DynamicResource LOCLS_Changed}" /><TextBlock Text="{Binding ChangedTotal}" Foreground="#FFFFB347" Margin="6,0,0,0" FontWeight="SemiBold" /></StackPanel>
                 </ToggleButton>
-                <Button Command="{Binding ResetPageCommand}" Content="{Binding ResetPageLabel}" Padding="12,4" />
+                <Button Command="{Binding ResetPageCommand}" Content="{Binding ResetPageLabel}" Padding="12,4"><Button.Style><Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}"><Style.Triggers><DataTrigger Binding="{Binding ResetPending}" Value="True"><Setter Property="Background" Value="#FFB5651D" /><Setter Property="Foreground" Value="White" /></DataTrigger></Style.Triggers></Style></Button.Style></Button>
             </StackPanel>
         </Grid>
 

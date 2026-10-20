@@ -1,7 +1,7 @@
 {
  "version": 1,
  "stats": {
-  "constants": 485
+  "constants": 511
  },
  "pages": [
   {
@@ -424,6 +424,7 @@
           "HeaderBarBlurOpacity": "1",
           "HeaderBarGlassOpacity": "1",
           "HeaderRowBackgroundOpacity": "1",
+          "HeaderBandEdge": "0",
           "HeaderRowPadding": "20,10,30,10",
           "HeaderTileBackgroundOpacity": "0",
           "HeaderTilePadding": "0",
@@ -992,6 +993,33 @@
          "preview": "Presets/Previews/Animations_Off.png"
         }
        ]
+      },
+      {
+       "kind": "preset",
+       "id": "Scrollbars",
+       "keys": [],
+       "title": "Scroll bars",
+       "titleKey": "LOCHNDPresetScrollbars",
+       "defaultChoice": "Default",
+       "choices": [
+        {
+         "id": "Default",
+         "name": "Slim bars",
+         "locKey": "LOCHNDPresetScrollbarsDefault",
+         "constants": {}
+        },
+        {
+         "id": "Hidden",
+         "name": "Hidden (the wheel and touch still scroll)",
+         "locKey": "LOCHNDPresetScrollbarsHidden",
+         "constants": {
+          "ScrollbarThumbWidth": "0",
+          "ScrollbarThumbHoverWidth": "0",
+          "ScrollbarThumbRim": "0",
+          "ScrollbarThumbOpacity": "0"
+         }
+        }
+       ]
       }
      ]
     }
@@ -1335,6 +1363,30 @@
        "title": "Window background blur",
        "titleKey": "LOCHNDOptWindowGlassBlurRadius",
        "description": "0 = sharp artwork.",
+       "choices": []
+      },
+      {
+       "kind": "toggle",
+       "id": "WindowGlassBackgroundWarning",
+       "keys": [
+        "WindowGlassBackgroundWarning"
+       ],
+       "title": "Warn when Playnite does not give the artwork to the theme",
+       "titleKey": "LOCHNDOptWindowGlassBackgroundWarning",
+       "description": "Shows a notice under the top bar when the glass is on but Playnite's option \"Show background image on the window\" is off (the glass then has no artwork to show).",
+       "tipKey": "LOCHNDTipWindowGlassBackgroundWarning",
+       "choices": []
+      },
+      {
+       "kind": "slider",
+       "id": "SidePanelFrostOpacity",
+       "keys": [
+        "SidePanelFrostOpacity"
+       ],
+       "title": "Filter and explorer panels: glass frost",
+       "titleKey": "LOCHNDOptSidePanelFrostOpacity",
+       "description": "A light glass fill over the filter panel and the explorer panel, like the sections. 0 = none (the panel keeps only its dark tint, set in Background and glass).",
+       "tipKey": "LOCHNDTipSidePanelFrostOpacity",
        "choices": []
       }
      ]
@@ -2048,6 +2100,7 @@
           "HeaderBarBlurOpacity": "1",
           "HeaderBarGlassOpacity": "1",
           "HeaderRowBackgroundOpacity": "1",
+          "HeaderBandEdge": "0",
           "HeaderRowPadding": "20,10,30,10",
           "HeaderTileBackgroundOpacity": "0",
           "HeaderTilePadding": "0",
@@ -2064,6 +2117,7 @@
           "HeaderBarBlurOpacity": "0",
           "HeaderBarGlassOpacity": "1",
           "HeaderRowBackgroundOpacity": "1",
+          "HeaderBandEdge": "0",
           "HeaderRowPadding": "20,10,30,10",
           "HeaderTileBackgroundOpacity": "0",
           "HeaderTilePadding": "0",
@@ -2080,6 +2134,81 @@
           "HeaderBarStyleVisible": "False"
          },
          "preview": "Presets/Previews/HeaderBar_Hidden.png"
+        }
+       ]
+      },
+      {
+       "kind": "preset",
+       "id": "HeaderBandEdge",
+       "keys": [],
+       "title": "Edges of the bands behind the header row",
+       "titleKey": "LOCHNDPresetHeaderBandEdge",
+       "defaultChoice": "Default",
+       "choices": [
+        {
+         "id": "Default",
+         "name": "Fade out at both sides",
+         "locKey": "LOCHNDPresetHeaderBandEdgeDefault",
+         "constants": {}
+        },
+        {
+         "id": "Square",
+         "name": "Square edges",
+         "locKey": "LOCHNDPresetHeaderBandEdgeSquare",
+         "constants": {
+          "HeaderBandEdge": "0"
+         }
+        },
+        {
+         "id": "Soft",
+         "name": "Fade out on every edge",
+         "locKey": "LOCHNDPresetHeaderBandEdgeSoft",
+         "constants": {
+          "HeaderBandEdge": "2"
+         }
+        }
+       ]
+      },
+      {
+       "kind": "preset",
+       "id": "HeroCoverShape",
+       "keys": [],
+       "title": "Cover shape in the artwork card",
+       "titleKey": "LOCHNDPresetHeroCoverShape",
+       "defaultChoice": "Default",
+       "choices": [
+        {
+         "id": "Default",
+         "name": "2:3 poster (230 x 345)",
+         "locKey": "LOCHNDPresetHeroCoverShapeDefault",
+         "constants": {}
+        },
+        {
+         "id": "Large",
+         "name": "2:3 poster, large (280 x 420)",
+         "locKey": "LOCHNDPresetHeroCoverShapeLarge",
+         "constants": {
+          "HeroCoverWidth": "280",
+          "HeroCoverHeight": "420"
+         }
+        },
+        {
+         "id": "Square",
+         "name": "Square 1:1 (300 x 300)",
+         "locKey": "LOCHNDPresetHeroCoverShapeSquare",
+         "constants": {
+          "HeroCoverWidth": "300",
+          "HeroCoverHeight": "300"
+         }
+        },
+        {
+         "id": "Wide",
+         "name": "Wide 4:3 (340 x 255)",
+         "locKey": "LOCHNDPresetHeroCoverShapeWide",
+         "constants": {
+          "HeroCoverWidth": "340",
+          "HeroCoverHeight": "255"
+         }
         }
        ]
       }
@@ -2256,6 +2385,156 @@
        "description": "A 2:3 ratio (230 x 345) fits most covers.",
        "tipKey": "LOCHNDTipHeroCoverHeight",
        "choices": []
+      },
+      {
+       "kind": "toggle",
+       "id": "HeroCoverShowWhole",
+       "keys": [
+        "HeroCoverShowWhole"
+       ],
+       "title": "Show the whole cover (no cropping)",
+       "titleKey": "LOCHNDOptHeroCoverShowWhole",
+       "description": "Off: the cover fills its box and is cropped to it, which can cut a logo. On: the whole cover is shown and its box takes the cover's own shape, inside the width and height above.",
+       "tipKey": "LOCHNDTipHeroCoverShowWhole",
+       "choices": []
+      },
+      {
+       "kind": "thickness",
+       "id": "HeroCoverMargin",
+       "keys": [
+        "HeroCoverMargin"
+       ],
+       "title": "Cover position (over the card edge)",
+       "titleKey": "LOCHNDOptHeroCoverMargin",
+       "description": "Space around the cover when it sits over the card edge and the tiles: left, top, right, bottom.",
+       "tipKey": "LOCHNDTipHeroCoverMargin",
+       "choices": []
+      },
+      {
+       "kind": "thickness",
+       "id": "HeroCoverInsideMargin",
+       "keys": [
+        "HeroCoverInsideMargin"
+       ],
+       "title": "Cover position (inside the card)",
+       "titleKey": "LOCHNDOptHeroCoverInsideMargin",
+       "description": "Space around the cover when it sits inside the card: left, top, right, bottom.",
+       "tipKey": "LOCHNDTipHeroCoverInsideMargin",
+       "choices": []
+      },
+      {
+       "kind": "color",
+       "id": "HeroCoverBorderColor",
+       "keys": [
+        "HeroCoverBorderColor"
+       ],
+       "title": "Cover outline color",
+       "titleKey": "LOCHNDOptHeroCoverBorderColor",
+       "choices": []
+      },
+      {
+       "kind": "color",
+       "id": "AchievementBarColor",
+       "keys": [
+        "AchievementBarColor"
+       ],
+       "title": "Achievements progress bar: fill color",
+       "titleKey": "LOCHNDOptAchievementBarColor",
+       "choices": []
+      },
+      {
+       "kind": "color",
+       "id": "AchievementBarTrackColor",
+       "keys": [
+        "AchievementBarTrackColor"
+       ],
+       "title": "Achievements progress bar: track color",
+       "titleKey": "LOCHNDOptAchievementBarTrackColor",
+       "choices": []
+      },
+      {
+       "kind": "thickness",
+       "id": "HeroActionsMarginRight",
+       "keys": [
+        "HeroActionsMarginRight"
+       ],
+       "title": "Play buttons position (at the right of the card)",
+       "titleKey": "LOCHNDOptHeroActionsMarginRight",
+       "description": "Space around the Play, edit and favorite buttons when they sit at the right of the card: left, top, right, bottom.",
+       "tipKey": "LOCHNDTipHeroActionsMarginRight",
+       "choices": []
+      },
+      {
+       "kind": "thickness",
+       "id": "HeroTopLeftMargin",
+       "keys": [
+        "HeroTopLeftMargin"
+       ],
+       "title": "Top-left corner of the banner: position",
+       "titleKey": "LOCHNDOptHeroTopLeftMargin",
+       "description": "Space around the language flags and the source selector at the top left of the banner.",
+       "tipKey": "LOCHNDTipHeroTopLeftMargin",
+       "choices": []
+      },
+      {
+       "kind": "toggle",
+       "id": "InfoPanelShowReleaseDate",
+       "keys": [
+        "InfoPanelShowReleaseDate"
+       ],
+       "title": "Information panel: show release date",
+       "titleKey": "LOCHNDOptInfoPanelShowReleaseDate",
+       "description": "Shows the release date row in the information panel. Turn it off when the same information is already shown in the chips or the header tiles.",
+       "tipKey": "LOCHNDTipInfoPanelShowReleaseDate",
+       "choices": []
+      },
+      {
+       "kind": "toggle",
+       "id": "InfoPanelShowPlatforms",
+       "keys": [
+        "InfoPanelShowPlatforms"
+       ],
+       "title": "Information panel: show platform",
+       "titleKey": "LOCHNDOptInfoPanelShowPlatforms",
+       "description": "Shows the platform row in the information panel. Turn it off when the same information is already shown in the chips or the header tiles.",
+       "tipKey": "LOCHNDTipInfoPanelShowPlatforms",
+       "choices": []
+      },
+      {
+       "kind": "toggle",
+       "id": "InfoPanelShowDevelopers",
+       "keys": [
+        "InfoPanelShowDevelopers"
+       ],
+       "title": "Information panel: show developer",
+       "titleKey": "LOCHNDOptInfoPanelShowDevelopers",
+       "description": "Shows the developer row in the information panel. Turn it off when the same information is already shown in the chips or the header tiles.",
+       "tipKey": "LOCHNDTipInfoPanelShowDevelopers",
+       "choices": []
+      },
+      {
+       "kind": "toggle",
+       "id": "InfoPanelShowInstallSize",
+       "keys": [
+        "InfoPanelShowInstallSize"
+       ],
+       "title": "Information panel: show install size",
+       "titleKey": "LOCHNDOptInfoPanelShowInstallSize",
+       "description": "Shows the install size row in the information panel. Turn it off when the same information is already shown in the chips or the header tiles.",
+       "tipKey": "LOCHNDTipInfoPanelShowInstallSize",
+       "choices": []
+      },
+      {
+       "kind": "toggle",
+       "id": "InfoPanelShowSource",
+       "keys": [
+        "InfoPanelShowSource"
+       ],
+       "title": "Information panel: show source",
+       "titleKey": "LOCHNDOptInfoPanelShowSource",
+       "description": "Shows the source row in the information panel. Turn it off when the same information is already shown in the chips or the header tiles.",
+       "tipKey": "LOCHNDTipInfoPanelShowSource",
+       "choices": []
       }
      ]
     },
@@ -2273,6 +2552,35 @@
        "titleKey": "LOCHNDOptHeroShowMusicPlayer",
        "description": "The UniPlaySong player (cover, title, previous, play, next) at the right of the banner. It only shows while a game music plays.",
        "tipKey": "LOCHNDTipHeroShowMusicPlayer",
+       "choices": []
+      }
+     ]
+    },
+    {
+     "id": "details-view---artwork-header--players-online",
+     "title": "Details view - artwork header: players online",
+     "controls": [
+      {
+       "kind": "toggle",
+       "id": "HeroShowPlayersCount",
+       "keys": [
+        "HeroShowPlayersCount"
+       ],
+       "title": "Show the players online",
+       "titleKey": "LOCHNDOptHeroShowPlayersCount",
+       "description": "The number of Steam players online (News Viewer extension), large above the cover. It only shows for games the extension finds on Steam.",
+       "tipKey": "LOCHNDTipHeroShowPlayersCount",
+       "choices": []
+      },
+      {
+       "kind": "slider",
+       "id": "HeroPlayersCountFontSize",
+       "keys": [
+        "HeroPlayersCountFontSize"
+       ],
+       "title": "Players online: text size",
+       "titleKey": "LOCHNDOptHeroPlayersCountFontSize",
+       "description": "Size of the players online number.",
        "choices": []
       }
      ]
@@ -3397,6 +3705,46 @@
    "title": "Game page",
    "groups": [
     {
+     "id": "details-view---section-titles-and-labels",
+     "title": "Details view - section titles and labels",
+     "controls": [
+      {
+       "kind": "thickness",
+       "id": "SectionTitleMargin",
+       "keys": [
+        "SectionTitleMargin"
+       ],
+       "title": "Section title: space around",
+       "titleKey": "LOCHNDOptSectionTitleMargin",
+       "description": "Space around the title of each section (GENRES, TAGS...): left, top, right, bottom.",
+       "tipKey": "LOCHNDTipSectionTitleMargin",
+       "choices": []
+      },
+      {
+       "kind": "slider",
+       "id": "HeaderLabelOpacity",
+       "keys": [
+        "HeaderLabelOpacity"
+       ],
+       "title": "Labels: strength",
+       "titleKey": "LOCHNDOptHeaderLabelOpacity",
+       "description": "How strong the small labels are (1 = full text color, lower = fainter).",
+       "choices": []
+      },
+      {
+       "kind": "slider",
+       "id": "HeaderTextOpacity",
+       "keys": [
+        "HeaderTextOpacity"
+       ],
+       "title": "Secondary text: strength",
+       "titleKey": "LOCHNDOptHeaderTextOpacity",
+       "description": "How strong the secondary header text is (1 = full text color, lower = fainter).",
+       "choices": []
+      }
+     ]
+    },
+    {
      "id": "details-view---tabs",
      "title": "Details view - tabs",
      "controls": [
@@ -3410,6 +3758,26 @@
        "titleKey": "LOCHNDOptDetailsViewTabsMode",
        "description": "Tabs above the sections: All, About, Media, Stats, Community. The gear of each section sets its tab, 0 = every tab.",
        "tipKey": "LOCHNDTipDetailsViewTabsMode",
+       "choices": []
+      },
+      {
+       "kind": "thickness",
+       "id": "DetailsTabMargin",
+       "keys": [
+        "DetailsTabMargin"
+       ],
+       "title": "Tabs: space around each tab",
+       "titleKey": "LOCHNDOptDetailsTabMargin",
+       "choices": []
+      },
+      {
+       "kind": "thickness",
+       "id": "DetailsTabPadding",
+       "keys": [
+        "DetailsTabPadding"
+       ],
+       "title": "Tabs: space inside each tab",
+       "titleKey": "LOCHNDOptDetailsTabPadding",
        "choices": []
       },
       {
@@ -6268,6 +6636,36 @@
    "title": "Glass and popups",
    "groups": [
     {
+     "id": "presets",
+     "title": "Presets",
+     "controls": [
+      {
+       "kind": "preset",
+       "id": "ControlOutline",
+       "keys": [],
+       "title": "Outline of controls (boxes, lists, buttons, text fields)",
+       "titleKey": "LOCHNDPresetControlOutline",
+       "defaultChoice": "Default",
+       "choices": [
+        {
+         "id": "Default",
+         "name": "Glass outline",
+         "locKey": "LOCHNDPresetControlOutlineDefault",
+         "constants": {}
+        },
+        {
+         "id": "None",
+         "name": "No outline",
+         "locKey": "LOCHNDPresetControlOutlineNone",
+         "constants": {
+          "ControlBorderThickness": "0"
+         }
+        }
+       ]
+      }
+     ]
+    },
+    {
      "id": "glass-material",
      "title": "Glass material",
      "controls": [
@@ -6794,6 +7192,16 @@
  ],
  "constants": [
   {
+   "key": "AchievementBarColor",
+   "type": "Color",
+   "default": "#2d73ff"
+  },
+  {
+   "key": "AchievementBarTrackColor",
+   "type": "Color",
+   "default": "#151619"
+  },
+  {
    "key": "AchievementsDataGridMaxHeight",
    "type": "Double",
    "default": "450",
@@ -6853,6 +7261,12 @@
    "default": "#3081E0"
   },
   {
+   "key": "ControlBorderThickness",
+   "type": "Thickness",
+   "default": "1",
+   "min": 0.0
+  },
+  {
    "key": "ControlCornerRadius",
    "type": "CornerRadius",
    "default": "8",
@@ -6905,6 +7319,17 @@
    "min": 0.0,
    "max": 1.0,
    "step": 0.01
+  },
+  {
+   "key": "DetailsTabMargin",
+   "type": "Thickness",
+   "default": "0,0,8,6"
+  },
+  {
+   "key": "DetailsTabPadding",
+   "type": "Thickness",
+   "default": "14,5,14,6",
+   "min": 0.0
   },
   {
    "key": "DetailsViewAchievementsInRightColumn",
@@ -8406,6 +8831,11 @@
    "default": "True"
   },
   {
+   "key": "HeaderBandEdge",
+   "type": "Int",
+   "default": "1"
+  },
+  {
    "key": "HeaderBarBlurOpacity",
    "type": "Double",
    "default": "0",
@@ -8435,6 +8865,14 @@
    "step": 1.0
   },
   {
+   "key": "HeaderLabelOpacity",
+   "type": "Double",
+   "default": "0.52",
+   "min": 0.0,
+   "max": 1.0,
+   "step": 0.01
+  },
+  {
    "key": "HeaderRowBackgroundOpacity",
    "type": "Double",
    "default": "0",
@@ -8445,8 +8883,16 @@
   {
    "key": "HeaderRowPadding",
    "type": "Thickness",
-   "default": "0,14,0,18",
+   "default": "0,16,0,18",
    "min": 0.0
+  },
+  {
+   "key": "HeaderTextOpacity",
+   "type": "Double",
+   "default": "0.32",
+   "min": 0.0,
+   "max": 1.0,
+   "step": 0.01
   },
   {
    "key": "HeaderTileBackgroundOpacity",
@@ -8773,6 +9219,11 @@
    "default": "2"
   },
   {
+   "key": "HeroActionsMarginRight",
+   "type": "Thickness",
+   "default": "0,0,28,22"
+  },
+  {
    "key": "HeroBlurFull",
    "type": "Double",
    "default": "0.88",
@@ -9040,6 +9491,11 @@
    "step": 1.0
   },
   {
+   "key": "HeroCoverBorderColor",
+   "type": "Color",
+   "default": "#59FFFFFF"
+  },
+  {
    "key": "HeroCoverBorderThickness",
    "type": "Thickness",
    "default": "1.5",
@@ -9058,6 +9514,16 @@
    "min": 150.0,
    "max": 600.0,
    "step": 1.0
+  },
+  {
+   "key": "HeroCoverInsideMargin",
+   "type": "Thickness",
+   "default": "20,0,0,20"
+  },
+  {
+   "key": "HeroCoverMargin",
+   "type": "Thickness",
+   "default": "20,0,0,6"
   },
   {
    "key": "HeroCoverPlacement",
@@ -9089,6 +9555,11 @@
    "step": 0.05
   },
   {
+   "key": "HeroCoverShowWhole",
+   "type": "Boolean",
+   "default": "False"
+  },
+  {
    "key": "HeroCoverWidth",
    "type": "Double",
    "default": "230",
@@ -9118,6 +9589,14 @@
    "default": "400",
    "min": 300.0,
    "max": 900.0,
+   "step": 1.0
+  },
+  {
+   "key": "HeroPlayersCountFontSize",
+   "type": "Double",
+   "default": "28",
+   "min": 14.0,
+   "max": 60.0,
    "step": 1.0
   },
   {
@@ -9197,6 +9676,11 @@
    "default": "True"
   },
   {
+   "key": "HeroShowPlayersCount",
+   "type": "Boolean",
+   "default": "True"
+  },
+  {
    "key": "HeroShowRareAchievements",
    "type": "Boolean",
    "default": "False"
@@ -9251,6 +9735,11 @@
    "min": 0.0,
    "max": 1.0,
    "step": 0.01
+  },
+  {
+   "key": "HeroTopLeftMargin",
+   "type": "Thickness",
+   "default": "20,20,0,0"
   },
   {
    "key": "HighlightGlyphColor",
@@ -9328,6 +9817,31 @@
    "type": "Thickness",
    "default": "16,12,16,12",
    "min": 0.0
+  },
+  {
+   "key": "InfoPanelShowDevelopers",
+   "type": "Boolean",
+   "default": "True"
+  },
+  {
+   "key": "InfoPanelShowInstallSize",
+   "type": "Boolean",
+   "default": "True"
+  },
+  {
+   "key": "InfoPanelShowPlatforms",
+   "type": "Boolean",
+   "default": "True"
+  },
+  {
+   "key": "InfoPanelShowReleaseDate",
+   "type": "Boolean",
+   "default": "True"
+  },
+  {
+   "key": "InfoPanelShowSource",
+   "type": "Boolean",
+   "default": "True"
   },
   {
    "key": "InfoPanelStyleShowCover",
@@ -9499,6 +10013,18 @@
    "step": 1.0
   },
   {
+   "key": "ScrollbarThumbOpacity",
+   "type": "Double",
+   "default": "1",
+   "min": 0.0
+  },
+  {
+   "key": "ScrollbarThumbRim",
+   "type": "Thickness",
+   "default": "1",
+   "min": 0.0
+  },
+  {
    "key": "ScrollbarThumbWidth",
    "type": "Double",
    "default": "6",
@@ -9616,9 +10142,22 @@
    "default": "0,0,0,14"
   },
   {
+   "key": "SectionTitleMargin",
+   "type": "Thickness",
+   "default": "0,0,0,10"
+  },
+  {
    "key": "ShowNavigationButtons",
    "type": "Boolean",
    "default": "True"
+  },
+  {
+   "key": "SidePanelFrostOpacity",
+   "type": "Double",
+   "default": "0.1",
+   "min": 0.0,
+   "max": 0.5,
+   "step": 0.01
   },
   {
    "key": "SidebarAutoHide",
@@ -9700,6 +10239,11 @@
    "default": "#151616"
   },
   {
+   "key": "WindowGlassBackgroundWarning",
+   "type": "Boolean",
+   "default": "True"
+  },
+  {
    "key": "WindowGlassBlurRadius",
    "type": "Double",
    "default": "36",
@@ -9730,6 +10274,12 @@
   }
  ],
  "dependents": {
+  "SidePanelFrostOpacity": [
+   {
+    "resource": "SidePanelFrostBrush",
+    "property": "Opacity"
+   }
+  ],
   "TextColor": [
    {
     "resource": "SectionGlassBorderBrush",
@@ -9756,6 +10306,24 @@
    {
     "resource": "GlassInsetRimBrush",
     "property": "Opacity"
+   }
+  ],
+  "HeroCoverBorderColor": [
+   {
+    "resource": "HeroCoverBorderBrush",
+    "property": "Color"
+   }
+  ],
+  "AchievementBarColor": [
+   {
+    "resource": "AchievementBarBrush",
+    "property": "Color"
+   }
+  ],
+  "AchievementBarTrackColor": [
+   {
+    "resource": "AchievementBarTrackBrush",
+    "property": "Color"
    }
   ],
   "SectionGlassOpacity": [

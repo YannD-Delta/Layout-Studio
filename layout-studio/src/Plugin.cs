@@ -21,6 +21,9 @@ namespace LayoutStudio
         private OptionsBridge options;
         public FactsViewModel Facts { get; set; }
 
+        /// <summary>Screenshots and trailer of the selected game for the Fullscreen details page (Path=Media.Screenshots, Media.HasScreenshots).</summary>
+        public MediaViewModel Media { get; } = new MediaViewModel();
+
         /// <summary>Opens the Layout Studio editor; the theme's settings button at the top binds its Command to this.</summary>
         public System.Windows.Input.ICommand OpenEditor { get; set; }
 
@@ -65,13 +68,17 @@ namespace LayoutStudio
                 if (guard == GuardResult.ThemeOptionsActive) { logger.Warn("LayoutStudio idle: ThemeOptions is enabled; disable it first so settings are not applied twice"); return; }
                 string themeDir = Path.Combine(api.Paths.ConfigurationPath, "Themes", ThemeGuard.ModeFolder(isDesktop), themeId);
                 string dataDir = isDesktop ? GetPluginUserDataPath() : Path.Combine(GetPluginUserDataPath(), "fullscreen");
-                studio = StudioService.Create(themeDir, dataDir, Application.Current.Dispatcher);
+                var clock = System.Diagnostics.Stopwatch.StartNew();
+                studio = StudioService.Create(themeDir, dataDir, Application.Current.Dispatcher, Path.Combine(GetPluginUserDataPath(), "look.profile.json"));
+                long createMs = clock.ElapsedMilliseconds;
                 Action<string> log = line => logger.Warn(line);
                 studio.Log = log;
                 studio.Applier.Log = log;
                 studio.ProfileApplier.Log = log;
                 foreach (var problem in studio.SchemaProblems) logger.Warn("LayoutStudio schema: " + problem);
+                if (studio.Look != null && studio.Look.Warning != null) logger.Warn(studio.Look.Warning);
                 studio.LoadActive();
+                long loadMs = clock.ElapsedMilliseconds - createMs;
                 if (studio.Active.Warning != null) logger.Warn(studio.Active.Warning);
                 exposed.Options = new OptionsBridge(studio.Store);
                 exposed.Facts = new FactsViewModel(FactsSettings.From(studio.Active.Editor));
@@ -84,7 +91,8 @@ namespace LayoutStudio
                     sectionMover.Start();
                 }
                 studio.ProfileReplaced += () => exposed.Facts.Reload(studio.Active.Editor);
-                logger.Info("LayoutStudio loaded profile '" + studio.Active.Name + "' (" + studio.Store.Changed().Count + " overrides, " + ThemeGuard.ModeFolder(isDesktop).ToLowerInvariant() + ")");
+                ShotService.StartIfRequested(Application.Current.Dispatcher, line => logger.Info(line));
+                logger.Info("LayoutStudio loaded profile '" + studio.Active.Name + "' (" + studio.Store.Changed().Count + " overrides, " + ThemeGuard.ModeFolder(isDesktop).ToLowerInvariant() + "), schema " + createMs + " ms, profile " + loadMs + " ms, total " + clock.ElapsedMilliseconds + " ms");
             }
             catch (Exception ex)
             {
@@ -104,10 +112,18 @@ namespace LayoutStudio
         /// <summary>Median FPS, CPU, GPU and RAM of the selected game, from GameActivity's logged samples.</summary>
         public override void OnGameSelected(OnGameSelectedEventArgs args)
         {
+            long started = System.Diagnostics.Stopwatch.GetTimestamp();
+            try { OnGameSelectedCore(args); }
+            finally { PerfProbe.HandlerTicks += System.Diagnostics.Stopwatch.GetTimestamp() - started; PerfProbe.HandlerCalls++; }
+        }
+
+        private void OnGameSelectedCore(OnGameSelectedEventArgs args)
+        {
             try
             {
                 if (studio == null || exposed.Facts == null) return;
                 var selected = args.NewValue;
+                UpdateMedia(selected);
                 if (selected == null || selected.Count != 1) { exposed.Facts.Update(null); exposed.Facts.SetScores(null, null, null); return; }
                 exposed.Facts.SetScores(selected[0].CriticScore, selected[0].CommunityScore, selected[0].UserScore);
                 string path = Path.Combine(PlayniteApi.Paths.ExtensionsDataPath, GameActivityId, "GameActivity", selected[0].Id.ToString() + ".json");
@@ -134,6 +150,22 @@ namespace LayoutStudio
             }
         }
 
+        private const string ScreenshotUtilitiesId = "485d682f-73e9-4d54-b16f-b8dd49e88f90";
+
+        /// <summary>The folders Screenshot Utilities and Extra Metadata Loader fill: read directly, they expose no paths to a theme.</summary>
+        private void UpdateMedia(List<Game> selected)
+        {
+            try
+            {
+                if (selected == null || selected.Count != 1) { exposed.Media.Update(null, null); return; }
+                string id = selected[0].Id.ToString();
+                exposed.Media.Update(
+                    MediaFiles.Screenshots(Path.Combine(PlayniteApi.Paths.ExtensionsDataPath, ScreenshotUtilitiesId), id, 8),
+                    MediaFiles.Video(PlayniteApi.Paths.ConfigurationPath, id));
+            }
+            catch (Exception ex) { logger.Warn(ex, "could not list the media of the selected game"); }
+        }
+
         public override void OnApplicationStopped(OnApplicationStoppedEventArgs args)
         {
             if (studio != null) studio.TrySave();   // an edit made less than a second before quitting is not lost
@@ -152,9 +184,34 @@ namespace LayoutStudio
                 try { File.Delete(sampleFlag); SampleLibrary.Fill(PlayniteApi, logger); }
                 catch (Exception ex) { logger.Warn(ex, "sample library failed"); }
             }
+            // Testbed measurement (tools\perf-probe.ps1): scrolls the list and switches games by code, logs the UI thread time per step.
+            string perfFlag = Path.Combine(PlayniteApi.Paths.ConfigurationPath, PerfProbe.FlagName);
+            if (File.Exists(perfFlag) && PlayniteApi.ApplicationInfo.Mode == ApplicationMode.Desktop)
+                PerfProbe.Arm(perfFlag, line => logger.Info(line));
             string marker = Path.Combine(PlayniteApi.Paths.ConfigurationPath, "open-editor.flag");
             if (studio != null && File.Exists(Path.Combine(PlayniteApi.Paths.ConfigurationPath, "sample-bg.jpg")) && File.Exists(marker))
-                Application.Current.Dispatcher.BeginInvoke(new Action(() => OpenEditor()));
+            {
+                // the flag may name a page (visual-corners, header...); editor-page.txt next to it is read every second afterwards, so one run can show many pages
+                string first = null;
+                try { first = File.ReadAllText(marker).Trim(); } catch (Exception) { }
+                Application.Current.Dispatcher.BeginInvoke(new Action(() => OpenEditor(string.IsNullOrEmpty(first) ? null : first)));
+                string pageFile = Path.Combine(PlayniteApi.Paths.ConfigurationPath, "editor-page.txt");
+                string last = null;
+                var timer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+                timer.Tick += (s, e) =>
+                {
+                    try
+                    {
+                        if (!File.Exists(pageFile)) return;
+                        string wanted = File.ReadAllText(pageFile).Trim();
+                        if (wanted == last) return;
+                        last = wanted;
+                        if (wanted.Length > 0) OpenEditor(wanted);
+                    }
+                    catch (Exception) { }
+                };
+                timer.Start();
+            }
         }
 
         /// <summary>One notification (not a dialog) naming the optional add-ons that are not installed; shown again only when that list changes.</summary>
@@ -278,6 +335,7 @@ namespace LayoutStudio
                 return;
             }
             if (editor != null) { if (shellModel != null) shellModel.OpenPage(pageId); editor.Activate(); return; }
+            logoChecked = false;   // a logo added meanwhile is seen when the editor is opened again
             Action releaseHandlers = null;
             try
             {
@@ -288,11 +346,26 @@ namespace LayoutStudio
                     key => Application.Current.TryFindResource(key) as string, CultureInfo.CurrentCulture, SelectedGameBackground,
                     studio, text => { try { Clipboard.SetText(text); } catch (Exception ex) { logger.Warn(ex, "clipboard unavailable"); } },
                     new PlayniteSettingsViewModel(PlayniteSettingsAccess.Create(PlayniteApi), Path.Combine(GetPluginUserDataPath(), "playnite-settings-backup.json")) { ThemeGlassOn = () => studio.Store.Get("WindowGlassEnabled") != "False" },
-                    HwinfoCheck.Run(PlayniteApi.Paths.ExtensionsDataPath), exposed.Facts);
+                    HwinfoCheck.Run(PlayniteApi.Paths.ExtensionsDataPath), exposed.Facts,
+                    () => new[]
+                    {
+                        new KeyValuePair<string, string>("Layout Studio", ExtensionVersion()),
+                        new KeyValuePair<string, string>("Playnite", PlayniteApi.ApplicationInfo.ApplicationVersion + " (" + PlayniteApi.ApplicationInfo.Mode + ")"),
+                        new KeyValuePair<string, string>("Language", PlayniteApi.ApplicationSettings.Language ?? "?"),
+                        new KeyValuePair<string, string>("Log", "extensions.log in Playnite's user data folder")
+                    }, CurrentLiveContext);
                 shell.OpenPage(pageId);
+                shell.Mode = "Desktop";
+                if (File.Exists(FullscreenSchemaPath())) shell.ModeSwitch = SwitchEditorMode;
+                desktopShell = shell;
                 shellModel = shell;
                 editor = EditorWindowFactory.Create(shell, PlayniteApi.ApplicationSettings.Language);
-                editor.Closed += (s, e) => { releaseHandlers(); editor = null; shellModel = null; studio.History.EndAllBatches(); studio.TrySave(); };
+                editor.Closed += (s, e) =>
+                {
+                    releaseHandlers(); editor = null; shellModel = null; desktopShell = null;
+                    studio.History.EndAllBatches(); studio.TrySave();
+                    if (fsStudio != null) { fsStudio.History.EndAllBatches(); fsStudio.TrySave(); fsStudio = null; studio.ReloadLook(); }
+                };
                 editor.Show();
             }
             catch (Exception ex)
@@ -303,6 +376,100 @@ namespace LayoutStudio
                 PlayniteApi.Dialogs.ShowErrorMessage("Layout Studio could not open the editor: " + ex.Message);
             }
         }
+
+        // ---- editing the Fullscreen profile from the desktop editor ----------------------------------------------
+
+        private StudioService fsStudio;
+        private ShellViewModel desktopShell;
+
+        private string FullscreenThemeDir() { return Path.Combine(PlayniteApi.Paths.ConfigurationPath, "Themes", "Fullscreen", ThemeGuard.FullscreenThemeId); }
+        private string FullscreenSchemaPath() { return Path.Combine(FullscreenThemeDir(), "layout-studio.schema.json"); }
+
+        /// <summary>Switches the open editor between the Desktop theme (live) and the Fullscreen theme (its profile is edited and saved; it shows when Playnite runs in Fullscreen mode).</summary>
+        private void SwitchEditorMode(string mode)
+        {
+            if (editor == null || desktopShell == null) return;
+            try
+            {
+                if (mode == "Fullscreen")
+                {
+                    studio.TrySave();   // the shared Look is read from the file: write what is pending first
+                    fsStudio = StudioService.CreateOffline(FullscreenThemeDir(), Path.Combine(GetPluginUserDataPath(), "fullscreen"), Application.Current.Dispatcher, Path.Combine(GetPluginUserDataPath(), "look.profile.json"));
+                    fsStudio.Log = line => logger.Warn(line);
+                    fsStudio.ProfileApplier.Log = line => logger.Warn(line);
+                    fsStudio.LoadActive();
+                    var fsShell = new ShellViewModel(fsStudio.Schema, fsStudio.Store, fsStudio.History, fsStudio.ProfileApplier, fsStudio.Active,
+                        key => Application.Current.TryFindResource(key) as string, CultureInfo.CurrentCulture, null,
+                        fsStudio, text => { try { Clipboard.SetText(text); } catch (Exception ex) { logger.Warn(ex, "clipboard unavailable"); } },
+                        null, null, null,
+                        () => new[]
+                        {
+                            new KeyValuePair<string, string>("Editing", "the Fullscreen profile (shown when Playnite runs in Fullscreen mode)"),
+                            new KeyValuePair<string, string>("Playnite", PlayniteApi.ApplicationInfo.ApplicationVersion + " (" + PlayniteApi.ApplicationInfo.Mode + ")")
+                        }, null);
+                    fsShell.Mode = "Fullscreen";
+                    fsShell.ModeSwitch = SwitchEditorMode;
+                    shellModel = fsShell;
+                    editor.DataContext = fsShell;
+                    editor.Title = "Layout Studio - Fullscreen";
+                }
+                else
+                {
+                    if (fsStudio != null) { fsStudio.History.EndAllBatches(); fsStudio.TrySave(); fsStudio = null; studio.ReloadLook(); }
+                    shellModel = desktopShell;
+                    editor.DataContext = desktopShell;
+                    editor.Title = "Layout Studio";
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, "LayoutStudio could not switch the editor to " + mode);
+                PlayniteApi.Dialogs.ShowErrorMessage("Layout Studio could not switch to " + mode + ": " + ex.Message);
+            }
+        }
+
+        /// <summary>The version in extension.yaml next to the plugin dll ("?" when it cannot be read).</summary>
+        private static string ExtensionVersion()
+        {
+            try
+            {
+                string yaml = Path.Combine(Path.GetDirectoryName(typeof(LayoutStudioPlugin).Assembly.Location), "extension.yaml");
+                foreach (var line in File.ReadAllLines(yaml))
+                    if (line.StartsWith("Version:", StringComparison.OrdinalIgnoreCase)) return line.Substring(8).Trim().Trim('\'', '"');
+            }
+            catch (Exception) { }
+            return "?";
+        }
+
+        /// <summary>What the main window shows now (view, and what the selected game has), for the Sizes page: which sizes can be seen live.</summary>
+        private LiveContext CurrentLiveContext()
+        {
+            var main = PlayniteApi.MainView;
+            var context = new LiveContext { View = main.ActiveDesktopView.ToString().ToLowerInvariant() };
+            var game = main.SelectedGames == null ? null : main.SelectedGames.FirstOrDefault();
+            if (game == null) return context;
+            context.HasGame = true;
+            context.HasDescription = !string.IsNullOrWhiteSpace(game.Description);
+            context.HasLinks = game.Links != null && game.Links.Count > 0;
+            // the disk is asked once per selected game, not every few seconds
+            if (!logoChecked || logoGame != game.Id)
+            {
+                logoGame = game.Id;
+                logoChecked = true;
+                try
+                {
+                    // Extra Metadata Loader keeps logos in <user data>\ExtraMetadata\games\<game id>\Logo.*
+                    string folder = Path.Combine(PlayniteApi.Paths.ConfigurationPath, "ExtraMetadata", "games", game.Id.ToString());
+                    logoFound = Directory.Exists(folder) && Directory.GetFiles(folder, "Logo.*").Length > 0;
+                }
+                catch (Exception) { logoFound = false; }
+            }
+            context.HasLogo = logoFound;
+            return context;
+        }
+
+        private Guid logoGame;
+        private bool logoChecked, logoFound;
 
         /// <summary>Artwork of the selected game for the background preview; null when there is none.</summary>
         private string SelectedGameBackground()

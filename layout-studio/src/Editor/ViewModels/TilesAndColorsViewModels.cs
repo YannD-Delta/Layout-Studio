@@ -86,6 +86,9 @@ namespace LayoutStudio.Editor
         private readonly ConstantStore store;
         private readonly History history;
         private readonly Control control;
+
+        /// <summary>The chip table and the other header settings shown under the cells (set by the shell).</summary>
+        public HeaderExtrasViewModel Extras { get; set; }
         public const int CardsPerCell = 4;
 
         public TilesEditorViewModel(ConstantStore store, Schema schema, History history)
@@ -203,8 +206,8 @@ namespace LayoutStudio.Editor
             foreach (var sw in Profiles) { var id = sw.Id; sw.SelectCommand = new RelayCommand(() => SelectProfile(id)); }
             foreach (var sw in Accents) { var id = sw.Id; sw.SelectCommand = new RelayCommand(() => SelectAccent(id)); }
             RefreshSelection();
-            store.ValueChanged += key => { if (key == "GlyphColor") Raise("CustomAccent"); };
-            history.Changed += () => { RefreshSelection(); Raise("CustomAccent"); };   // an undo or redo can change the selected profile/accent
+            store.ValueChanged += key => { if (key == "GlyphColor") { Raise("CustomAccent"); Raise("AccentR"); Raise("AccentG"); Raise("AccentB"); } };
+            history.Changed += () => { RefreshSelection(); Raise("CustomAccent"); Raise("AccentR"); Raise("AccentG"); Raise("AccentB"); };   // an undo or redo can change the selected profile/accent
         }
 
         public IList<SwatchViewModel> Profiles { get; private set; }
@@ -238,6 +241,34 @@ namespace LayoutStudio.Editor
                 }
                 finally { history.EndBatch(); Raise("CustomAccent"); }
             }
+        }
+
+        private bool pickerOpen;
+        public bool PickerOpen { get { return pickerOpen; } set { if (pickerOpen != value) { pickerOpen = value; Raise("PickerOpen"); } } }
+
+        private int Channel(int index)
+        {
+            try { string t = CustomAccent; if (t != null && t.Length == 9) return Convert.ToInt32(t.Substring(1 + index * 2, 2), 16); } catch (FormatException) { }
+            return 0;
+        }
+
+        private void SetChannel(int index, double value)
+        {
+            var c = new[] { Channel(0), Channel(1), Channel(2), Channel(3) };
+            c[index] = (int)Math.Max(0, Math.Min(255, Math.Round(value)));
+            CustomAccent = "#" + c[0].ToString("X2") + c[1].ToString("X2") + c[2].ToString("X2") + c[3].ToString("X2");
+            Raise("AccentR"); Raise("AccentG"); Raise("AccentB");
+        }
+
+        /// <summary>Red, green and blue of the custom accent for the picker sliders (0 to 255).</summary>
+        public double AccentR { get { return Channel(1); } set { SetChannel(1, value); } }
+        public double AccentG { get { return Channel(2); } set { SetChannel(2, value); } }
+        public double AccentB { get { return Channel(3); } set { SetChannel(3, value); } }
+
+        /// <summary>A quick swatch ("#RRGGBB").</summary>
+        public RelayCommand SetAccentCommand
+        {
+            get { return new RelayCommand(p => { string t = p as string; if (!string.IsNullOrEmpty(t) && t.Length == 7 && t[0] == '#') { CustomAccent = "#FF" + t.Substring(1).ToUpperInvariant(); Raise("AccentR"); Raise("AccentG"); Raise("AccentB"); } }); }
         }
 
         private void Select(string group, string id)

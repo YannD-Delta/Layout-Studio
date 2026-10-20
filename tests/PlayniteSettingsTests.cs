@@ -172,6 +172,22 @@ public static class PlayniteSettingsTests
         Assert.False(System.IO.File.Exists(path), "nothing left to restore");
     }
 
+    public static void Reopening_the_editor_says_which_Playnite_settings_were_changed_so_the_restore_button_shows()
+    {
+        string path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "ls-backup-" + System.Guid.NewGuid().ToString("N") + ".json");
+        var fake = new FakeSettings();
+        new PlayniteSettingsViewModel(fake, path).FixAllCommand.Execute(null);
+        var again = new PlayniteSettingsViewModel(fake, path);
+        Assert.False(again.HasFindings, "nothing left to fix");
+        Assert.True(again.HasStatus, "the banner explains that settings were changed");
+        Assert.True(again.Status.Contains("Put back"), again.Status);
+        again.RestoreCommand.Execute(null);
+        Assert.False(again.Status.Contains("earlier"), "once restored, the hint gives way to the confirmation");
+        var fresh = new PlayniteSettingsViewModel(new FakeSettings(), path);
+        Assert.False(fresh.HasStatus, "nothing was changed, nothing to say");
+        System.IO.File.Delete(path);
+    }
+
     public static void A_damaged_backup_file_is_ignored()
     {
         string path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "ls-backup-" + System.Guid.NewGuid().ToString("N") + ".json");

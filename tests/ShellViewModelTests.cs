@@ -164,6 +164,76 @@ public static class ShellViewModelTests
         Assert.True(e.Shell.RedoCommand.CanExecute(null));
     }
 
+    public static void The_undo_and_redo_buttons_say_what_they_would_change()
+    {
+        var e = Make();
+        Assert.Equal("Undo", e.Shell.UndoLabel);
+        Assert.Equal("Redo", e.Shell.RedoLabel);
+        var blur = e.Shell.Pages.SelectMany(p => p.Settings).Single(s => s.Id == "WindowGlassBlurRadius");
+        blur.Text = "12";
+        Assert.Equal("Undo: Window background blur", e.Shell.UndoLabel);
+        string error;
+        e.History.BeginBatch();
+        e.Store.TrySet("WindowGlassBlurRadius", "20", out error);
+        e.Store.TrySet("SlotCount", "6", out error);
+        e.History.EndBatch();
+        Assert.Equal("Undo: 2 settings", e.Shell.UndoLabel);
+        e.Shell.UndoCommand.Execute(null);
+        Assert.Equal("Undo: Window background blur", e.Shell.UndoLabel);
+        Assert.Equal("Redo: 2 settings", e.Shell.RedoLabel);
+        var corners = e.Shell.Pages.SelectMany(p => p.Settings).Single(s => s.Id == "Corners");
+        corners.SelectedChoice = corners.Choices.Single(c => c.Id == "Sharp");
+        Assert.Equal("Undo: a preset choice", e.Shell.UndoLabel);
+    }
+
+    public static void A_big_page_reset_asks_for_a_second_click_and_stays_one_undo_step()
+    {
+        var e = Make();
+        e.Shell.BigResetThreshold = 3;
+        e.Shell.SelectedPage = e.Shell.Pages.Single(p => p.Id == "details");
+        Setting(e, "SlotCount").Text = "6";
+        Setting(e, "Accent").Text = "#FF00FF00";
+        Setting(e, "PageSideMargin").Text = "1,2,3,4";
+        Assert.Equal(3, e.Shell.SelectedPage.ChangedCount);
+        e.Shell.ResetPageCommand.Execute(null);
+        Assert.True(e.Shell.ResetPending, "first click only asks");
+        Assert.Equal("Click again to reset 3 settings", e.Shell.ResetPageLabel);
+        Assert.Equal("6", e.Store.Get("SlotCount"), "nothing was reset yet");
+        e.Shell.ResetPageCommand.Execute(null);
+        Assert.False(e.Shell.ResetPending);
+        Assert.Equal("4", e.Store.Get("SlotCount"));
+        Assert.Equal("Reset this page", e.Shell.ResetPageLabel);
+        e.History.Undo();
+        Assert.Equal("6", e.Store.Get("SlotCount"), "one undo step brings all three back");
+    }
+
+    public static void A_small_reset_is_immediate_and_a_change_or_another_page_cancels_the_question()
+    {
+        var e = Make();
+        e.Shell.BigResetThreshold = 3;
+        e.Shell.SelectedPage = e.Shell.Pages.Single(p => p.Id == "details");
+        Setting(e, "SlotCount").Text = "6";
+        e.Shell.ResetPageCommand.Execute(null);
+        Assert.Equal("4", e.Store.Get("SlotCount"), "one setting: no question");
+        Setting(e, "SlotCount").Text = "6"; Setting(e, "Accent").Text = "#FF00FF00"; Setting(e, "PageSideMargin").Text = "1,2,3,4";
+        e.Shell.ResetPageCommand.Execute(null);
+        Assert.True(e.Shell.ResetPending);
+        Setting(e, "SlotCount").Text = "7";
+        Assert.False(e.Shell.ResetPending, "a change cancels the question");
+        e.Shell.ResetPageCommand.Execute(null);
+        Assert.True(e.Shell.ResetPending);
+        e.Shell.SelectedPage = e.Shell.Pages.Single(p => p.Id == "background");
+        Assert.False(e.Shell.ResetPending, "so does another page");
+    }
+
+    public static void The_undo_label_follows_the_language()
+    {
+        var e = Make(k => k == "LOCLS_Undo" ? "Annuler" : null);
+        var blur = e.Shell.Pages.SelectMany(p => p.Settings).Single(s => s.Id == "WindowGlassBlurRadius");
+        blur.Text = "12";
+        Assert.Equal("Annuler: Window background blur", e.Shell.UndoLabel);
+    }
+
     public static void Undo_refreshes_the_setting_view_models()
     {
         var e = Make();

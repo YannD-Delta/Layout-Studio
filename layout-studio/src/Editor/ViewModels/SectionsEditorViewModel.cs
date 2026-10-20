@@ -64,6 +64,10 @@ namespace LayoutStudio.Editor
 
         /// <summary>The left/right button: sends the section to the end of the other column (only for sections that can change column).</summary>
         public RelayCommand MoveColumnCommand { get; set; }
+
+        /// <summary>Opens the Items page on the card of this section, with every option the theme has for it. Null when the section has no item card.</summary>
+        public RelayCommand OptionsCommand { get; set; }
+        public bool HasOptions { get { return OptionsCommand != null; } }
     }
 
     /// <summary>The two-column wireframe of the Details view: blocks to drag between and inside the columns.</summary>
@@ -83,6 +87,9 @@ namespace LayoutStudio.Editor
             Rebuild();
             store.ValueChanged += key => Rebuild();
         }
+
+        /// <summary>Set by the shell: opens the Items page on the card with this id.</summary>
+        public System.Action<string> OpenItemOptions { get; set; }
 
         public ObservableCollection<SectionBlockViewModel> Left { get; private set; }
         public ObservableCollection<SectionBlockViewModel> Right { get; private set; }
@@ -213,6 +220,9 @@ namespace LayoutStudio.Editor
                     block.ToggleOpenCommand = new RelayCommand(() => ToggleOpen(captured));
                     block.MoveColumnCommand = new RelayCommand(() => MoveToOtherColumn(captured), () => captured.CanMove);
                     block.OnDragEnded = ClearDropTarget;
+                    var def = schema.Sections.FirstOrDefault(d => d.Id == s.Id);
+                    var family = def == null ? null : ItemFamilies.FamilyOfSection(def);
+                    if (family != null) { string familyId = family.Id; block.OptionsCommand = new RelayCommand(() => { if (OpenItemOptions != null) OpenItemOptions(familyId); }); }
                     blocks[s.Id] = block;
                 }
                 block.Column = column;
