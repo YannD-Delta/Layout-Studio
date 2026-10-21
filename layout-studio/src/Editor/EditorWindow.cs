@@ -27,18 +27,6 @@ namespace LayoutStudio.Editor
         }
     }
 
-    /// <summary>Picks the schematic "Glyph.&lt;id&gt;" of a setting that has one; nothing for the others (the glyph slot stays empty and takes no room).</summary>
-    public class GlyphTemplateSelector : DataTemplateSelector
-    {
-        public override DataTemplate SelectTemplate(object item, DependencyObject container)
-        {
-            var element = container as FrameworkElement;
-            var setting = item as SettingViewModel;
-            if (element == null || setting == null || !setting.HasGlyph) return null;
-            return element.TryFindResource("Glyph." + setting.GlyphKey) as DataTemplate;
-        }
-    }
-
     /// <summary>Picks the scene "Scene.<size id>" the Sizes preview dock draws for a size (the plain box when it has none).</summary>
     public class SceneTemplateSelector : DataTemplateSelector
     {
@@ -59,7 +47,131 @@ namespace LayoutStudio.Editor
             var element = container as FrameworkElement;
             var page = item as PageViewModel;
             if (element == null || page == null) return null;
-            return (element.TryFindResource("Page." + page.Kind) ?? element.TryFindResource("Page.settings")) as DataTemplate;
+            if (page.IsComposite) return element.TryFindResource("Page.composite") as DataTemplate;
+            if (page.Kind == "settings") return element.TryFindResource("Page.settings") as DataTemplate;
+            return (element.TryFindResource("Page." + page.Kind) ?? element.TryFindResource("Page.editorHost") ?? element.TryFindResource("Page.settings")) as DataTemplate;
+        }
+    }
+
+    /// <summary>Picks "Editor.&lt;kind&gt;" for the view model of a specialised editor: the same content whether it fills a page or sits in a block.</summary>
+    public class EditorTemplateSelector : DataTemplateSelector
+    {
+        public static string KindOf(object editor)
+        {
+            if (editor == null) return null;
+            switch (editor.GetType().Name)
+            {
+                case "SectionsEditorViewModel": return "sections";
+                case "ItemsEditorViewModel": return "items";
+                case "SizesEditorViewModel": return "sizes";
+                case "BackgroundEditorViewModel": return "background";
+                case "BackdropEditorViewModel": return "backdrop";
+                case "TilesEditorViewModel": return "tiles";
+                case "ColorsEditorViewModel": return "colors";
+                case "CornersEditorViewModel": return "corners";
+                case "RulesEditorViewModel": return "rules";
+                case "AdviceViewModel": return "advice";
+                case "DiagnosticsViewModel": return "diagnostics";
+                case "SharingViewModel": return "share";
+                case "GlobalPresetsViewModel": return "globalpresets";
+                default: return null;
+            }
+        }
+
+        public override DataTemplate SelectTemplate(object item, DependencyObject container)
+        {
+            var element = container as FrameworkElement;
+            string kind = KindOf(item);
+            if (element == null || kind == null) return null;
+            return element.TryFindResource("Editor." + kind) as DataTemplate;
+        }
+    }
+
+    /// <summary>
+    /// Attached to the root of a block: when the view model asks for the block to be shown (sidebar entry, see-also link, search hit) the element is brought into view.
+    /// The block may not be drawn yet when the request is made, so the request waits in ScrollPending until the element is loaded.
+    /// </summary>
+    public static class BlockScroll
+    {
+        public static readonly DependencyProperty BlockProperty =
+            DependencyProperty.RegisterAttached("Block", typeof(GroupViewModel), typeof(BlockScroll), new PropertyMetadata(null, OnBlockChanged));
+
+        public static GroupViewModel GetBlock(DependencyObject d) { return (GroupViewModel)d.GetValue(BlockProperty); }
+        public static void SetBlock(DependencyObject d, GroupViewModel value) { d.SetValue(BlockProperty, value); }
+
+        private static void ScrollToTop(FrameworkElement element)
+        {
+            DependencyObject node = element;
+            ScrollViewer viewer = null;
+            while (node != null && viewer == null) { node = VisualTreeHelper.GetParent(node); viewer = node as ScrollViewer; }
+            if (viewer == null) { element.BringIntoView(); return; }
+            viewer.UpdateLayout();
+            double y = element.TransformToAncestor(viewer).Transform(new Point(0, 0)).Y + viewer.VerticalOffset;
+            viewer.ScrollToVerticalOffset(Math.Max(0, y - 6));
+        }
+
+        private static void OnBlockChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            var element = d as FrameworkElement;
+            if (element == null) return;
+            var old = e.OldValue as GroupViewModel;
+            var block = e.NewValue as GroupViewModel;
+            if (old != null) element.Tag = null;
+            if (block == null) return;
+            Action scroll = () =>
+            {
+                if (!block.ScrollPending) return;
+                if (!element.IsLoaded || !element.IsVisible) return;
+                block.ScrollPending = false;
+                // after the layout pass that follows a page change, so the block has its place
+                element.Dispatcher.BeginInvoke(new Action(() => ScrollToTop(element)), System.Windows.Threading.DispatcherPriority.Loaded);
+            };
+            Action handler = () => scroll();
+            block.ScrollRequested += handler;
+            element.Loaded += (s, a) => scroll();
+            element.Unloaded += (s, a) => block.ScrollRequested -= handler;
+            if (element.IsLoaded) scroll();
+        }
+    }
+
+    /// <summary>
+    /// A scroll viewer inside another one (the sections editor, the sizes list) hands the mouse wheel to the page when it cannot scroll any further,
+    /// so the wheel never gets stuck over an inner list.
+    /// </summary>
+    public static class ScrollChain
+    {
+        public static readonly DependencyProperty EnabledProperty =
+            DependencyProperty.RegisterAttached("Enabled", typeof(bool), typeof(ScrollChain), new PropertyMetadata(false, OnEnabledChanged));
+
+        public static bool GetEnabled(DependencyObject d) { return (bool)d.GetValue(EnabledProperty); }
+        public static void SetEnabled(DependencyObject d, bool value) { d.SetValue(EnabledProperty, value); }
+
+        private static void OnEnabledChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            var viewer = d as ScrollViewer;
+            if (viewer == null) return;
+            // the page's own viewer: any inner viewer that is at its end sends the wheel up to it
+            if ((bool)e.NewValue) viewer.PreviewMouseWheel += OnPageWheel;
+            else viewer.PreviewMouseWheel -= OnPageWheel;
+        }
+
+        private static void OnPageWheel(object sender, MouseWheelEventArgs e)
+        {
+            var page = (ScrollViewer)sender;
+            var source = e.OriginalSource as DependencyObject;
+            // the innermost scroll viewer under the pointer, if it is not the page itself
+            ScrollViewer inner = null;
+            for (var node = source; node != null && !ReferenceEquals(node, page); node = (node is Visual || node is System.Windows.Media.Media3D.Visual3D) ? VisualTreeHelper.GetParent(node) : LogicalTreeHelper.GetParent(node))
+            {
+                var viewer = node as ScrollViewer;
+                if (viewer != null && viewer.ScrollableHeight > 0) { inner = viewer; break; }
+            }
+            if (inner == null) return;
+            bool up = e.Delta > 0;
+            bool atEnd = up ? inner.VerticalOffset <= 0 : inner.VerticalOffset >= inner.ScrollableHeight;
+            if (!atEnd) return;   // the inner list scrolls by itself
+            e.Handled = true;
+            page.ScrollToVerticalOffset(page.VerticalOffset - e.Delta);
         }
     }
 
@@ -183,6 +295,7 @@ namespace LayoutStudio.Editor
     {
         public static Window Create(ShellViewModel shell, string language)
         {
+            TextCommit.Install();
             var window = (Window)LoadXaml("LayoutStudio.Editor.EditorWindow.xaml");
             var strings = (ResourceDictionary)LoadXaml("LayoutStudio.Localization." + (string.Equals(language, "fr_FR", StringComparison.OrdinalIgnoreCase) ? "fr_FR" : "en_US") + ".xaml");
             window.Resources.MergedDictionaries.Add(strings);
@@ -235,6 +348,15 @@ namespace LayoutStudio.Editor
                 if (e.Key == Key.Enter) binding.UpdateSource(); else binding.UpdateTarget();
                 e.Handled = true;
             }));
+            // Ctrl+F: the search box takes the focus (typing opens the page that has the setting)
+            window.PreviewKeyDown += (s, e) =>
+            {
+                if (e.Key == Key.F && (Keyboard.Modifiers & ModifierKeys.Control) != 0)
+                {
+                    var box = window.FindName("SearchBox") as TextBox;
+                    if (box != null) { box.Focus(); box.SelectAll(); e.Handled = true; }
+                }
+            };
             // Arrow keys on a focused handle: one step along its axis (Shift = ten).
             window.PreviewKeyDown += (s, e) =>
             {

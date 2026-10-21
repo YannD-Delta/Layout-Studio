@@ -15,6 +15,7 @@ public static class LookTests
         {""key"":""GlyphColor"",""type"":""Color"",""default"":""#FF4DA3FF""},
         {""key"":""GlyphLightColor"",""type"":""Color"",""default"":""#FF9AD1FF""},
         {""key"":""FsPill"",""type"":""CornerRadius"",""default"":""40""},
+        {""key"":""FsSide"",""type"":""CornerRadius"",""default"":""0,24,24,0""},
         {""key"":""Other"",""type"":""Double"",""default"":""5""}
       ],
       ""pages"": [{""id"":""p"",""title"":""P"",""groups"":[{""id"":""g"",""title"":""G"",""controls"":[
@@ -31,7 +32,7 @@ public static class LookTests
     private const string TableJson = @"{
       ""sharedGroups"": [""Corners""],
       ""tokens"": {
-        ""radius_card"": {""type"":""CornerRadius"",""constants"":[""FsCardCornerRadius""],""scale"":0.62,""extra"":{""FsCardRimCornerRadius"":2},""extraScale"":{""FsPill"":3.5}},
+        ""radius_card"": {""type"":""CornerRadius"",""constants"":[""FsCardCornerRadius""],""scale"":0.62,""extra"":{""FsCardRimCornerRadius"":2},""extraScale"":{""FsPill"":3.5},""extraShape"":{""FsSide"":""0,{v},{v},0""}},
         ""glass_rim"": {""type"":""Double"",""constants"":[""FsGlassRimOpacity""],""scale"":1.6667,""max"":1},
         ""accent"": {""type"":""Color"",""constants"":[""GlyphColor""],""light"":{""constant"":""GlyphLightColor"",""mixWhite"":0.47}}
       }
@@ -66,6 +67,7 @@ public static class LookTests
         Assert.Equal("16", rig.Store.Get("FsCardCornerRadius"), "26 x 0.62 = 16.1, rounded");
         Assert.Equal("18", rig.Store.Get("FsCardRimCornerRadius"), "the ring follows with +2");
         Assert.Equal("56", rig.Store.Get("FsPill"), "the pill follows as a multiple (16 x 3.5)");
+        Assert.Equal("0,16,16,0", rig.Store.Get("FsSide"), "a side panel keeps one square edge: the value goes into a shape");
     }
 
     public static void A_zero_token_keeps_the_ring_at_zero_and_a_strength_is_clamped()

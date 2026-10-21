@@ -54,13 +54,13 @@ namespace LayoutStudio.Core
             new InfoItem { Id = "Features", Title = "Features", FamilyId = "Features", ChipKey = "HeroShowFeatures", DemoteKey = "DemoteFeaturesSection" },
             new InfoItem { Id = "Tags", Title = "Tags", FamilyId = "Tags", ChipKey = "HeroShowTags", DemoteKey = "DemoteTagsSection" },
             new InfoItem { Id = "CompletionStatus", Title = "Completion status", FamilyId = "CompletionStatus", ChipKey = "HeroShowCompletionStatus", TileValues = new[] { 3 } },
-            new InfoItem { Id = "CommunityScore", Title = "Community score", FamilyId = "CommunityScore", ChipKey = "HeroShowCommunityScore", TileValues = new[] { 6, 24 } },
+            new InfoItem { Id = "CommunityScore", Title = "Community score", FamilyId = "CommunityScore", ChipKey = "HeroShowCommunityScore", TileValues = new[] { 6, 24 }, InPanel = true },
             new InfoItem { Id = "Hltb", Title = "HowLongToBeat", FamilyId = "Hltb", ChipKey = "HeroShowHltb", TileValues = new[] { 5, 25, 26, 27 }, SectionShowKey = "DetailsViewShowHltbPanel", DemoteKey = "DemoteHltbSection" },
             new InfoItem { Id = "Achievements", Title = "Achievements", FamilyId = "Achievements", ChipKey = "HeroShowAchievements", TileValues = new[] { 4, 28 }, SectionShowKey = "DetailsViewShowAchievementsPanel", DemoteKey = "DemoteAchievementsSection" },
             new InfoItem { Id = "LatestAchievement", Title = "Latest achievement", FamilyId = "LatestAchievement", ChipKey = "HeroShowLatestAchievement", TileValues = new[] { 29 } },
             new InfoItem { Id = "RareAchievements", Title = "Rare achievements", FamilyId = "RareAchievements", ChipKey = "HeroShowRareAchievements", TileValues = new[] { 30 } },
             new InfoItem { Id = "LastSession", Title = "Last session", FamilyId = "LastSession", ChipKey = "HeroShowLastSession", TileValues = new[] { 9 } },
-            new InfoItem { Id = "RecentActivity", Title = "Recent activity", FamilyId = "RecentActivity", ChipKey = "HeroShowRecentActivity", TileValues = new[] { 10 } }
+            new InfoItem { Id = "RecentActivity", Title = "Recent activity", FamilyId = "RecentActivity", ChipKey = "HeroShowRecentActivity", TileValues = new[] { 10 }, InPanel = true }
         };
 
         public static InfoItem Find(string id) { return All.FirstOrDefault(i => i.Id == id); }

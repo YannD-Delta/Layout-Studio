@@ -20,7 +20,7 @@ namespace LayoutStudio.Engine
         }
 
         /// <summary>Adds or refills every game. Returns how many were created.</summary>
-        public static int Fill(IPlayniteAPI api, ILogger logger)
+        public static int Fill(IPlayniteAPI api, ILogger logger, bool replace = false)
         {
             string dir = api.Paths.ConfigurationPath;
             var specs = new JavaScriptSerializer { MaxJsonLength = int.MaxValue }.DeserializeObject(File.ReadAllText(Path.Combine(dir, "sample-games.json"))) as object[];
@@ -32,10 +32,17 @@ namespace LayoutStudio.Engine
                 var spec = (IDictionary<string, object>)item;
                 string name = Str(spec, "name");
                 var game = db.Games.FirstOrDefault(g => g.Name == name);
+                if (game != null && replace)
+                {
+                    // "replace" in the flag: redraw the artwork too. Other add-ons listen to the removal and one of them may throw after the game is gone: not a failure.
+                    var old = game;
+                    Listeners("removing " + name, logger, () => db.Games.Remove(old));
+                    game = null;
+                }
                 if (game == null)
                 {
                     game = new Game(name);
-                    db.Games.Add(game);
+                    Listeners("adding " + name, logger, () => db.Games.Add(game));
                     created++;
                     string slug = Slug(name);
                     string bg = Path.Combine(dir, "sample-art", slug + "-bg.jpg");
@@ -46,10 +53,35 @@ namespace LayoutStudio.Engine
                     if (File.Exists(icon)) game.Icon = db.AddFile(icon, game.Id);
                 }
                 Fill(db, game, spec);
-                db.Games.Update(game);
+                Listeners("updating " + name, logger, () => db.Games.Update(game));
+                CopyLogo(dir, game);
             }
             logger.Info("sample library: " + specs.Length + " games, " + created + " created");
             return created;
+        }
+
+        /// <summary>
+        /// Other add-ons listen to library changes (Metadata Utilities throws a NullReferenceException while it is still starting): the change is
+        /// already made when a listener throws, so that is logged and not treated as a failure.
+        /// </summary>
+        private static void Listeners(string what, ILogger logger, Action change)
+        {
+            try { change(); }
+            catch (Exception ex) { logger.Debug(what + ": " + ex.GetType().Name + " in another add-on's listener (ignored)"); }
+        }
+
+        /// <summary>Extra Metadata Loader keeps a title logo in ExtraMetadata\games\id\Logo.png: the details page shows it in place of the plain name.</summary>
+        private static void CopyLogo(string dir, Game game)
+        {
+            try
+            {
+                string source = Path.Combine(dir, "sample-art", Slug(game.Name) + "-logo.png");
+                string folder = Path.Combine(dir, "ExtraMetadata", "games", game.Id.ToString());
+                if (!File.Exists(source) || Directory.Exists(folder) && Directory.GetFiles(folder, "Logo.*").Length > 0) return;
+                Directory.CreateDirectory(folder);
+                File.Copy(source, Path.Combine(folder, "Logo.png"), true);
+            }
+            catch (Exception) { }
         }
 
         private static void Fill(IGameDatabaseAPI db, Game game, IDictionary<string, object> s)
@@ -61,6 +93,11 @@ namespace LayoutStudio.Engine
             game.Hidden = Bool(s, "hidden", false);
             game.GenreIds = Ids(db.Genres, List(s, "genres"));
             game.TagIds = Ids(db.Tags, List(s, "tags"));
+            game.CategoryIds = Ids(db.Categories, List(s, "categories"));
+            game.AgeRatingIds = Ids(db.AgeRatings, NonEmpty(Str(s, "ageRating")));
+            game.RegionIds = Ids(db.Regions, NonEmpty(Str(s, "region")));
+            game.Version = Str(s, "version");
+            game.Notes = Str(s, "notes");
             game.FeatureIds = Ids(db.Features, List(s, "features"));
             game.PlatformIds = Ids(db.Platforms, List(s, "platforms"));
             game.DeveloperIds = Ids(db.Companies, NonEmpty(Str(s, "developer")));

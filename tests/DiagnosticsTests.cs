@@ -70,7 +70,10 @@ public static class DiagnosticsTests
     public static void Every_page_kind_has_a_template_in_the_editor_window()
     {
         string xaml = System.IO.File.ReadAllText(System.IO.Path.Combine(TestPaths.RepoRoot(), @"layout-studio\src\Editor\EditorWindow.xaml"));
-        foreach (var kind in new[] { "settings", "sections", "items", "sizes", "background", "tiles", "colors", "corners", "rules", "advice", "share", "diagnostics" })
-            Assert.True(xaml.Contains("x:Key=\"Page." + kind + "\""), "Page." + kind + " exists");
+        foreach (var page in new[] { "settings", "composite", "editorHost" })
+            Assert.True(xaml.Contains("x:Key=\"Page." + page + "\""), "Page." + page + " exists");
+        // a specialised editor has one template, whether it fills a page or sits in a block
+        foreach (var kind in new[] { "sections", "items", "sizes", "background", "tiles", "colors", "corners", "rules", "advice", "share", "diagnostics", "globalpresets" })
+            Assert.True(xaml.Contains("x:Key=\"Editor." + kind + "\""), "Editor." + kind + " exists");
     }
 }

@@ -8,6 +8,8 @@
 
 The editor behind the **[Modula](https://github.com/YannD-Delta/Modula)** theme, as a Playnite extension.
 
+It edits **705 settings** (646 for Modula Desktop, 59 for Modula Fullscreen), with 30 ready-made global looks, a generated window backdrop, live undo and redo, and a shared look for both modes. Built end to end with [Claude Code](https://claude.com/claude-code).
+
 [![Playnite 10](https://img.shields.io/badge/Playnite-10.x-1f6feb?style=flat-square)](https://playnite.link)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green?style=flat-square)](LICENSE)
 [![Made with Claude Code](https://img.shields.io/badge/made%20with-Claude%20Code-d97757?style=flat-square)](https://claude.com/claude-code)
@@ -86,6 +88,7 @@ On first start without a profile, Layout Studio offers to import your existing T
 
 | Page | What you do |
 | --- | --- |
+| Global preset | One card per ready-made look (with a real picture of the window); a click, then a second click, applies the whole look and saves your previous profile first. A new profile starts from the default preset and "Reset all" returns to it |
 | Graphics and performance | What Playnite's settings and the theme cost, what to fix, optional savings, and a button to fix each |
 | Sections | Drag a details-view section to reorder it or move it to the other column (an amber line shows where it lands), or press its left/right button; the eye hides it, the arrow sets whether it starts open. Every section can change column |
 | Items | One foldable card per piece of information or section (Genres, Release date, HowLongToBeat...) with every option for it: show in the chips, new line, section open by default, column, tab, grid view. The **...** button of a section block opens its card |
@@ -152,7 +155,7 @@ Layout Studio was designed and written together with [**Claude Code**](https://c
 ## Feedback
 
 - Open an [issue](https://github.com/YannD-Delta/Layout-Studio/issues) on GitHub for bugs and ideas.
-- Talk to me on Discord: **@yannd_delta** (or open an issue, either is welcome).
+- Talk to me on Discord: **yannd_delta** (or open an issue, either is welcome).
 ## Licence
 
 [MIT](LICENSE).

@@ -20,6 +20,8 @@ namespace LayoutStudio.Core
         public Dictionary<string, double> Extra = new Dictionary<string, double>();
         /// <summary>Other constants that are the first one times a factor (the Play pill is the button corners x 3.33).</summary>
         public Dictionary<string, double> ExtraScale = new Dictionary<string, double>();
+        /// <summary>Other constants that are a text built around the value, "{v}" standing for it ("0,{v},{v},0": a panel square on the screen edge, round on the other).</summary>
+        public Dictionary<string, string> ExtraShape = new Dictionary<string, string>();
         /// <summary>A colour token that also sets a lighter end: the colour mixed this far towards white.</summary>
         public string LightConstant;
         public double LightMix;
@@ -59,6 +61,9 @@ namespace LayoutStudio.Core
                     object extraScale;
                     if (d.TryGetValue("extraScale", out extraScale) && extraScale is IDictionary<string, object>)
                         foreach (var e in (IDictionary<string, object>)extraScale) t.ExtraScale[e.Key] = Num(e.Value);
+                    object extraShape;
+                    if (d.TryGetValue("extraShape", out extraShape) && extraShape is IDictionary<string, object>)
+                        foreach (var e in (IDictionary<string, object>)extraShape) t.ExtraShape[e.Key] = Convert.ToString(e.Value, CultureInfo.InvariantCulture);
                     object light;
                     if (d.TryGetValue("light", out light) && light is IDictionary<string, object>)
                     {
@@ -100,6 +105,8 @@ namespace LayoutStudio.Core
                 result[e.Key] = Format(main == 0 ? 0 : main + e.Value, whole);
             foreach (var e in t.ExtraScale)
                 result[e.Key] = Format(whole ? Math.Round(main * e.Value, MidpointRounding.AwayFromZero) : main * e.Value, whole);
+            foreach (var e in t.ExtraShape)
+                result[e.Key] = e.Value.Replace("{v}", Format(main, whole));
             return result;
         }
 

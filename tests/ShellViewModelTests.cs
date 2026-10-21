@@ -73,7 +73,7 @@ public static class ShellViewModelTests
         var repeated = SettingsPages(e).SelectMany(p => p.Groups).SelectMany(g => g.Settings)
             .Where(s => s.Keys.Count > 0 && s.Keys.All(k => covered.Contains(k))).Select(s => s.Id).ToList();
         Assert.Equal("", string.Join(",", repeated));
-        Assert.True(SettingsPages(e).SelectMany(p => p.Groups).All(g => g.Settings.Count > 0), "no empty group is left");
+        Assert.True(SettingsPages(e).SelectMany(p => p.Groups).All(g => g.Settings.Count > 0 || g.HasEditor || g.HasAddon), "no empty block is left: a block has settings, an editor or an add-on card");
     }
 
     public static void The_advice_page_comes_first_when_playnites_settings_are_reachable()

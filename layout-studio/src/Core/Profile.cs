@@ -6,7 +6,7 @@ namespace LayoutStudio.Core
     /// <summary>A named set of constant overrides and selected presets.</summary>
     public class Profile
     {
-        public const int CurrentVersion = 1;
+        public const int CurrentVersion = 2;
 
         public string Name;
         public int Version = CurrentVersion;

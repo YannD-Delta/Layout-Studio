@@ -41,11 +41,11 @@ public static class SchemaTests
         return Schema.Load(File.ReadAllText(TestPaths.SchemaPath()));
     }
 
-    public static void Loads_converted_schema_with_nine_pages()
+    public static void Loads_converted_schema_with_eleven_pages()
     {
         var s = Load();
-        Assert.Equal(9, s.Pages.Count);
-        Assert.Equal(9, s.Pages.Select(p => p.Id).Distinct().Count(), "page ids are unique");
+        Assert.Equal(11, s.Pages.Count);
+        Assert.Equal(11, s.Pages.Select(p => p.Id).Distinct().Count(), "page ids are unique");
     }
 
     public static void Constants_cover_the_known_options()
@@ -88,10 +88,10 @@ public static class SchemaTests
     public static void Section_orders_are_ordered_lists()
     {
         var s = Load();
-        var lists = s.Pages.SelectMany(p => p.Groups).SelectMany(g => g.Controls).Where(c => c.Kind == "orderedList" && c.Id != "HeroChipsOrder").ToList();
+        var lists = s.Pages.SelectMany(p => p.Groups).SelectMany(g => g.Controls).Where(c => c.Kind == "orderedList" && c.Id != "HeroChipOrder").ToList();
         Assert.Equal(3, lists.Count, "details left, details right, grid");
-        Assert.Equal(11, lists[0].Keys.Count);
-        Assert.Equal(11, lists[1].Keys.Count);
+        Assert.Equal(12, lists[0].Keys.Count);
+        Assert.Equal(12, lists[1].Keys.Count);
         Assert.Equal(lists.Sum(l => l.Keys.Count), lists.SelectMany(l => l.Keys).Distinct().Count(), "no key in two lists");
     }
 
@@ -126,6 +126,37 @@ public static class SchemaTests
         Assert.Equal(0, s.DependentsOf("NoSuchConstant").Count, "unknown constants have no dependents");
     }
 
+    public static void Play_and_context_button_colors_drive_their_brushes_live()
+    {
+        var s = Load();
+        // gradient stops read their colors through DynamicResource: the plugin rebuilds the brush with that stop replaced
+        for (int i = 1; i <= 3; i++)
+        {
+            string stop = "GradientStops[" + (i - 1) + "].Color";
+            Assert.True(s.DependentsOf("PlayButtonBackgroundColor" + i).Any(d => d.Resource == "PlayButtonBackgroundBrush" && d.Property == stop), "play button color " + i);
+            Assert.True(s.DependentsOf("PlayButtonIsMouseOverBackgroundColor" + i).Any(d => d.Resource == "PlayButtonIsMouseOverBackgroundBrush" && d.Property == stop), "play button hover color " + i);
+            Assert.True(s.DependentsOf("ContextButtonBackgroundColor" + i).Any(d => d.Resource == "ContextButtonBackgroundBrush" && d.Property == stop), "context button color " + i);
+            Assert.True(s.DependentsOf("ContextButtonIsMouseOverBackgroundColor" + i).Any(d => d.Resource == "ContextButtonIsMouseOverBackgroundBrush" && d.Property == stop), "context button hover color " + i);
+        }
+    }
+
+    public static void Dependents_include_the_keys_only_a_color_profile_defines()
+    {
+        var s = Load();
+        var keys = s.DependentKeys().ToList();
+        Assert.True(s.AllConstants().All(c => c.Key != "TextColorDarker"), "TextColorDarker is a profile color, not an editable constant");
+        Assert.True(keys.Contains("TextColorDarker") && keys.Contains("DetailsViewContainerLabelColor") && keys.Contains("TextColor"), "their brushes are refreshed when a profile is merged");
+        Assert.True(s.DependentsOf("TextColorDarker").Any(d => d.Resource == "TextBrushDarker" && d.Property == "Color"));
+    }
+
+    public static void No_constant_of_the_theme_needs_a_restart()
+    {
+        // a StaticResource on a constant freezes its value at load: the Play and context buttons used to (their templates now read live brushes)
+        var s = Load();
+        var stale = s.AllConstants().Where(c => s.NeedsRestart(c.Key)).Select(c => c.Key).ToList();
+        Assert.Equal(0, stale.Count, "read with StaticResource: " + string.Join(",", stale.Take(8)));
+    }
+
     public static void Restart_keys_flag_their_constants_and_controls()
     {
         var s = Schema.Load(@"{""version"":1,""restartKeys"":[""Radius""],
@@ -154,8 +185,10 @@ public static class SchemaTests
         var s = Load();
         foreach (var def in s.AllConstants())
         {
+            // the positions of the backdrop circles and the centre of its radial gradient are offsets from the middle of the window: a negative one is a move to the left or up
+            bool offset = def.Key.StartsWith("Backdrop", System.StringComparison.Ordinal) && (def.Key.EndsWith("X") || def.Key.EndsWith("Y"));
             if (def.Type == ConstantType.Double && double.Parse(def.Default, System.Globalization.CultureInfo.InvariantCulture) >= 0)
-                Assert.True(def.Min.HasValue && def.Min.Value >= (def.Key.EndsWith("FontSize") ? 1 : 0), def.Key + " needs a minimum (a negative size, radius or font size makes WPF throw)");
+                Assert.True(def.Min.HasValue && (offset || def.Min.Value >= (def.Key.EndsWith("FontSize") ? 1 : 0)), def.Key + " needs a minimum (a negative size, radius or font size makes WPF throw)");
             if ((def.Type == ConstantType.Thickness || def.Type == ConstantType.CornerRadius) && !def.Key.Contains("Margin"))
                 Assert.True(def.Min.HasValue && def.Min.Value >= 0, def.Key + " must not accept negative numbers (borders and paddings throw)");
         }
@@ -188,7 +221,7 @@ public static class SchemaTests
         Assert.False(s.Sizes.Single(z => z.Id == "searchBox").HasRatio);
     }
 
-    public static void Tab_numbers_are_choices_and_the_six_chip_orders_are_one_ordered_list()
+    public static void Tab_numbers_are_choices_and_the_chip_orders_are_one_ordered_list()
     {
         var s = Load();
         var all = s.Pages.SelectMany(p => p.Groups).SelectMany(g => g.Controls).ToList();
@@ -196,10 +229,11 @@ public static class SchemaTests
         Assert.Equal("choice", tab.Kind);
         Assert.Equal("0:Every tab,1:About,2:Media,3:Stats,4:Community", string.Join(",", tab.Choices.Select(c => c.Id + ":" + c.Name)));
         Assert.False(all.Any(c => c.Id.StartsWith("DetailsViewTab") && c.Id != "DetailsViewTabsMode" && c.Kind == "slider"), "no tab slider is left");
-        var order = all.Single(c => c.Id == "HeroChipsOrder");
+        var order = all.Single(c => c.Id == "HeroChipOrder");
         Assert.Equal("orderedList", order.Kind);
-        Assert.Equal(6, order.Keys.Count);
-        Assert.False(all.Any(c => c.Kind == "slider" && c.Id.StartsWith("HeroChipsOrder") && c.Id != "HeroChipsOrder"), "the six order sliders are gone");
+        Assert.Equal(17, order.Keys.Count, "one order number per chip");
+        Assert.False(all.Any(c => c.Id.StartsWith("HeroChipsOrder")), "the six group orders are gone");
+        Assert.False(all.Any(c => c.Kind == "slider" && c.Id.StartsWith("HeroChipOrder") && c.Id != "HeroChipOrder"), "no order slider is left");
     }
     public static void Real_schema_passes_validation()
     {

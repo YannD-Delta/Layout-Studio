@@ -23,7 +23,8 @@ public static class RecommendationsTests
         var desktop = Recommendations.For(true).Select(r => r.Id).ToList();
         var fullscreen = Recommendations.For(false).Select(r => r.Id).ToList();
         Assert.True(desktop.Contains("playnite-howlongtobeat-plugin"), "the desktop theme has a HowLongToBeat section");
-        Assert.False(fullscreen.Contains("playnite-howlongtobeat-plugin"));
+        foreach (var id in new[] { "NowPlaying_db4e7ade-57fb-426c-8392-60e2347a0209", "ControllerSessionManager_6f3e7a21-98f4-4f2b-92ad-3fc0e6e941dc", "PlayniteAudioSwitcher_708b6ec4-bf96-4c0d-bd9d-fe0aa04d6bf1", "MoData_5a0a672a-998a-4cf3-94ea-44543de5afcb" })
+            Assert.True(fullscreen.Contains(id), "the fullscreen top bar shows data of " + id);
         Assert.True(fullscreen.Contains("UniPlaySong.a1b2c3d4-e5f6-7890-abcd-ef1234567890"), "the fullscreen home plays game music through UniPlaySong");
     }
 

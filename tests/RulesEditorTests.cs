@@ -116,7 +116,7 @@ public static class RulesEditorTests
         var page = shell.Pages.First(p => p.Kind == "rules");
         Assert.True(page.Editor is RulesEditorViewModel, "the page edits the rules");
         string xaml = File.ReadAllText(Path.Combine(TestPaths.RepoRoot(), @"layout-studio\src\Editor\EditorWindow.xaml"));
-        Assert.True(xaml.Contains("x:Key=\"Page.rules\""), "Page.rules template exists");
+        Assert.True(xaml.Contains("x:Key=\"Editor.rules\""), "Editor.rules template exists");
     }
 
     public static void A_slow_slider_drag_on_a_limit_still_moves_it()

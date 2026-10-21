@@ -22,7 +22,8 @@ public static class ThemeCustomizationTests
         new[] { "HeroCoverMargin", "Thickness", "20,0,0,6", "Opt" },
         new[] { "HeroCoverInsideMargin", "Thickness", "20,0,0,20", "Opt" },
         new[] { "HeroCoverBorderColor", "Color", "#59FFFFFF", "Opt" },
-        new[] { "SidePanelFrostOpacity", "Double", "0.1", "Opt" },
+        new[] { "SidePanelFrostOpacity", "Double", "0", "Opt" },
+        new[] { "LibraryListShowPlayTime", "Boolean", "False", "Opt" },
         new[] { "AchievementBarColor", "Color", "#2d73ff", "Opt" },
         new[] { "AchievementBarTrackColor", "Color", "#151619", "Opt" },
         new[] { "DetailsTabMargin", "Thickness", "0,0,8,6", "Opt" },
@@ -40,6 +41,11 @@ public static class ThemeCustomizationTests
         new[] { "HeroCoverWidth", "Double", "230", "Preset", "HeroCoverShape" },
         new[] { "InfoPanelShowSource", "Boolean", "True", "Opt" },
         new[] { "ControlBorderThickness", "Thickness", "1", "Preset", "ControlOutline" },
+        new[] { "SidebarIconColor", "Color", "#F2F2F2", "Opt" },
+        new[] { "SidebarIconPadOpacity", "Double", "0.25", "Opt" },
+        new[] { "SidebarIconHalo", "Boolean", "True", "Opt" },
+        new[] { "SidebarIconActiveColor", "Color", "#FFB350", "Opt" },
+        new[] { "SidebarIconActivePadOpacity", "Double", "0.5", "Opt" },
     };
 
     private static string ThemeDir()

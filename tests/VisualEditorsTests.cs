@@ -173,7 +173,7 @@ public static class VisualEditorsTests
     {
         var e = Make();
         var ed = new ColorsEditorViewModel(e.Store, e.Schema, e.History, e.Applier, e.Profile);
-        Assert.Equal(14, ed.Profiles.Count);
+        Assert.Equal(25, ed.Profiles.Count);
         Assert.Equal(9, ed.Accents.Count);
         Assert.True(ed.Profiles.All(p => p.Accent != null && p.Background1 != null), "every profile has a swatch");
         Assert.True(ed.Accents.All(a => a.Accent != null));

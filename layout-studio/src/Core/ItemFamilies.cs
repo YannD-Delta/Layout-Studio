@@ -33,7 +33,18 @@ namespace LayoutStudio.Core
             F("CheckDlc", "CheckDlc", "CheckDlc"), F("GameRelations", "Game Relations", "GameRelations"), F("WebExplorer", "Web Explorer", "WebExplorer", "Web"),
             F("SteamScreenshots", "Steam Screenshots", "SteamScreenshots"), F("Vndb", "VNDB Nexus", "Vndb"),
             F("ScreenshotsVisualizer", "ScreenshotsVisualizer", "ScreenshotsVisualizer"), F("ReviewViewer", "Review Viewer", "ReviewViewer", "Reviews"),
-            F("ScreenshotUtilities", "Screenshot Utilities", "ScreenshotUtilities")
+            F("ScreenshotUtilities", "Screenshot Utilities", "ScreenshotUtilities"), F("PlayerActivities", "Player Activities", "PlayerActivities"),
+            // header cards that have no chip and no section of their own: they exist as a card type only (no constant carries their name)
+            F("PlayTime", "Time played"), F("LastPlayed", "Last played"), F("InstallSize", "Install size", "InstallSize"), F("PlayCount", "Play count"),
+            F("Added", "Date added", "Added"), F("Publishers", "Publishers", "Publishers"), F("Series", "Series", "Series"), F("AgeRatings", "Age rating", "AgeRatings"),
+            F("Version", "Version", "Version"), F("UserScore", "Your score", "UserScore", "UserRating"), F("CriticScore", "Critic score", "CriticScore"),
+            F("Cpu", "CPU load"), F("Gpu", "GPU load"), F("Ram", "RAM load"),
+            // rows of the information panel that nothing else shows ("ShowLibrary": the word alone would also catch the game list and the library panel)
+            F("Library", "Library", "ShowLibrary"), F("InstallDirectory", "Install directory", "InstallDirectory"), F("Regions", "Regions", "Regions"),
+            // widgets and buttons of the artwork header and of the header bar
+            F("PlayersCount", "Players online", "PlayersCount"), F("MusicPlayer", "Music player", "MusicPlayer"), F("SteamShortcuts", "Steam shortcuts", "SteamShortcuts"),
+            F("UpdateStatus", "Update status", "UpdateStatus"), F("Logo", "Game logo", "Logo", "Logos"), F("EditButton", "Edit button", "EditButton"),
+            F("FavoriteButton", "Favorite button", "FavoriteButton"), F("HiddenButton", "Hide button", "HiddenButton"), F("InfoButton", "Information panel button", "InfoButton")
         };
 
         private static ItemFamily F(string id, string title, params string[] tokens) { return new ItemFamily { Id = id, Title = title, Tokens = tokens }; }
@@ -70,6 +81,18 @@ namespace LayoutStudio.Core
             if (c == null || c.Keys.Count != 1) return false;
             if (c.Kind != "toggle" && c.Kind != "slider" && c.Kind != "number" && c.Kind != "choice") return false;
             return FamilyOf(c.Keys[0]) != null;
+        }
+
+        /// <summary>
+        /// True for what the Items page edits: the options of an item, the order of the chips, and the options about a whole place of the game page
+        /// (the chips line, the header cards row, the information panel, the sections). The generated pages do not repeat them.
+        /// </summary>
+        public static bool IsOwnedByItemsPage(Control c)
+        {
+            if (c == null) return false;
+            if (IsItemControl(c)) return true;
+            if (c.Kind == "orderedList" && c.Id == ChipLayout.ListId) return true;
+            return c.Keys.Count == 1 && c.Kind != "tileSlots" && c.Kind != "preset" && ItemZones.ZoneOwning(c.Keys[0]) != null;
         }
 
         /// <summary>Where an option shows, in words: the sub-heading of a card.</summary>
@@ -127,7 +150,7 @@ namespace LayoutStudio.Core
         /// <summary>The keys of every control a card holds.</summary>
         public static HashSet<string> KeysOf(Schema schema)
         {
-            return new HashSet<string>(schema.Pages.SelectMany(p => p.Groups).SelectMany(g => g.Controls).Where(IsItemControl).Select(c => c.Keys[0]));
+            return new HashSet<string>(schema.Pages.SelectMany(p => p.Groups).SelectMany(g => g.Controls).Where(c => IsItemControl(c) && schema.ItemsMayEdit(c.Keys[0])).Select(c => c.Keys[0]));
         }
     }
 }

@@ -27,6 +27,7 @@ namespace LayoutStudio.Core
         public bool OpenByDefault;
         public bool CanMove;        // can change column
         public bool CanHide;
+        public bool CanOpen;        // has an "open by default" switch (the links have none: they are chips, not a fold)
         public bool NeedsRestart;   // one of its constants is read with StaticResource: the window changes after a restart
     }
 
@@ -47,7 +48,7 @@ namespace LayoutStudio.Core
                         Id = d.Id, Title = d.Title, Column = column, Index = i,
                         Visible = d.ShowKey == null || store.Get(d.ShowKey) == "True",
                         OpenByDefault = d.ExpandKey != null && store.Get(d.ExpandKey) == "True",
-                        CanMove = d.ColumnKey != null, CanHide = d.ShowKey != null,
+                        CanMove = d.ColumnKey != null, CanHide = d.ShowKey != null, CanOpen = d.ExpandKey != null,
                         NeedsRestart = new[] { d.LeftKey, d.RightKey, d.ShowKey, d.ExpandKey, d.ColumnKey }.Any(k => k != null && schema.NeedsRestart(k))
                     });
                 }

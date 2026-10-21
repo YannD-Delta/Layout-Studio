@@ -115,6 +115,10 @@ namespace LayoutStudio.Editor
         public IEnumerable<OnceRowViewModel> AllRows { get { return all.Values; } }
 
         public RelayCommand ShowAllCommand { get; private set; }
+
+        private bool listOpen;
+        /// <summary>The list of items shown twice is folded until you ask for it: the page leads with the places, not with the conflicts.</summary>
+        public bool IsListOpen { get { return listOpen; } set { if (listOpen != value) { listOpen = value; Raise("IsListOpen"); } } }
         public int ConflictCount { get { return Rows.Count; } }
         public bool HasConflicts { get { return Rows.Count > 0; } }
 

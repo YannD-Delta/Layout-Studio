@@ -18,6 +18,17 @@ namespace LayoutStudio.Engine
 
         private PlayniteSettingsAccess(object settings) { this.settings = settings; }
 
+        /// <summary>The live PlayniteSettings object itself (for the testbed scene driver), or null when it cannot be reached.</summary>
+        public static object Raw(IPlayniteAPI api)
+        {
+            try
+            {
+                var field = api.ApplicationSettings.GetType().GetField("settings", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
+                return field == null ? null : field.GetValue(api.ApplicationSettings);
+            }
+            catch (Exception) { return null; }
+        }
+
         public static PlayniteSettingsAccess Create(IPlayniteAPI api)
         {
             try

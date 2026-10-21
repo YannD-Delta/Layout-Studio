@@ -17,7 +17,7 @@ namespace LayoutStudio.Engine
     /// </summary>
     public static class ShotService
     {
-        public static void StartIfRequested(Dispatcher ui, Action<string> log)
+        public static void StartIfRequested(Dispatcher ui, Action<string> log, Playnite.SDK.IPlayniteAPI api = null)
         {
             string dir = Environment.GetEnvironmentVariable("LAYOUTSTUDIO_SHOT_DIR");
             if (string.IsNullOrEmpty(dir) || !Directory.Exists(dir)) return;
@@ -41,6 +41,7 @@ namespace LayoutStudio.Engine
                 }
             };
             timer.Start();
+            if (api != null) SceneService.Start(ui, api, dir, log);
             string keys = Path.Combine(dir, "keys.request");
             var keyTimer = new DispatcherTimer(DispatcherPriority.Background, ui) { Interval = TimeSpan.FromMilliseconds(400) };
             bool busy = false;
@@ -90,8 +91,13 @@ namespace LayoutStudio.Engine
                 if (only == null) throw new InvalidOperationException("no visible window titled " + title);
                 var shot = new RenderTargetBitmap((int)only.ActualWidth, (int)only.ActualHeight, 96, 96, PixelFormats.Pbgra32);
                 shot.Render(only);
+                // the editor window is taller than what it lays out: the unused strip below the content would show as a white band, so crop to the content
+                BitmapSource result = shot;
+                var content = only.Content as FrameworkElement;
+                if (content != null && content.ActualHeight > 0 && content.ActualHeight < shot.PixelHeight - 4 && content.ActualWidth <= shot.PixelWidth)
+                    result = new CroppedBitmap(shot, new Int32Rect(0, 0, (int)Math.Min(shot.PixelWidth, Math.Ceiling(content.ActualWidth)), (int)Math.Ceiling(content.ActualHeight)));
                 var enc = new PngBitmapEncoder();
-                enc.Frames.Add(BitmapFrame.Create(shot));
+                enc.Frames.Add(BitmapFrame.Create(result));
                 Directory.CreateDirectory(Path.GetDirectoryName(path));
                 using (var stream = File.Create(path)) enc.Save(stream);
                 return path;

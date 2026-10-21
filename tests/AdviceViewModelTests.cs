@@ -67,7 +67,7 @@ public static class AdviceViewModelTests
     {
         var e = Make();
         Item(e, "themeScorePulse").OpenPageCommand.Execute(null);
-        Assert.Equal("header", e.Opened.Single());
+        Assert.Equal("items", e.Opened.Single());
         Assert.Equal("tip", Item(e, "themeScorePulse").StatusName);
         e.Store.TrySet("HeaderTileScoreAnimation", "False", out var error);
         Assert.Equal("ok", Item(e, "themeScorePulse").StatusName);

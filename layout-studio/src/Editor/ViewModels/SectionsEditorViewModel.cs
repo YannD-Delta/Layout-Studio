@@ -29,8 +29,11 @@ namespace LayoutStudio.Editor
         public int Column
         {
             get { return column; }
-            set { if (column != value) { column = value; Raise("Column"); } }
+            set { if (column != value) { column = value; Raise("Column"); Raise("PointsLeft"); } }
         }
+
+        /// <summary>True in the right column: the left/right button sends the section to the left, so its arrow points left.</summary>
+        public bool PointsLeft { get { return column == 1; } }
 
         /// <summary>The insertion line shown above this block while a section is dragged over its column.</summary>
         public bool DropLineAbove
@@ -40,6 +43,7 @@ namespace LayoutStudio.Editor
         }
         public string Title { get; set; }
         public bool CanHide { get; set; }
+        public bool CanOpen { get; set; }
         public bool NeedsRestart { get; set; }
 
         public bool Visible
@@ -214,7 +218,7 @@ namespace LayoutStudio.Editor
                 SectionBlockViewModel block;
                 if (!blocks.TryGetValue(s.Id, out block))
                 {
-                    block = new SectionBlockViewModel { Id = s.Id, Title = s.Title, CanHide = s.CanHide, NeedsRestart = s.NeedsRestart };
+                    block = new SectionBlockViewModel { Id = s.Id, Title = s.Title, CanHide = s.CanHide, CanOpen = s.CanOpen, NeedsRestart = s.NeedsRestart };
                     var captured = block;
                     block.ToggleVisibleCommand = new RelayCommand(() => ToggleVisible(captured), () => captured.CanHide);
                     block.ToggleOpenCommand = new RelayCommand(() => ToggleOpen(captured));

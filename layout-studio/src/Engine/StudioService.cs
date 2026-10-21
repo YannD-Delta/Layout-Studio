@@ -8,7 +8,7 @@ using LayoutStudio.Editor;
 namespace LayoutStudio.Engine
 {
     /// <summary>Wires the Core pieces to the running theme: schema, store, history, profiles and the resource applier.</summary>
-    public class StudioService : IProfileSharing, IProfileSwitching
+    public class StudioService : IProfileSharing, IProfileSwitching, IGlobalPresetSwitching
     {
         public string ThemeDir { get; private set; }
         public Schema Schema { get; private set; }
@@ -21,6 +21,9 @@ namespace LayoutStudio.Engine
         public ResourceApplier Applier { get; private set; }
         public Profile Active { get; private set; }
         public ProfileApplier ProfileApplier { get; private set; }
+
+        /// <summary>The theme's global presets (the whole look at once); empty when the theme ships none.</summary>
+        public GlobalPresets GlobalPresets { get; private set; }
 
         /// <summary>The Look shared with the other mode (null when this theme has no look-tokens.json or no path was given).</summary>
         public Look Look { get; private set; }
@@ -41,6 +44,7 @@ namespace LayoutStudio.Engine
             var schema = Schema.Load(File.ReadAllText(Path.Combine(themeDir, "layout-studio.schema.json")));
             var service = new StudioService { ThemeDir = themeDir, Schema = schema, Store = new ConstantStore(schema.AllConstants()) };
             service.History = new History(service.Store);
+            service.GlobalPresets = Core.GlobalPresets.Load(themeDir);
             service.Profiles = new ProfileStore(Path.Combine(dataDir, "profiles"));
             service.ProfileApplier = new ProfileApplier(schema, service.Store, new NoPresetFiles(), themeDir);
             string table = Path.Combine(themeDir, "look-tokens.json");
@@ -63,6 +67,7 @@ namespace LayoutStudio.Engine
             var schema = Schema.Load(File.ReadAllText(Path.Combine(themeDir, "layout-studio.schema.json")));
             var service = new StudioService { ThemeDir = themeDir, Schema = schema, Store = new ConstantStore(schema.AllConstants()) };
             service.History = new History(service.Store);
+            service.GlobalPresets = Core.GlobalPresets.Load(themeDir);
             service.Profiles = new ProfileStore(Path.Combine(dataDir, "profiles"));
             service.Applier = new ResourceApplier(service.Store, schema, ui);
             service.ProfileApplier = new ProfileApplier(schema, service.Store, service.Applier, themeDir);
@@ -99,7 +104,10 @@ namespace LayoutStudio.Engine
         {
             string name = Profiles.Active;
             if (string.IsNullOrEmpty(name)) name = "Default";
+            bool fresh = !Profiles.Names().Contains(name, StringComparer.OrdinalIgnoreCase);
             Active = Profiles.Load(name);
+            // a profile that has no file yet starts as the default global preset (the owner's look), not as the bare theme
+            if (fresh && !Active.ReadOnly && GlobalPresets.Default != null) Active = Core.GlobalPresets.StartFrom(GlobalPresets.Default, name, Look);
             ProfileApplier.ApplyProfile(Active);
             if (Applier != null) Applier.ApplyAll();
             History.Clear();
@@ -189,9 +197,54 @@ namespace LayoutStudio.Engine
         public string ResetAll()
         {
             if (Active != null && Active.ReadOnly) return "the active profile is read-only (" + Active.Warning + ")";
+            if (GlobalPresets.Default != null) return ApplyGlobalPreset(GlobalPresets.Default.Id, "reset");
             SaveActive();
             Profiles.Backup(Active.Name, "reset");
             ReturnToDefaults();
+            if (Applier != null) Applier.ApplyAll();
+            History.Clear();
+            SaveActive();
+            RaiseProfileReplaced();
+            return null;
+        }
+
+        // ---- global presets (IGlobalPresetSwitching) -------------------------------------------------------------
+
+        public System.Collections.Generic.IList<GlobalPreset> GlobalPresetList { get { return GlobalPresets.Items; } }
+
+        public string DefaultGlobalPresetId { get { return GlobalPresets.Default == null ? null : GlobalPresets.Default.Id; } }
+
+        /// <summary>The global preset the profile was started from (null when none or it no longer exists).</summary>
+        public string ActiveGlobalPresetId
+        {
+            get
+            {
+                string id;
+                return Active != null && Active.Editor.TryGetValue(Core.GlobalPresets.EditorKey, out id) && GlobalPresets.Find(id) != null ? GlobalPresets.Find(id).Id : null;
+            }
+        }
+
+        /// <summary>True when everything the preset sets holds right now and nothing else was changed from the theme's defaults.</summary>
+        public bool IsExactly(GlobalPreset preset) { return Core.GlobalPresets.IsExactly(preset, Active, Store, Schema, ProfileApplier); }
+
+        public string ApplyGlobalPreset(string id) { return ApplyGlobalPreset(id, "preset"); }
+
+        /// <summary>Safe switch of the whole look: the profile is saved first (it stays as a .before-preset backup), then it holds exactly the preset.</summary>
+        private string ApplyGlobalPreset(string id, string reason)
+        {
+            var preset = GlobalPresets.Find(id);
+            if (preset == null) return "unknown global preset '" + id + "'";
+            if (Active != null && Active.ReadOnly) return "the active profile is read-only (" + Active.Warning + ")";
+            SaveActive();
+            Profiles.Backup(Active.Name, reason);
+            ReturnToDefaults();
+            var look = Core.GlobalPresets.StartFrom(preset, Active.Name, Look);
+            Active.Overrides = look.Overrides;
+            Active.Presets = look.Presets;
+            Active.Editor.Clear();
+            foreach (var kv in look.Editor) Active.Editor[kv.Key] = kv.Value;
+            ProfileApplier.ApplyProfile(Active);
+            RaiseProfileReplaced();
             if (Applier != null) Applier.ApplyAll();
             History.Clear();
             SaveActive();

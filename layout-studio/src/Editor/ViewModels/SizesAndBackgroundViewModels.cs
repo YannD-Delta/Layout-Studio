@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Windows.Media;
 using LayoutStudio.Core;
 
 namespace LayoutStudio.Editor
@@ -14,6 +13,7 @@ namespace LayoutStudio.Editor
         public const string Section = "LayoutStudio.Section";
         public const string Tile = "LayoutStudio.Tile";
         public const string Slot = "LayoutStudio.Slot";
+        public const string ItemRow = "LayoutStudio.ItemRow";
     }
 
     public interface IDragSource
@@ -49,45 +49,7 @@ namespace LayoutStudio.Editor
             Items = schema.Tuning.Select(t => new SettingViewModel(
                 new Control { Kind = t.Kind, Id = t.Key, Keys = new List<string> { t.Key }, Title = t.Title }, store, history, applier, profile, localize, culture)).ToList();
             var keys = new HashSet<string>(schema.Tuning.Select(t => t.Key).Concat(new[] { "PageGlassOpacity" }));
-            store.ValueChanged += key => { if (keys.Contains(key)) { RaiseAll(); QueueLiveRefresh(); } };
-            RefreshLive();
-            QueueLiveRefresh();   // once more shortly after: the window may still be loading when the editor opens right at start-up
-        }
-
-        /// <summary>
-        /// Takes a picture of the real window (set by the plugin): the preview shows the game's own artwork through the real layers and panels,
-        /// not a drawing of them. Null when there is no window to draw (then the stand-in drawing stays).
-        /// </summary>
-        public static Func<ImageSource> LiveCapture { get; set; }
-
-        /// <summary>Runs an action a moment later, on the UI thread (the theme applies a changed setting asynchronously). Replaceable for tests.</summary>
-        public static Action<Action> LiveSchedule { get; set; }
-
-        private ImageSource live;
-        private bool liveQueued;
-
-        public ImageSource LivePreview { get { return live; } }
-        public bool HasLivePreview { get { return live != null; } }
-        public bool NoLivePreview { get { return live == null; } }
-
-        /// <summary>Captures the real window now.</summary>
-        public void RefreshLive()
-        {
-            ImageSource shot = null;
-            try { if (LiveCapture != null) shot = LiveCapture(); } catch (Exception) { shot = null; }
-            live = shot;
-            Raise("LivePreview"); Raise("HasLivePreview"); Raise("NoLivePreview");
-        }
-
-        private void QueueLiveRefresh()
-        {
-            if (LiveCapture == null || liveQueued) return;
-            liveQueued = true;
-            Action run = () => { liveQueued = false; RefreshLive(); };
-            if (LiveSchedule != null) { LiveSchedule(run); return; }
-            var timer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(450) };
-            timer.Tick += (o, e) => { timer.Stop(); run(); };
-            timer.Start();
+            store.ValueChanged += key => { if (keys.Contains(key)) RaiseAll(); };
         }
 
         public IList<SettingViewModel> Items { get; private set; }
@@ -144,7 +106,6 @@ namespace LayoutStudio.Editor
             }
             finally { history.EndBatch(); }
             RaiseAll();
-            QueueLiveRefresh();
         }
 
         public bool PreviewEnabled { get { return Mode != "off"; } }

@@ -13,144 +13,8 @@ namespace LayoutStudio.Editor
         void ResetAll();
     }
 
-    public class GroupViewModel : ViewModelBase
-    {
-        private bool visible = true;
-
-        public string Title { get; private set; }
-        public IList<SettingViewModel> Settings { get; private set; }
-
-        public GroupViewModel(string title, IList<SettingViewModel> settings)
-        {
-            Title = title;
-            Settings = settings;
-        }
-
-        public bool Visible
-        {
-            get { return visible; }
-            set { if (visible != value) { visible = value; Raise("Visible"); } }
-        }
-    }
-
-    /// <summary>A sub-category button at the top of a long settings page (the Details view has twelve groups): shows one group, or all of them.</summary>
-    public class GroupChipViewModel : ViewModelBase
-    {
-        private bool selected;
-
-        public GroupChipViewModel(string title, int count, GroupViewModel group, Action<GroupViewModel> select)
-        {
-            Title = title; Count = count; Group = group;
-            SelectCommand = new RelayCommand(() => select(group));
-        }
-
-        public string Title { get; private set; }
-        public int Count { get; private set; }
-        public GroupViewModel Group { get; private set; }
-        public RelayCommand SelectCommand { get; private set; }
-        public bool IsSelected { get { return selected; } set { if (selected != value) { selected = value; Raise("IsSelected"); } } }
-    }
-
-    public class PageViewModel : ViewModelBase
-    {
-        private int matchCount;
-        private int changedCount;
-        private GroupViewModel activeGroup;
-
-        public string Id { get; private set; }
-        public string Title { get; private set; }
-        public IList<GroupViewModel> Groups { get; private set; }
-
-        public PageViewModel(string id, string title, IList<GroupViewModel> groups)
-        {
-            Id = id;
-            Title = title;
-            Groups = groups;
-            Kind = "settings";
-            Group = "SETTINGS";
-            ShowCount = true;
-            matchCount = groups.SelectMany(g => g.Settings).Count();
-            Chips = new List<GroupChipViewModel>();
-            if (groups.Count >= 3)
-            {
-                var chips = new List<GroupChipViewModel> { new GroupChipViewModel("All", matchCount, null, Select) };
-                chips.AddRange(groups.Select(g => new GroupChipViewModel(ChipTitle(g.Title), g.Settings.Count, g, Select)));
-                chips[0].IsSelected = true;
-                Chips = chips;
-            }
-        }
-
-        /// <summary>Sub-category buttons (empty when the page has fewer than three groups).</summary>
-        public IList<GroupChipViewModel> Chips { get; private set; }
-        public bool HasChips { get { return Chips.Count > 0; } }
-
-        /// <summary>The group shown alone, or null for all of them. Search ignores it: matches are always listed.</summary>
-        public GroupViewModel ActiveGroup { get { return activeGroup; } }
-
-        /// <summary>Called when the chosen sub-category changes so the shell can re-apply the filter.</summary>
-        public Action FilterChanged { get; set; }
-
-        private void Select(GroupViewModel group)
-        {
-            activeGroup = group;
-            foreach (var chip in Chips) chip.IsSelected = ReferenceEquals(chip.Group, group);
-            if (FilterChanged != null) FilterChanged();
-        }
-
-        /// <summary>"Details view - information chips" is shown as "Information chips": the page name is already known.</summary>
-        private static string ChipTitle(string title)
-        {
-            int dash = title.IndexOf(" - ", StringComparison.Ordinal);
-            string t = dash >= 0 ? title.Substring(dash + 3) : title;
-            return t.Length == 0 ? title : char.ToUpperInvariant(t[0]) + t.Substring(1);
-        }
-
-        /// <summary>A page that shows a visual editor instead of generated settings.</summary>
-        public PageViewModel(string id, string title, string kind, object editor)
-            : this(id, title, new List<GroupViewModel>())
-        {
-            Kind = kind;
-            Editor = editor;
-            ShowCount = false;
-            Group = kind == "advice" ? "ADVICE" : kind == "sections" || kind == "items" || kind == "sizes" || kind == "tiles" || kind == "corners" ? "LAYOUT"
-                : kind == "background" || kind == "colors" || kind == "rules" ? "LOOK" : kind == "share" || kind == "diagnostics" ? "PROFILE" : "SETTINGS";
-        }
-
-        /// <summary>The sidebar heading this page is listed under: LAYOUT, LOOK, SETTINGS or PROFILE.</summary>
-        public string Group { get; private set; }
-
-        /// <summary>Settings of this page that differ from the defaults (shown as an orange count in the sidebar).</summary>
-        public int ChangedCount
-        {
-            get { return changedCount; }
-            set { if (changedCount != value) { changedCount = value; Raise("ChangedCount"); Raise("HasChanges"); } }
-        }
-        public bool HasChanges { get { return changedCount > 0; } }
-
-        /// <summary>Words a search can find on a visual page (its settings are not generated controls).</summary>
-        public string Keywords { get; set; }
-
-        private bool dimmed;
-        /// <summary>True while a search is typed and nothing on this page matches it: the sidebar dims the page and the page says so.</summary>
-        public bool Dimmed { get { return dimmed; } set { if (dimmed != value) { dimmed = value; Raise("Dimmed"); } } }
-
-        /// <summary>"settings" for generated pages, otherwise the visual editor's kind (sections, sizes, ...).</summary>
-        public string Kind { get; private set; }
-        public object Editor { get; private set; }
-        public bool ShowCount { get; private set; }
-
-        public IEnumerable<SettingViewModel> Settings { get { return Groups.SelectMany(g => g.Settings); } }
-
-        /// <summary>Settings of this page that match the current search.</summary>
-        public int MatchCount
-        {
-            get { return matchCount; }
-            set { if (matchCount != value) { matchCount = value; Raise("MatchCount"); } }
-        }
-    }
-
     /// <summary>State of the editor window: pages built from the schema, search, undo/redo and page reset.</summary>
-    public class ShellViewModel : ViewModelBase
+    public partial class ShellViewModel : ViewModelBase
     {
         private readonly ConstantStore store;
         private readonly History history;
@@ -170,7 +34,8 @@ namespace LayoutStudio.Editor
         public ShellViewModel(Schema schema, ConstantStore store, History history, ProfileApplier applier, Profile profile,
             Func<string, string> localize, CultureInfo culture, Func<string> previewImage = null,
             IProfileSharing sharing = null, Action<string> copyToClipboard = null, PlayniteSettingsViewModel playniteSettings = null, IList<string> sensorProblems = null, FactsViewModel facts = null,
-            Func<IEnumerable<KeyValuePair<string, string>>> environment = null, Func<LiveContext> liveContext = null)
+            Func<IEnumerable<KeyValuePair<string, string>>> environment = null, Func<LiveContext> liveContext = null,
+            Func<IEnumerable<InstalledAddon>> installedAddons = null)
         {
             this.store = store;
             this.history = history;
@@ -182,13 +47,19 @@ namespace LayoutStudio.Editor
             PlayniteSettings = playniteSettings;
             Page = (name, english) => { string text = null; try { text = localize("LOCLS_Page_" + name); } catch (Exception) { } return string.IsNullOrEmpty(text) ? english : text; };
             SensorProblems = sensorProblems ?? new List<string>();
+            if (schema.HasLayout)
+            {
+                BuildComposite(schema, sharing, copyToClipboard, facts, environment, liveContext, previewImage, installedAddons);
+            }
+            else
+            {
             var covered = SchemaCoverage.VisualKeys(schema);
             var allControls = schema.Pages.SelectMany(p => p.Groups).SelectMany(g => g.Controls).ToList();
             bool hasColorsPage = allControls.Any(c => c.Id == "ColorProfile") && allControls.Any(c => c.Id == "Accent") && schema.Find("GlyphColor") != null;
             bool hasCornersPage = schema.Corners.Count > 0;
             bool hasItemsPage = allControls.Any(ItemFamilies.IsItemControl);
             Pages = schema.Pages.Select(p => new PageViewModel(p.Id, p.Title, p.Groups.Select(g =>
-                new GroupViewModel(SchemaCoverage.ShortTitle(g.Title), g.Controls.Where(c => !SchemaCoverage.IsCovered(c, covered) && !SchemaCoverage.IsPresetOfAVisualPage(c, hasColorsPage, hasCornersPage) && !(hasItemsPage && ItemFamilies.IsItemControl(c))).Select(c =>
+                new GroupViewModel(SchemaCoverage.ShortTitle(g.Title), g.Controls.Where(c => !SchemaCoverage.IsCovered(c, covered) && !SchemaCoverage.IsPresetOfAVisualPage(c, hasColorsPage, hasCornersPage) && !(hasItemsPage && ItemFamilies.IsOwnedByItemsPage(c))).Select(c =>
                     new SettingViewModel(c, store, history, applier, profile, localize, culture)).ToList())).Where(g => g.Settings.Count > 0).ToList())).ToList();
             var controls = schema.Pages.SelectMany(p => p.Groups).SelectMany(g => g.Controls).ToList();
             keyTitles = KeyTitles(schema, controls, localize);
@@ -200,6 +71,7 @@ namespace LayoutStudio.Editor
             {
                 var itemsVm = new ItemsEditorViewModel(schema, store, history, applier, profile, localize, culture);
                 visual.Add(new PageViewModel("visual-items", Page("Items", "Items"), "items", itemsVm));
+                itemsVm.OpenSections = () => OpenPage("visual-sections");
                 if (sectionsVm != null) sectionsVm.OpenItemOptions = id => { Search = ""; ShowChangedOnly = false; OpenPage("visual-items"); itemsVm.ShowOnly(id); };   // a search or "changed only" would leave the card empty
             }
             if (schema.Sizes.Count > 0)
@@ -212,7 +84,6 @@ namespace LayoutStudio.Editor
             if (schema.Tuning.Count > 0) visual.Add(new PageViewModel("visual-background", Page("Background", "Background"), "background", new BackgroundEditorViewModel(store, schema, history, applier, profile, localize, culture, previewImage)));
             if (controls.Any(c => c.Kind == "tileSlots")) {
                 var tilesVm = new TilesEditorViewModel(store, schema, history);
-                tilesVm.Extras = new HeaderExtrasViewModel(schema, store, history, applier, profile, localize, culture);   // every other header parameter, on the same page
                 visual.Add(new PageViewModel("visual-tiles", Page("HeaderCards", "Header cards"), "tiles", tilesVm));
             }
             if (controls.Any(c => c.Id == "ColorProfile") && controls.Any(c => c.Id == "Accent") && schema.Find("GlyphColor") != null)
@@ -227,9 +98,11 @@ namespace LayoutStudio.Editor
             Pages.Add(new PageViewModel("diagnostics", Page("Diagnostics", "Diagnostics"), "diagnostics",
                 new DiagnosticsViewModel(() => CollectDiagnostics(schema, environment), copyToClipboard)));
             if (sharing != null) Pages.Add(new PageViewModel("profile", Page("Profile", "Profile"), "share", new SharingViewModel(sharing, copyToClipboard)));
+            foreach (var page in Pages.Where(p => p.Keywords == null)) { page.Keywords = KeywordsOf(page.Kind); page.FilterChanged = ApplyFilter; }   // the Diagnostics and Profile pages are found by their words too
             selectedPage = Pages.FirstOrDefault();
             PagesView = System.Windows.Data.CollectionViewSource.GetDefaultView(Pages);
             PagesView.GroupDescriptions.Add(new System.Windows.Data.PropertyGroupDescription("Group"));
+            }
 
             UndoCommand = new RelayCommand(() => history.Undo(), () => history.CanUndo);
             RedoCommand = new RelayCommand(() => history.Redo(), () => history.CanRedo);
@@ -317,7 +190,7 @@ namespace LayoutStudio.Editor
             switch (kind)
             {
                 case "sections": return "sections order column genres tags notes categories features move hide";
-                case "items": return "items information chips genres tags categories features release date platforms developers source score achievements hltb howlongtobeat notes video news section sections tab column right new line wrap open default show hide grid view";
+                case "items": return "items information chips cards genres tags categories features release date platforms developers source score scores rating achievements hltb howlongtobeat play time played install size last session notes video news section sections tab column right new line wrap open default show hide grid view order move buttons widgets music players online panel";
                 case "sizes": return "sizes size width height artwork cover button logo ratio card header";
                 case "background": return "background blur dark darkness glass window panel opacity artwork zone top bar sidebar list filter";
                 case "tiles": return "header tiles cards cell fps cpu gpu ram score playtime install size";
@@ -327,12 +200,14 @@ namespace LayoutStudio.Editor
                 case "advice": return "advice graphics performance gpu cpu slow lag fps blur animation darken background playnite settings problem";
                 case "diagnostics": return "diagnostics problem bug report version log schema profile restart sensors hwinfo check";
                 case "share": return "profile share export import reset backup code";
+                case "globalpresets": return "global preset look theme style direction delta whole all reset default";
                 default: return "";
             }
         }
 
         private int ChangedOf(PageViewModel page)
         {
+            if (page.IsComposite) return page.Groups.Sum(g => g.ChangedCount);
             if (page.Kind == "settings") return page.Settings.Count(s => s.IsModified);
             var resettable = page.Editor as IResettable;
             if (resettable != null) return resettable.ChangedCount;
@@ -343,7 +218,12 @@ namespace LayoutStudio.Editor
         /// <summary>Recounts what differs from the defaults on every page: the sidebar counts, the Changed button and the reset button follow.</summary>
         public void RefreshChanged()
         {
-            foreach (var page in Pages) page.ChangedCount = ChangedOf(page);
+            foreach (var page in Pages)
+            {
+                if (page.IsComposite)
+                    foreach (var block in page.Groups) { block.ChangedCount = ChangedOf(block); if (block.ChangedCount == 0) block.ResetPending = false; block.RaiseResetCanExecute(); }
+                page.ChangedCount = ChangedOf(page);
+            }
             Raise("ChangedTotal");
             Raise("ResetPageLabel");
             ResetPageCommand.RaiseCanExecuteChanged();
@@ -413,12 +293,20 @@ namespace LayoutStudio.Editor
             set
             {
                 if (ReferenceEquals(selectedPage, value)) return;
+                if (selectedPage != null) selectedPage.IsCurrent = false;
                 selectedPage = value;
+                if (value != null) value.IsCurrent = true;
                 ResetPending = false;
                 var itemsPage = value == null ? null : value.Editor as ItemsEditorViewModel;
                 if (itemsPage != null) itemsPage.ShowOnly(null);   // reached from the sidebar: every card (a section button focuses one right after)
                 var diagnostics = value == null ? null : value.Editor as DiagnosticsViewModel;
                 if (diagnostics != null) diagnostics.Refresh();   // the facts were collected when the window opened: read them again when the page is shown
+                if (value != null && value.IsComposite)
+                {
+                    // a page of blocks: the Items page shows every card again, the Diagnostics block reads the facts again
+                    if (itemsEditor != null && value.Id == "items") itemsEditor.ShowOnly(null);
+                    if (diagnosticsEditor != null && value.Groups.Any(g => ReferenceEquals(g.Editor, diagnosticsEditor))) diagnosticsEditor.Refresh();
+                }
                 Raise("SelectedPage");
                 Raise("ResetPageLabel");
                 ResetPageCommand.RaiseCanExecuteChanged();
@@ -430,7 +318,8 @@ namespace LayoutStudio.Editor
         {
             if (string.IsNullOrEmpty(id)) return;
             var page = Pages.FirstOrDefault(p => p.Id == id);
-            if (page != null) SelectedPage = page;
+            if (page != null) { SelectedPage = page; return; }
+            OpenPlace(id);   // an older page id, or "page/block": the page opens and the block comes into view
         }
 
         public string Search
@@ -445,6 +334,11 @@ namespace LayoutStudio.Editor
                 {
                     var next = Pages.FirstOrDefault(p => !p.Dimmed && p.MatchCount > 0);
                     if (next != null) SelectedPage = next;
+                }
+                if (search.Length > 0 && selectedPage != null && selectedPage.IsComposite)
+                {
+                    var first = FirstShownBlock(selectedPage);
+                    if (first != null) first.RequestScroll();   // the page opens on the first block that matches
                 }
             }
         }
@@ -503,6 +397,7 @@ namespace LayoutStudio.Editor
         {
             foreach (var page in Pages)
             {
+                if (page.IsComposite) { ApplyCompositeFilter(page); continue; }
                 foreach (var group in page.Groups)
                 {
                     foreach (var setting in group.Settings) setting.Visible = setting.Matches(search) && (!showChangedOnly || setting.IsModified);
@@ -535,7 +430,8 @@ namespace LayoutStudio.Editor
             history.BeginBatch();
             try
             {
-                if (selectedPage.Kind == "settings") { foreach (var setting in selectedPage.Settings.Where(s => s.IsModified).ToList()) setting.Reset(); }
+                if (selectedPage.IsComposite) { foreach (var block in selectedPage.Groups) ResetBlockCore(block); }
+                else if (selectedPage.Kind == "settings") { foreach (var setting in selectedPage.Settings.Where(s => s.IsModified).ToList()) setting.Reset(); }
                 else if (selectedPage.Editor is IResettable) ((IResettable)selectedPage.Editor).ResetAll();
                 else
                 {

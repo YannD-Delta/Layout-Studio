@@ -287,6 +287,17 @@ namespace LayoutStudio.Editor
             set { if (visible != value) { visible = value; Raise("Visible"); } }
         }
 
+        private bool highlighted;
+        /// <summary>True while a search is typed and this setting matches it: the row wears an accent bar so the eye finds it.</summary>
+        public bool Highlighted
+        {
+            get { return highlighted; }
+            set { if (highlighted != value) { highlighted = value; Raise("Highlighted"); } }
+        }
+
+        /// <summary>True when the block keeps this setting behind its "More" link.</summary>
+        public bool IsMore { get { return def.More; } }
+
         /// <summary>The last validation message for this setting, null when the value is fine.</summary>
         public string Error
         {
@@ -442,29 +453,11 @@ namespace LayoutStudio.Editor
             foreach (var x in ordered) Items.Add(new OrderedItemViewModel { Key = x.Key, Title = x.Title });
         }
 
-        // ---- glyph: a small schematic of the setting that follows the slider ------------------------------------
+        // ---- wireframe: the plan of the Playnite window, with the part this setting touches lit (shown on hover) -------
 
-        public const double GlyphHeight = 44;
-
-        /// <summary>The schematic drawn next to the slider (see SettingGlyphs), or null.</summary>
-        public string GlyphKey { get { return def.Kind == "slider" ? SettingGlyphs.For(Key) : null; } }
-        public bool HasGlyph { get { return GlyphKey != null; } }
-
-        /// <summary>Where the value sits between the ends of its range, 0 to 1 (a typed value beyond the end stays at the end).</summary>
-        public double Fraction
-        {
-            get
-            {
-                if (Key == null || Def == null || !Def.Min.HasValue || !Def.Max.HasValue || Def.Max.Value <= Def.Min.Value) return 0;
-                double v = double.Parse(store.Get(Key), NumberStyles.Float, CultureInfo.InvariantCulture);
-                return Math.Max(0, Math.Min(1, (v - Def.Min.Value) / (Def.Max.Value - Def.Min.Value)));
-            }
-        }
-
-        public double FractionInverse { get { return 1 - Fraction; } }
-
-        /// <summary>A margin that pushes a marker down the schematic by the fraction of its height.</summary>
-        public System.Windows.Thickness GlyphTopMargin { get { return new System.Windows.Thickness(0, Fraction * GlyphHeight, 0, 0); } }
+        /// <summary>The plan drawn in the hover tooltip (see SettingRegions), or null when the setting has none.</summary>
+        public WireframePlan Plan { get { return def.Kind == "preset" ? null : WireframePlan.For(Key); } }
+        public bool HasPlan { get { return Plan != null; } }
 
         // ---- color picker ----------------------------------------------------------------------------------------
 

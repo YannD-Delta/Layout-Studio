@@ -42,4 +42,52 @@ public static class FullscreenThemeTests
             Assert.Equal(m.Groups[1].Value.Trim(), c.Default, c.Key + ": the schema default is the value of Constants.xaml");
         }
     }
+
+    private static System.Collections.Generic.Dictionary<string, System.Collections.Generic.List<LayoutStudio.Core.Choice>> PresetGroups(string themeDir)
+    {
+        var schema = LayoutStudio.Core.Schema.Load(File.ReadAllText(Path.Combine(themeDir, "layout-studio.schema.json")));
+        return schema.Pages.SelectMany(p => p.Groups).SelectMany(g => g.Controls).Where(c => c.Kind == "preset")
+            .GroupBy(c => c.Id).ToDictionary(g => g.Key, g => g.First().Choices.ToList());
+    }
+
+    /// <summary>The shared Look is one choice for both modes: a choice the Desktop offers but the TV lacks would be silently ignored there.</summary>
+    public static void Every_choice_of_a_shared_group_resolves_in_the_fullscreen_theme()
+    {
+        string full = Path.Combine(Root, @"theme\Modula-Fullscreen");
+        string desk = Path.Combine(Root, @"theme\Modula");
+        if (!Directory.Exists(full) || !Directory.Exists(desk)) return;   // the exported Layout Studio repository has no theme
+        var tokens = File.ReadAllText(Path.Combine(full, "look-tokens.json"));
+        var list = Regex.Match(tokens, "\"sharedGroups\"\\s*:\\s*\\[([^\\]]*)\\]").Groups[1].Value;
+        var shared = Regex.Matches(list, "\"(\\w+)\"").Cast<Match>().Select(x => x.Groups[1].Value).ToList();
+        Assert.True(shared.Contains("ColorProfile"), "the colour profile is part of the shared Look");
+        var d = PresetGroups(desk);
+        var f = PresetGroups(full);
+        foreach (var group in shared)
+        {
+            Assert.True(d.ContainsKey(group), "the Desktop has the group " + group);
+            Assert.True(f.ContainsKey(group), "the Fullscreen theme has the group " + group);
+            var missing = d[group].Select(c => c.Id).Except(f[group].Select(c => c.Id)).ToList();
+            Assert.Equal(0, missing.Count, group + ": Desktop choices the Fullscreen theme lacks: " + string.Join(",", missing));
+            foreach (var choice in f[group])
+                foreach (var file in choice.Files)
+                    Assert.True(File.Exists(Path.Combine(full, file)), group + "/" + choice.Id + ": the preset file " + file + " exists");
+        }
+    }
+
+    /// <summary>A colour profile merges live and replaces the palette: every one carries the whole palette (text, panels, gradients, scrims, glass, pills, polarity flag).</summary>
+    public static void Every_fullscreen_colour_profile_carries_the_whole_palette()
+    {
+        string dir = Path.Combine(Root, @"theme\Modula-Fullscreen\Presets\Colors");
+        if (!Directory.Exists(dir)) return;   // the exported Layout Studio repository has no theme
+        string[] required = { "TextColor", "TextBrush", "MainBackgourndBrush", "OverlayMenuBackgroundBrush", "FsHeroTextBrush", "FsScrimVerticalBrush", "FsScrimSideBrush", "FsTileFillBrush", "FsPillFillBrush", "FsPillPrimaryFillBrush", "FsLightProfile", "GlyphBrush", "SelectionBrush" };
+        var files = Directory.GetFiles(dir, "*.xaml");
+        Assert.True(files.Length >= 10, "the colour profiles are there");
+        foreach (var file in files)
+        {
+            System.Xml.Linq.XDocument.Load(file);   // throws when the file is not well-formed
+            string text = File.ReadAllText(file);
+            foreach (var key in required)
+                Assert.True(text.Contains("x:Key=\"" + key + "\""), Path.GetFileName(file) + " defines " + key);
+        }
+    }
 }

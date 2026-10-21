@@ -33,6 +33,9 @@ namespace LayoutStudio
             set { options = value; OnPropertyChanged(); }
         }
 
+        /// <summary>The completion status picker of the header card (Path=Completion.Choices, Completion.StatusId two ways, Completion.HasChoices).</summary>
+        public CompletionPicker Completion { get; } = new CompletionPicker();
+
         public void BeginEdit() { }
         public void CancelEdit() { }
         public void EndEdit() { }
@@ -45,6 +48,7 @@ namespace LayoutStudio
         private static readonly ILogger logger = LogManager.GetLogger();
         private StudioService studio;
         private SectionMover sectionMover;
+        private ChipMover chipMover;
         private Window editor;
         private ShellViewModel shellModel;
         private readonly ExposedSettings exposed = new ExposedSettings();
@@ -84,16 +88,19 @@ namespace LayoutStudio
                 exposed.Facts = new FactsViewModel(FactsSettings.From(studio.Active.Editor));
                 // the visual editor is a desktop window: in the fullscreen app the quick menu (main menu, Layout Studio) is the way in
                 if (isDesktop) exposed.OpenEditor = new LayoutStudio.Editor.RelayCommand((Action<object>)(page => OpenEditor(page as string)));
+                exposed.Completion.Picked = PickCompletion;
+                PlayniteApi.Database.Games.ItemUpdated += Games_ItemUpdated;
                 if (isDesktop)
                 {
                     // moves the sections that host plugin controls between the two columns, as the profile says (see Engine\SectionMover.cs)
                     sectionMover = new SectionMover(studio.Schema, studio.Store, line => logger.Info(line));
                     sectionMover.Start();
+                    // puts the information chips of the artwork header in the profile's order (see Engine\ChipMover.cs)
+                    chipMover = new ChipMover(studio.Schema, studio.Store, line => logger.Info(line));
+                    chipMover.Start();
                 }
                 studio.ProfileReplaced += () => exposed.Facts.Reload(studio.Active.Editor);
-                ShotService.StartIfRequested(Application.Current.Dispatcher, line => logger.Info(line));
-                // the editor's Background page shows the real window (artwork, glass layers, panels) instead of a drawing of them
-                if (isDesktop) LayoutStudio.Editor.BackgroundEditorViewModel.LiveCapture = () => LivePreview.Capture(640);
+                ShotService.StartIfRequested(Application.Current.Dispatcher, line => logger.Info(line), PlayniteApi);
                 logger.Info("LayoutStudio loaded profile '" + studio.Active.Name + "' (" + studio.Store.Changed().Count + " overrides, " + ThemeGuard.ModeFolder(isDesktop).ToLowerInvariant() + "), schema " + createMs + " ms, profile " + loadMs + " ms, total " + clock.ElapsedMilliseconds + " ms");
             }
             catch (Exception ex)
@@ -126,6 +133,7 @@ namespace LayoutStudio
                 if (studio == null || exposed.Facts == null) return;
                 var selected = args.NewValue;
                 UpdateMedia(selected);
+                UpdateCompletion(selected);
                 if (selected == null || selected.Count != 1) { exposed.Facts.Update(null); exposed.Facts.SetScores(null, null, null); return; }
                 exposed.Facts.SetScores(selected[0].CriticScore, selected[0].CommunityScore, selected[0].UserScore);
                 string path = Path.Combine(PlayniteApi.Paths.ExtensionsDataPath, GameActivityId, "GameActivity", selected[0].Id.ToString() + ".json");
@@ -150,6 +158,51 @@ namespace LayoutStudio
             {
                 logger.Warn(ex, "could not read the activity data of the selected game");
             }
+        }
+
+        // ---- completion status picker ------------------------------------------------------------------------------------------------------------
+
+        private Game completionGame;
+
+        /// <summary>Fills the header card's picker from Playnite's own completion statuses and the selected game's current one.</summary>
+        private void UpdateCompletion(List<Game> selected)
+        {
+            try
+            {
+                completionGame = selected != null && selected.Count == 1 ? selected[0] : null;
+                if (completionGame == null) { exposed.Completion.Show(new List<CompletionChoice>(), ""); return; }
+                var statuses = PlayniteApi.Database.CompletionStatuses.Select(x => new KeyValuePair<string, string>(x.Id.ToString(), x.Name)).ToList();
+                string current = completionGame.CompletionStatusId == Guid.Empty ? "" : completionGame.CompletionStatusId.ToString();
+                exposed.Completion.Show(CompletionChoices.Build(statuses, current, "—"), current);
+            }
+            catch (Exception ex) { logger.Warn(ex, "could not list the completion statuses"); }
+        }
+
+        private void PickCompletion(string id)
+        {
+            try
+            {
+                var game = completionGame;
+                if (game == null) return;
+                var wanted = CompletionChoices.ToGuid(id);
+                if (game.CompletionStatusId == wanted) return;
+                game.CompletionStatusId = wanted;
+                PlayniteApi.Database.Games.Update(game);
+                logger.Info("completion status of '" + game.Name + "' set to " + (wanted == Guid.Empty ? "none" : id));
+            }
+            catch (Exception ex) { logger.Warn(ex, "could not set the completion status"); }
+        }
+
+        /// <summary>The game was changed elsewhere (its edit window, another add-on): the picker follows.</summary>
+        private void Games_ItemUpdated(object sender, ItemUpdatedEventArgs<Game> e)
+        {
+            try
+            {
+                var game = completionGame;
+                if (game == null || !e.UpdatedItems.Any(u => u.NewData.Id == game.Id)) return;
+                Application.Current.Dispatcher.BeginInvoke(new Action(() => UpdateCompletion(new List<Game> { game })));
+            }
+            catch (Exception ex) { logger.Warn(ex, "could not follow a completion status change"); }
         }
 
         private const string ScreenshotUtilitiesId = "485d682f-73e9-4d54-b16f-b8dd49e88f90";
@@ -183,7 +236,20 @@ namespace LayoutStudio
             string sampleFlag = Path.Combine(PlayniteApi.Paths.ConfigurationPath, "add-sample-library.flag");
             if (File.Exists(sampleFlag) && SampleLibrary.Available(PlayniteApi.Paths.ConfigurationPath))
             {
-                try { File.Delete(sampleFlag); SampleLibrary.Fill(PlayniteApi, logger); }
+                try
+                {
+                    bool replace = File.ReadAllText(sampleFlag).IndexOf("replace", StringComparison.OrdinalIgnoreCase) >= 0;   // flag text "replace": redo every game and its artwork
+                    File.Delete(sampleFlag);
+                    // a few seconds later: other add-ons that listen to the library are still starting at this point
+                    var fillTimer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
+                    fillTimer.Tick += (s, e) =>
+                    {
+                        fillTimer.Stop();
+                        try { SampleLibrary.Fill(PlayniteApi, logger, replace); }
+                        catch (Exception ex) { logger.Warn(ex, "sample library failed"); }
+                    };
+                    fillTimer.Start();
+                }
                 catch (Exception ex) { logger.Warn(ex, "sample library failed"); }
             }
             // Testbed measurement (tools\perf-probe.ps1): scrolls the list and switches games by code, logs the UI thread time per step.
@@ -208,12 +274,22 @@ namespace LayoutStudio
                         string wanted = File.ReadAllText(pageFile).Trim();
                         if (wanted == last) return;
                         last = wanted;
-                        if (wanted.Length > 0) OpenEditor(wanted);
+                        // "search:<words>" types into the search box and "mode:fullscreen" / "mode:desktop" switches the edited theme (testbed screenshots); anything else is a page or "page/block"
+                        if (wanted.StartsWith("search:", StringComparison.OrdinalIgnoreCase)) { if (shellModel != null) shellModel.Search = wanted.Substring(7); }
+                        else if (wanted.StartsWith("mode:", StringComparison.OrdinalIgnoreCase)) { if (shellModel != null && shellModel.ModeSwitch != null) shellModel.ModeSwitch(wanted.Substring(5).Trim().Equals("fullscreen", StringComparison.OrdinalIgnoreCase) ? "Fullscreen" : "Desktop"); }
+                        else if (wanted.Length > 0) OpenEditor(wanted);
                     }
                     catch (Exception) { }
                 };
                 timer.Start();
             }
+        }
+
+        /// <summary>The add-ons installed in Playnite and whether each one is switched on (read when the editor opens, for the Add-ons page).</summary>
+        private IEnumerable<InstalledAddon> InstalledAddons()
+        {
+            var off = new HashSet<string>(PlayniteApi.Addons.DisabledAddons ?? new List<string>(), StringComparer.OrdinalIgnoreCase);
+            return (PlayniteApi.Addons.Addons ?? new List<string>()).Select(id => new InstalledAddon(id, !off.Contains(id))).ToList();
         }
 
         /// <summary>One notification (not a dialog) naming the optional add-ons that are not installed; shown again only when that list changes.</summary>
@@ -277,7 +353,7 @@ namespace LayoutStudio
                     var e = entry;
                     yield return new MainMenuItem { Description = e.Title, MenuSection = "@Layout Studio", Action = a => ChooseQuick(e) };
                 }
-                yield return new MainMenuItem { Description = "Reset to the theme defaults", MenuSection = "@Layout Studio", Action = a => ResetQuick() };
+                yield return new MainMenuItem { Description = "Reset to the default global preset", MenuSection = "@Layout Studio", Action = a => ResetQuick() };
                 yield break;
             }
             yield return new MainMenuItem
@@ -317,7 +393,7 @@ namespace LayoutStudio
         {
             try
             {
-                var answer = PlayniteApi.Dialogs.ShowMessage("Put every Layout Studio setting of this theme back to its default?", "Layout Studio", MessageBoxButton.YesNo);
+                var answer = PlayniteApi.Dialogs.ShowMessage("Put every Layout Studio setting of this theme back to the default global preset? Your current profile is kept as a backup.", "Layout Studio", MessageBoxButton.YesNo);
                 if (answer != MessageBoxResult.Yes) return;
                 string error = studio.ResetAll();
                 if (error != null) PlayniteApi.Dialogs.ShowMessage(error, "Layout Studio");
@@ -355,7 +431,7 @@ namespace LayoutStudio
                         new KeyValuePair<string, string>("Playnite", PlayniteApi.ApplicationInfo.ApplicationVersion + " (" + PlayniteApi.ApplicationInfo.Mode + ")"),
                         new KeyValuePair<string, string>("Language", PlayniteApi.ApplicationSettings.Language ?? "?"),
                         new KeyValuePair<string, string>("Log", "extensions.log in Playnite's user data folder")
-                    }, CurrentLiveContext);
+                    }, CurrentLiveContext, InstalledAddons);
                 shell.OpenPage(pageId);
                 shell.Mode = "Desktop";
                 if (File.Exists(FullscreenSchemaPath())) shell.ModeSwitch = SwitchEditorMode;

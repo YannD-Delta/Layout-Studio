@@ -80,6 +80,7 @@ namespace LayoutStudio.Core
         {
             var report = new ApplyReport();
             LegacyKeys.Migrate(profile);
+            LegacyKeys.ShiftSectionOrders(profile, schema);
             // A shared group follows the Look; the profile records what is applied (a group the Look does not have yet is adopted below by ApplyPreset).
             if (Look != null)
                 foreach (var kv in Look.Presets.ToList())

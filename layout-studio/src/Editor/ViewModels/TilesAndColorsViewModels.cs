@@ -87,8 +87,6 @@ namespace LayoutStudio.Editor
         private readonly History history;
         private readonly Control control;
 
-        /// <summary>The chip table and the other header settings shown under the cells (set by the shell).</summary>
-        public HeaderExtrasViewModel Extras { get; set; }
         public const int CardsPerCell = 4;
 
         public TilesEditorViewModel(ConstantStore store, Schema schema, History history)
