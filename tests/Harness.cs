@@ -54,6 +54,15 @@ public static class Harness
                 }
                 catch (TargetInvocationException ex)
                 {
+                    // the exported Layout Studio repository has no theme folder: a test that reads a theme file is skipped there
+                    var missing = ex.InnerException as System.IO.IOException;
+                    if (missing != null && (missing is System.IO.FileNotFoundException || missing is System.IO.DirectoryNotFoundException)
+                        && missing.Message.Replace('/', '\\').IndexOf("\\theme\\", StringComparison.OrdinalIgnoreCase) >= 0
+                        && !System.IO.Directory.Exists(System.IO.Path.Combine(TestPaths.RepoRoot(), "theme")))
+                    {
+                        Console.WriteLine("SKIP " + name + " (needs the theme folder)");
+                        continue;
+                    }
                     failed++;
                     Console.WriteLine("FAIL " + name + " - " + ex.InnerException.Message);
                 }

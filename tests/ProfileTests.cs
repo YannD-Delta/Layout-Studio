@@ -106,7 +106,7 @@ public static class ProfileTests
         var store = new ProfileStore(dir);
         store.Save(Sample());
         var file = Directory.GetFiles(dir, "*.profile.json").Single();
-        File.WriteAllText(file, File.ReadAllText(file).Replace("\"Version\":1", "\"Version\":99"));
+        File.WriteAllText(file, File.ReadAllText(file).Replace("\"Version\":" + Profile.CurrentVersion, "\"Version\":99"));
 
         var loaded = store.Load("Dark glass");
         Assert.True(loaded.ReadOnly, "a profile from a newer version is not overwritten");

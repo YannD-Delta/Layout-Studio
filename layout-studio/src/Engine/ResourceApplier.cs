@@ -77,13 +77,14 @@ namespace LayoutStudio.Engine
         {
             if (brushDependencies != null) return brushDependencies;
             brushDependencies = new Dictionary<string, List<KeyValuePair<string, string>>>();
-            foreach (var def in store.Definitions)
+            // every key a brush reads, not only the editable constants: a color profile also changes keys such as TextColorDarker
+            foreach (var key in schema.DependentKeys())
             {
-                foreach (var dep in schema.DependentsOf(def.Key))
+                foreach (var dep in schema.DependentsOf(key))
                 {
                     List<KeyValuePair<string, string>> list;
                     if (!brushDependencies.TryGetValue(dep.Resource, out list)) brushDependencies[dep.Resource] = list = new List<KeyValuePair<string, string>>();
-                    list.Add(new KeyValuePair<string, string>(def.Key, dep.Property));
+                    list.Add(new KeyValuePair<string, string>(key, dep.Property));
                 }
             }
             return brushDependencies;
@@ -95,8 +96,9 @@ namespace LayoutStudio.Engine
         }
 
         /// <summary>
-        /// Rebuilds the clone of one brush from the theme's (or the active preset's) own brush plus every changed constant that feeds it.
-        /// With no changed constant there is no clone, so a color preset's brush is never hidden by a stale copy.
+        /// Rebuilds the clone of one brush from the theme's (or the active preset's) own brush plus the live value of every resource that feeds it
+        /// (a changed constant, a color profile or any other merged preset: the first dictionary that defines the key wins, as for DynamicResource).
+        /// A brush that already holds those values gets no clone, so a color preset's brush is never hidden by a stale copy.
         /// </summary>
         private void RefreshBrush(string resource)
         {
@@ -104,24 +106,16 @@ namespace LayoutStudio.Engine
             if (clones.Remove(resource)) resources.Remove(resource);
             var original = Application.Current.TryFindResource(resource) as Freezable;
             if (original == null) return;
-            Freezable result = original;
-            bool any = false;
             List<KeyValuePair<string, string>> feeds;
             if (!BrushDependencies().TryGetValue(resource, out feeds)) return;
+            var live = new List<KeyValuePair<string, object>>();
             foreach (var feed in feeds)
             {
-                if (store.Get(feed.Key) == store.GetDefault(feed.Key)) continue;
-                try
-                {
-                    result = DependentBrushes.Rebuild(result, feed.Value, WpfValues.ToWpf(store.Find(feed.Key).Type, store.Get(feed.Key)));
-                    any = true;
-                }
-                catch (ArgumentException)
-                {
-                    // the constant's type does not fit this brush property: leave the theme's brush as it is
-                }
+                var value = Application.Current.TryFindResource(feed.Key);
+                if (value != null) live.Add(new KeyValuePair<string, object>(feed.Value, value));
             }
-            if (!any) return;
+            var result = DependentBrushes.Sync(original, live);
+            if (ReferenceEquals(result, original)) return;
             resources[resource] = result;
             clones.Add(resource);
         }
@@ -147,7 +141,17 @@ namespace LayoutStudio.Engine
                     using (var stream = File.OpenRead(xamlPath))
                     {
                         var dictionary = (ResourceDictionary)XamlReader.Load(stream);
-                        Application.Current.Resources.MergedDictionaries.Add(dictionary);
+                        // merged in the order of the groups in the schema, not in the order they were applied: the later group wins where two files
+                        // define the same resource (the Typography group over the fonts of a Material)
+                        var merged = Application.Current.Resources.MergedDictionaries;
+                        int at = merged.Count, rank = schema.PresetRank(id);
+                        foreach (var other in presets)
+                        {
+                            if (schema.PresetRank(other.Key) <= rank) continue;
+                            int index = merged.IndexOf(other.Value);
+                            if (index >= 0 && index < at) at = index;
+                        }
+                        merged.Insert(at, dictionary);
                         presets[id] = dictionary;
                     }
                 }

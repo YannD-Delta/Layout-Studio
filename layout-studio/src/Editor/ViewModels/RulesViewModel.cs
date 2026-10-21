@@ -32,11 +32,27 @@ namespace LayoutStudio.Editor
             set
             {
                 if (double.IsNaN(value) || double.IsInfinity(value)) return;
+                if (!fromSlider) sliderRaw = null;
                 double v = Math.Min(Max, Math.Max(Min, Math.Round(value)));
                 owner.Change(s => set(s, v));
             }
         }
 
+        private double? sliderRaw;   // what the slider last wrote, before rounding
+        private bool fromSlider;
+
+        /// <summary>The slider position: what the slider wrote while the stored limit is its rounded value (a slider drags relative to the value it is given back; see SettingViewModel.SliderValue).</summary>
+        public double SliderValue
+        {
+            get
+            {
+                double stored = Value;
+                if (sliderRaw.HasValue && Math.Abs(Math.Min(Max, Math.Max(Min, Math.Round(sliderRaw.Value))) - stored) < 1e-9) return Math.Min(Max, Math.Max(Min, sliderRaw.Value));
+                sliderRaw = null;
+                return stored;
+            }
+            set { sliderRaw = value; fromSlider = true; try { Value = value; } finally { fromSlider = false; } }
+        }
         public void Refresh() { RaiseAll(); }
         public void BeginGesture() { owner.BeginGesture(); }
         public void EndGesture() { owner.EndGesture(); }

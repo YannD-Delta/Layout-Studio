@@ -63,4 +63,12 @@ public static class QuickMenuTests
         Assert.False(QuickMenu.Choose(applier, profile, "Corners", "Nope"), "an unknown choice does nothing");
         Assert.Equal("Square", profile.Presets["Corners"]);
     }
+
+    public static void A_long_name_loses_its_parenthesis_and_a_short_one_keeps_it()
+    {
+        Assert.Equal("Corner rounding", QuickMenu.Short("Corner rounding (card, panels, tiles, chips, buttons, cover)"));
+        Assert.Equal("Neon blue (default)", QuickMenu.Short("Neon blue (default)"), "short names are untouched");
+        Assert.Equal("A name without any parenthesis that is far too long for the list", QuickMenu.Short("A name without any parenthesis that is far too long for the list"));
+        Assert.Equal(null, QuickMenu.Short(null));
+    }
 }

@@ -44,6 +44,9 @@ namespace LayoutStudio.Core
         /// <summary>True when a structural preset was chosen or dropped while live: it takes effect at the next start.</summary>
         public bool RestartRequired { get; private set; }
 
+        /// <summary>The Look shared with the other mode (null = this theme has none): its preset choices and tokens apply under the profile's own overrides.</summary>
+        public Look Look { get; set; }
+
         /// <summary>Raised after a preset choice was applied, so the profile can be saved even when no constant changed.</summary>
         public event Action PresetChanged;
 
@@ -77,6 +80,11 @@ namespace LayoutStudio.Core
         {
             var report = new ApplyReport();
             LegacyKeys.Migrate(profile);
+            LegacyKeys.ShiftSectionOrders(profile, schema);
+            // A shared group follows the Look; the profile records what is applied (a group the Look does not have yet is adopted below by ApplyPreset).
+            if (Look != null)
+                foreach (var kv in Look.Presets.ToList())
+                    if (Look.IsShared(kv.Key) && PresetKnown(kv.Key, kv.Value)) profile.Presets[kv.Key] = kv.Value;
             // Iterate over copies: ApplyPreset records the selection back into profile.Presets.
             foreach (var kv in profile.Presets.ToList())
             {
@@ -84,6 +92,7 @@ namespace LayoutStudio.Core
                 ApplyPreset(profile, kv.Key, kv.Value);
                 report.Applied++;
             }
+            if (Look != null) report.Invalid.AddRange(Look.ApplyTokens(store));
             foreach (var kv in profile.Overrides.ToList())
             {
                 string error;
@@ -148,6 +157,7 @@ namespace LayoutStudio.Core
                 }
             }
             profile.Presets[groupId] = choiceId;
+            if (Look != null) Look.SetPreset(groupId, choiceId);   // ignored unless the group is shared
             var handler = PresetChanged;
             if (handler != null) handler();
         }

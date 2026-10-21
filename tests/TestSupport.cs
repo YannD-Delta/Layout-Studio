@@ -80,3 +80,27 @@ public static class TestSections
         return serializer.Serialize(root);
     }
 }
+
+/// <summary>Finds the pieces of the ten-page editor: a page by id, a block by id, the editor of a kind.</summary>
+public static class ShellFinder
+{
+    public static LayoutStudio.Editor.PageViewModel PageOf(this LayoutStudio.Editor.ShellViewModel shell, string id)
+    {
+        return System.Linq.Enumerable.Single(shell.Pages, p => p.Id == id);
+    }
+
+    public static LayoutStudio.Editor.GroupViewModel Block(this LayoutStudio.Editor.ShellViewModel shell, string blockId)
+    {
+        return System.Linq.Enumerable.Single(System.Linq.Enumerable.SelectMany(shell.Pages, p => p.Groups), g => g.Id == blockId);
+    }
+
+    public static T EditorOf<T>(this LayoutStudio.Editor.ShellViewModel shell) where T : class
+    {
+        return System.Linq.Enumerable.Single(System.Linq.Enumerable.OfType<T>(System.Linq.Enumerable.Select(System.Linq.Enumerable.SelectMany(shell.Pages, p => p.Groups), g => g.Editor)));
+    }
+
+    public static System.Collections.Generic.IEnumerable<LayoutStudio.Editor.SettingViewModel> AllSettings(this LayoutStudio.Editor.ShellViewModel shell)
+    {
+        return System.Linq.Enumerable.SelectMany(System.Linq.Enumerable.SelectMany(shell.Pages, p => p.Groups), g => g.Settings);
+    }
+}

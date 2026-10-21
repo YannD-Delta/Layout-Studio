@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -115,7 +116,27 @@ public static class RulesEditorTests
         var page = shell.Pages.First(p => p.Kind == "rules");
         Assert.True(page.Editor is RulesEditorViewModel, "the page edits the rules");
         string xaml = File.ReadAllText(Path.Combine(TestPaths.RepoRoot(), @"layout-studio\src\Editor\EditorWindow.xaml"));
-        Assert.True(xaml.Contains("x:Key=\"Page.rules\""), "Page.rules template exists");
+        Assert.True(xaml.Contains("x:Key=\"Editor.rules\""), "Editor.rules template exists");
+    }
+
+    public static void A_slow_slider_drag_on_a_limit_still_moves_it()
+    {
+        var e = Make();
+        var row = Row(e, "Median FPS", "Orange up to");
+        double start = row.Value;
+        for (int i = 0; i < 20; i++) row.SliderValue = row.SliderValue + 0.2;   // the slider adds a fraction of a unit to the value it was given back
+        Assert.True(row.Value >= start + 3, "20 x 0.2 = +4: " + start + " -> " + row.Value);
+    }
+
+    public static void The_rules_page_is_called_Thresholds_and_follows_the_language()
+    {
+        var schema = Schema.Load(TestSchema.Json);
+        var store = new ConstantStore(schema.AllConstants());
+        Func<System.Func<string, string>, ShellViewModel> make = loc => new ShellViewModel(schema, store, new History(store), new ProfileApplier(schema, store, new FakePresetFiles(), @"C:\theme"),
+            new Profile { Name = "Default" }, loc, new System.Globalization.CultureInfo("en-US"), null, null, null, null, null, new FactsViewModel(new FactsSettings()));
+        Assert.Equal("Thresholds", make(k => null).Pages.First(p => p.Kind == "rules").Title);
+        Assert.Equal("Seuils", make(k => k == "LOCLS_Page_Thresholds" ? "Seuils" : null).Pages.First(p => p.Kind == "rules").Title);
+        Assert.True(make(k => null).Pages.First(p => p.Kind == "rules").Keywords.Contains("thresholds"), "the search finds it by its new name");
     }
 
     public static void Reset_puts_the_defaults_back_and_keeps_the_cut_off_date()

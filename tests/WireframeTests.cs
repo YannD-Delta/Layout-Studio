@@ -27,8 +27,8 @@ public static class WireframeTests
     public static void Sections_load_from_the_schema()
     {
         var s = Schema_();
-        Assert.Equal(18, s.Sections.Count);
-        Assert.Equal(18, s.Sections.Count(d => d.ColumnKey != null), "every section can change column");
+        Assert.Equal(20, s.Sections.Count);
+        Assert.Equal(20, s.Sections.Count(d => d.ColumnKey != null), "every section can change column");
         Assert.True(s.Sections.All(d => d.LeftKey != null || d.RightKey != null), "every section has a place");
         Assert.True(s.Sections.All(d => (d.LeftKey == null || s.Find(d.LeftKey) != null) && (d.ShowKey == null || s.Find(d.ShowKey) != null)), "all keys are known constants");
     }
@@ -38,12 +38,13 @@ public static class WireframeTests
         var s = Schema_();
         var store = Store(s);
         var slots = WireframeModel.FromStore(store, s);
-        Assert.Equal(18, slots.Count);
+        Assert.Equal(20, slots.Count);
         var left = Ids(slots, 0);
-        Assert.Equal("Notes", left[0]);
-        Assert.Equal(11, left.Length, "seven fixed + four movable sections by default in the left column");
+        Assert.Equal("Links", left[0]);
+        Assert.Equal("Notes", left[1]);
+        Assert.Equal(12, left.Length, "links, the notes and the others by default in the left column");
         var right = Ids(slots, 1);
-        Assert.Equal(7, right.Length);
+        Assert.Equal(8, right.Length);
         Assert.True(right.Contains("HowLongToBeat") && right.Contains("Achievements"));
         for (int i = 1; i < left.Length; i++)
             Assert.True(int.Parse(store.Get(s.Sections.Single(d => d.Id == left[i - 1]).LeftKey)) < int.Parse(store.Get(s.Sections.Single(d => d.Id == left[i]).LeftKey)), "left column is sorted by its order constants");
@@ -85,7 +86,7 @@ public static class WireframeTests
         Assert.True(WireframeModel.Move(store, s, "Tags", 0, 0));
         var left = Ids(WireframeModel.FromStore(store, s), 0);
         Assert.Equal("Tags", left[0]);
-        Assert.Equal("Notes", left[1]);
+        Assert.Equal("Links", left[1]);
         Assert.Equal("False", store.Get("DetailsViewTagsInRightColumn"));
     }
 
@@ -93,7 +94,7 @@ public static class WireframeTests
     {
         var s = Schema_();
         var store = Store(s);
-        Assert.False(WireframeModel.Move(store, s, "Notes", 0, 0));
+        Assert.False(WireframeModel.Move(store, s, "Links", 0, 0));
         Assert.Equal(0, store.Changed().Count);
     }
 
@@ -119,7 +120,7 @@ public static class WireframeTests
             Assert.True(WireframeModel.Move(store, s, d.Id, home, 0), d.Id + " comes back");
             var slots = WireframeModel.FromStore(store, s);
             Assert.Equal(home, slots.Single(x => x.Id == d.Id).Column);
-            Assert.Equal(18, slots.Count, "no section is lost");
+            Assert.Equal(20, slots.Count, "no section is lost");
             foreach (var column in new[] { 0, 1 })
             {
                 var values = OrderValues(store, s, column);
@@ -190,6 +191,6 @@ public static class WireframeTests
         Assert.Equal("Video", left[0]);
         Assert.Equal("Tags", right[0]);
         Assert.Equal("Genres", right[3], "Tags was inserted before it, so Genres moved from index 2 to 3");
-        Assert.Equal(18, left.Length + right.Length);
+        Assert.Equal(20, left.Length + right.Length);
     }
 }

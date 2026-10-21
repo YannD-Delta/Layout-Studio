@@ -25,6 +25,12 @@ namespace LayoutStudio.Editor
         public static readonly DependencyProperty DropSlotProperty =
             DependencyProperty.RegisterAttached("DropSlot", typeof(bool), typeof(DragDropBehavior), new PropertyMetadata(false, OnDropSlotChanged));
 
+        public static readonly DependencyProperty ReorderZoneProperty =
+            DependencyProperty.RegisterAttached("ReorderZone", typeof(bool), typeof(DragDropBehavior), new PropertyMetadata(false, OnReorderZoneChanged));
+
+        public static bool GetReorderZone(DependencyObject d) { return (bool)d.GetValue(ReorderZoneProperty); }
+        public static void SetReorderZone(DependencyObject d, bool value) { d.SetValue(ReorderZoneProperty, value); }
+
         public static bool GetDropSlot(DependencyObject d) { return (bool)d.GetValue(DropSlotProperty); }
         public static void SetDropSlot(DependencyObject d, bool value) { d.SetValue(DropSlotProperty, value); }
 
@@ -78,6 +84,39 @@ namespace LayoutStudio.Editor
                     slot.Drop(format, a.Data.GetData(format) as string);
                     break;
                 }
+                a.Handled = true;
+            };
+        }
+
+        /// <summary>A list of rows (the Items page) is a drop target for the rows of its own place: an insertion line follows the pointer.</summary>
+        private static void OnReorderZoneChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            var items = d as ItemsControl;
+            if (items == null || !(bool)e.NewValue) return;
+            items.AllowDrop = true;
+            items.DragOver += (s, a) =>
+            {
+                var zone = items.DataContext as ItemZoneViewModel;
+                var payload = a.Data.GetDataPresent(DragFormats.ItemRow) ? a.Data.GetData(DragFormats.ItemRow) as string : null;
+                bool accepted = zone != null && zone.CanDrop(payload);
+                a.Effects = accepted ? DragDropEffects.Move : DragDropEffects.None;
+                if (accepted) zone.SetDropTarget(payload, IndexAt(items, a.GetPosition(items).Y));
+                else if (zone != null) zone.ClearDropTarget();
+                a.Handled = true;
+            };
+            items.DragLeave += (s, a) =>
+            {
+                var zone = items.DataContext as ItemZoneViewModel;
+                var at = a.GetPosition(items);
+                if (zone != null && (at.X < 0 || at.Y < 0 || at.X > items.ActualWidth || at.Y > items.ActualHeight)) zone.ClearDropTarget();
+            };
+            items.Drop += (s, a) =>
+            {
+                var zone = items.DataContext as ItemZoneViewModel;
+                var payload = a.Data.GetDataPresent(DragFormats.ItemRow) ? a.Data.GetData(DragFormats.ItemRow) as string : null;
+                if (zone == null || payload == null) return;
+                if (zone.CanDrop(payload)) zone.Drop(payload, IndexAt(items, a.GetPosition(items).Y));
+                else zone.ClearDropTarget();
                 a.Handled = true;
             };
         }

@@ -13,6 +13,7 @@ namespace LayoutStudio.Editor
         public const string Section = "LayoutStudio.Section";
         public const string Tile = "LayoutStudio.Tile";
         public const string Slot = "LayoutStudio.Slot";
+        public const string ItemRow = "LayoutStudio.ItemRow";
     }
 
     public interface IDragSource

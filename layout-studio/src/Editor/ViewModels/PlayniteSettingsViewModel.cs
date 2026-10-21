@@ -46,19 +46,32 @@ namespace LayoutStudio.Editor
         {
             this.access = access;
             Ui = ui ?? new UiStrings();
-            Ui.Changed += () => Refresh();
+            Ui.Changed += () => { Refresh(); if (restoreHint) ShowRestoreHint(); };
             this.backupPath = backupPath;
             LoadBackup();
             Findings = new ObservableCollection<SettingsFindingViewModel>();
             FixAllCommand = new RelayCommand(FixAll, () => Findings.Count > 0);
             RestoreCommand = new RelayCommand(Restore, () => previous.Count > 0);
             Refresh();
+            // settings changed in an earlier session are still on file: say so, or the Put back button would stay hidden until the next fix
+            if (previous.Count > 0) { restoreHint = true; ShowRestoreHint(); }
+        }
+
+        private bool restoreHint;
+
+        private void ShowRestoreHint()
+        {
+            IsError = false;
+            Status = Ui.Format("LOCLS_Status_Changed", "Layout Studio changed {0} of Playnite's settings earlier. Put back as before restores them.", previous.Count);
         }
 
         public ObservableCollection<SettingsFindingViewModel> Findings { get; private set; }
         public RelayCommand FixAllCommand { get; private set; }
         public RelayCommand RestoreCommand { get; private set; }
         public bool HasFindings { get { return Findings.Count > 0; } }
+
+        /// <summary>How many of Playnite's settings Layout Studio changed and has not put back.</summary>
+        public int ChangedByUsCount { get { return previous.Count; } }
         public bool HasStatus { get { return !string.IsNullOrEmpty(status); } }
 
         public string Status
@@ -136,6 +149,7 @@ namespace LayoutStudio.Editor
 
         private void Apply(List<SettingsFinding> findings)
         {
+            restoreHint = false;
             var before = Read() ?? new Dictionary<string, object>();
             foreach (var finding in findings)
             {
@@ -163,6 +177,7 @@ namespace LayoutStudio.Editor
 
         private void Restore()
         {
+            restoreHint = false;
             foreach (var kv in previous.ToList())
             {
                 string error;

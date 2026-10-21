@@ -19,17 +19,19 @@ public static class SectionLayoutTests
     {
         var s = Schema_();
         var all = SectionLayout.Compute(new ConstantStore(s.AllConstants()), s);
-        Assert.Equal(18, all.Count);
+        Assert.Equal(20, all.Count);
+        Assert.Equal(0, Of(all, "Links").Column);
+        Assert.Equal(0, Of(all, "Links").Row, "the links are at the top of the left column");
         Assert.Equal(0, Of(all, "Notes").Column);
-        Assert.Equal(0, Of(all, "Notes").Row);
+        Assert.Equal(1, Of(all, "Notes").Row);
         Assert.Equal(0, Of(all, "NewsViewer").Column);
-        Assert.Equal(5, Of(all, "NewsViewer").Row, "its order constant in the left column");
+        Assert.Equal(6, Of(all, "NewsViewer").Row, "its order constant in the left column");
         Assert.Equal(1, Of(all, "HowLongToBeat").Column);
-        Assert.Equal(0, Of(all, "HowLongToBeat").Row);
+        Assert.Equal(1, Of(all, "HowLongToBeat").Row);
         Assert.Equal(1, Of(all, "ReviewViewer").Column);
-        Assert.Equal(5, Of(all, "ReviewViewer").Row);
-        Assert.Equal(11, all.Count(p => p.Column == 0));
-        Assert.Equal(7, all.Count(p => p.Column == 1));
+        Assert.Equal(6, Of(all, "ReviewViewer").Row);
+        Assert.Equal(12, all.Count(p => p.Column == 0));
+        Assert.Equal(8, all.Count(p => p.Column == 1));
     }
 
     public static void A_section_moved_to_the_other_column_takes_the_row_of_that_column()
@@ -42,9 +44,9 @@ public static class SectionLayoutTests
         Assert.Equal(0, Of(all, "NewsViewer").Row);
         Assert.Equal(1, Of(all, "HowLongToBeat").Row, "the sections already there shift down");
         var left = all.Where(p => p.Column == 0).Select(p => p.Row).OrderBy(r => r).ToArray();
-        Assert.Equal("0,1,2,3,4,5,6,7,8,9", string.Join(",", left), "the left column closed the gap");
+        Assert.Equal("0,1,2,3,4,5,6,7,8,9,10", string.Join(",", left), "the left column closed the gap");
         var right = all.Where(p => p.Column == 1).Select(p => p.Row).OrderBy(r => r).ToArray();
-        Assert.Equal("0,1,2,3,4,5,6,7", string.Join(",", right));
+        Assert.Equal("0,1,2,3,4,5,6,7,8", string.Join(",", right));
     }
 
     public static void A_right_section_moved_left_comes_before_the_ones_it_was_dropped_on()
@@ -55,7 +57,7 @@ public static class SectionLayoutTests
         var all = SectionLayout.Compute(store, s);
         Assert.Equal(0, Of(all, "HowLongToBeat").Column);
         Assert.Equal(0, Of(all, "HowLongToBeat").Row);
-        Assert.Equal(1, Of(all, "Notes").Row);
+        Assert.Equal(2, Of(all, "Notes").Row);
         Assert.Equal(0, Of(all, "Achievements").Row, "the right column renumbered without it");
     }
 
@@ -69,7 +71,7 @@ public static class SectionLayoutTests
         {
             WireframeModel.Move(store, s, ids[rng.Next(ids.Length)], rng.Next(2), rng.Next(20));
             var all = SectionLayout.Compute(store, s);
-            Assert.Equal(18, all.Count, "no section is lost");
+            Assert.Equal(20, all.Count, "no section is lost");
             foreach (var column in new[] { 0, 1 })
             {
                 var rows = all.Where(p => p.Column == column).Select(p => p.Row).ToList();

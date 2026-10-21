@@ -26,9 +26,27 @@ public static class SectionsEditorTests
     public static void Both_columns_are_filled_from_the_store()
     {
         var e = Make();
-        Assert.Equal(11, e.Editor.Left.Count);
-        Assert.Equal(7, e.Editor.Right.Count);
-        Assert.Equal("Notes", e.Editor.Left[0].Id);
+        Assert.Equal(12, e.Editor.Left.Count);
+        Assert.Equal(8, e.Editor.Right.Count);
+        Assert.Equal("Links", e.Editor.Left[0].Id);
+        Assert.Equal("Notes", e.Editor.Left[1].Id);
+    }
+
+    public static void A_section_without_an_open_switch_has_no_open_toggle()
+    {
+        var e = Make();
+        Assert.False(e.Editor.Left.Single(b => b.Id == "Links").CanOpen, "the links are chips, they have nothing to fold");
+        Assert.True(e.Editor.Left.Single(b => b.Id == "Notes").CanOpen);
+    }
+
+    public static void The_arrow_of_a_block_points_to_the_column_it_will_go_to()
+    {
+        var e = Make();
+        Assert.True(e.Editor.Left.All(b => !b.PointsLeft), "a left block sends its section to the right");
+        Assert.True(e.Editor.Right.All(b => b.PointsLeft), "a right block sends its section to the left");
+        var moved = e.Editor.Left.First(b => b.CanMove);
+        e.Editor.MoveToOtherColumn(moved);
+        Assert.True(moved.PointsLeft, "the arrow turns around once the section is in the right column");
     }
 
     public static void Drop_moves_a_block_between_columns()
@@ -45,8 +63,8 @@ public static class SectionsEditorTests
         var e = Make();
         e.Editor.Drop("Genres", 1, 0);
         e.History.Undo();
-        Assert.Equal(11, e.Editor.Left.Count, "the left column is back");
-        Assert.Equal(7, e.Editor.Right.Count);
+        Assert.Equal(12, e.Editor.Left.Count, "the left column is back");
+        Assert.Equal(8, e.Editor.Right.Count);
         Assert.False(e.History.CanUndo, "one move was one step");
         e.History.Redo();
         Assert.Equal("Genres", e.Editor.Right[0].Id);
@@ -56,7 +74,7 @@ public static class SectionsEditorTests
     {
         var e = Make("Notes");
         e.Editor.Drop("Notes", 1, 0);
-        Assert.Equal("Notes", e.Editor.Left[0].Id);
+        Assert.Equal("Notes", e.Editor.Left[1].Id);
         Assert.False(e.History.CanUndo);
     }
 
@@ -143,7 +161,7 @@ public static class SectionsEditorTests
         Assert.False(notes.MoveColumnCommand.CanExecute(null));
         notes.MoveColumnCommand.Execute(null);
         Assert.False(e.History.CanUndo);
-        Assert.Equal("Notes", e.Editor.Left[0].Id);
+        Assert.Equal("Notes", e.Editor.Left[1].Id);
     }
 
     public static void CanDrop_refuses_a_fixed_section_on_the_other_column_only()
@@ -199,19 +217,19 @@ public static class SectionsEditorTests
     {
         // the index is a place among the blocks as they are shown (the dragged block included): before Features means between Categories and Features
         var e = Make();
-        Assert.Equal("Features", e.Editor.Left[3].Id);
-        e.Editor.Drop("Genres", 0, 3);
-        Assert.Equal("Notes,Categories,Genres,Features", string.Join(",", e.Editor.Left.Take(4).Select(b => b.Id)));
+        Assert.Equal("Features", e.Editor.Left[4].Id);
+        e.Editor.Drop("Genres", 0, 4);
+        Assert.Equal("Links,Notes,Categories,Genres,Features", string.Join(",", e.Editor.Left.Take(5).Select(b => b.Id)));
         // and moving up is unchanged: before Categories (index 1)
-        e.Editor.Drop("Genres", 0, 1);
-        Assert.Equal("Notes,Genres,Categories,Features", string.Join(",", e.Editor.Left.Take(4).Select(b => b.Id)));
+        e.Editor.Drop("Genres", 0, 2);
+        Assert.Equal("Links,Notes,Genres,Categories,Features", string.Join(",", e.Editor.Left.Take(5).Select(b => b.Id)));
     }
 
     public static void Dropping_on_the_place_the_block_already_has_changes_nothing()
     {
         var e = Make();
-        e.Editor.Drop("Genres", 0, 1);
         e.Editor.Drop("Genres", 0, 2);
+        e.Editor.Drop("Genres", 0, 3);
         Assert.False(e.History.CanUndo, "just above itself or just below itself is no move");
     }
 

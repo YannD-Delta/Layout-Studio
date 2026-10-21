@@ -114,6 +114,20 @@ namespace LayoutStudio.Editor
             }
         }
         public string LiveText { get { return def.Live == "always" ? "Live" : "In the Details view"; } }
+
+        /// <summary>What Playnite shows now (set by the editor); null when unknown.</summary>
+        public LiveContext Context { get; set; }
+
+        /// <summary>True when this size can be seen in the real Playnite window right now (the schema "live" rule against the current view and game).</summary>
+        public bool IsLive { get { return LiveRule.IsLive(def.Live, Context); } }
+
+        /// <summary>Why it is not on screen, in words; null when it is.</summary>
+        public string NotLiveReason { get { return LiveRule.Describe(LiveRule.Gap(def.Live, Context), Words); } }
+
+        /// <summary>The language file's text for a key, English as the fallback; set by the editor.</summary>
+        public Func<string, string, string> Words { get; set; }
+
+        public void RefreshLive() { Raise("IsLive"); Raise("NotLiveReason"); }
         public bool HasWidth { get { return def.WidthKey != null; } }
         public bool HasHeight { get { return def.HeightKey != null; } }
         public bool IsSquare { get { return def.WidthKey != null && def.WidthKey == def.HeightKey; } }
@@ -569,6 +583,62 @@ namespace LayoutStudio.Editor
         public bool IsEmpty { get { return VisibleCount == 0; } }
         public SizeItemViewModel Active { get { return active; } }
 
+        private LiveContext context;
+        private bool pinned, closed;
+
+        /// <summary>Looks a key up in the language file; the shell sets it. Without it the English in the code is used.</summary>
+        public Func<string, string> Localize
+        {
+            set
+            {
+                Words = (key, english) => { string text = null; try { text = value(key); } catch (Exception) { } return string.IsNullOrEmpty(text) ? english : text; };
+                foreach (var i in Items) i.Words = Words;
+            }
+        }
+
+        private Func<string, string, string> Words;
+
+        /// <summary>What Playnite shows now; the plugin refreshes it when the editor is activated and while it is open.</summary>
+        public LiveContext Context
+        {
+            get { return context; }
+            set { context = value; foreach (var i in Items) { i.Context = value; i.RefreshLive(); } RaiseDock(); }
+        }
+
+        /// <summary>"Hidden" (nothing selected, no context, or closed), "Slim" (the selected size is live: watch the window), "Full" (it is not on screen: the dock previews it).</summary>
+        public string DockState
+        {
+            get
+            {
+                if (active == null || context == null || closed) return "Hidden";
+                return pinned || !active.IsLive ? "Full" : "Slim";
+            }
+        }
+
+        public string DockTitle { get { return active == null ? "" : active.Title; } }
+
+        public string DockText
+        {
+            get
+            {
+                if (active == null) return "";
+                Func<string, string, string> w = Words ?? ((key, english) => english);
+                return active.IsLive
+                    ? string.Format(System.Globalization.CultureInfo.InvariantCulture, w("LOCLS_Dock_Live", "{0} is live: watch the Playnite window while you change it."), active.Title)
+                    : string.Format(System.Globalization.CultureInfo.InvariantCulture, w("LOCLS_Dock_Preview", "Preview only. {0}."), active.NotLiveReason);
+            }
+        }
+
+        /// <summary>Keeps the full preview on screen even for a size that is live.</summary>
+        public bool PinPreview { get { return pinned; } set { if (pinned != value) { pinned = value; Raise("PinPreview"); RaiseDock(); } } }
+
+        /// <summary>Closes the dock for this session.</summary>
+        public void CloseDock() { closed = true; RaiseDock(); }
+
+        public RelayCommand CloseDockCommand { get { return new RelayCommand(CloseDock); } }
+
+        private void RaiseDock() { Raise("DockState"); Raise("DockText"); Raise("DockTitle"); }
+
         /// <summary>The card the person last clicked, focused or dragged (not merely hovered).</summary>
         public void Activate(SizeItemViewModel item)
         {
@@ -576,7 +646,9 @@ namespace LayoutStudio.Editor
             if (active != null) active.IsActive = false;
             active = item;
             if (active != null) active.IsActive = true;
+            closed = false;
             Raise("Active");
+            RaiseDock();
         }
 
         private void ApplyFilter()

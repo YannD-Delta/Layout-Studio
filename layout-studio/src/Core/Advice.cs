@@ -123,7 +123,7 @@ namespace LayoutStudio.Core
                 Status = animOff ? AdviceStatus.Ok : AdviceStatus.Tip,
                 What = "The fades and slides of the game page when you change game.",
                 Measured = "With the Animations preset on Off: about -31 % CPU and -35 % GPU while changing games. The biggest saving of all the options we measured.",
-                PageId = "appearance", PageLabel = "Appearance"
+                PageId = "performance/advice", PageLabel = "Animations"
             });
             items.Add(new AdviceItem
             {
@@ -131,7 +131,7 @@ namespace LayoutStudio.Core
                 Status = theme("HeaderTileScoreAnimation") == "False" ? AdviceStatus.Ok : AdviceStatus.Tip,
                 What = "The score tile glows and pulses when the selected game has a top score.",
                 Measured = "It runs all the time the game is selected: turning it off cut the GPU use at rest by about 46 %.",
-                PageId = "header", PageLabel = "Game header"
+                PageId = "items", PageLabel = "Items"
             });
             string material;
             bool lite = presets.TryGetValue("Material", out material) && material == "Light";
@@ -141,7 +141,7 @@ namespace LayoutStudio.Core
                 Status = lite ? AdviceStatus.Ok : AdviceStatus.Tip,
                 What = "The Lite material drops the glow and the shadows.",
                 Measured = "About -47 % GPU at rest and -10 % while changing games; the look is flatter.",
-                PageId = "appearance", PageLabel = "Appearance"
+                PageId = "window/glass", PageLabel = "Glass and material"
             });
             double radius;
             bool big = double.TryParse(theme("WindowGlassBlurRadius"), NumberStyles.Float, CultureInfo.InvariantCulture, out radius) && radius >= 80;
@@ -152,7 +152,7 @@ namespace LayoutStudio.Core
                 Status = big ? AdviceStatus.Tip : AdviceStatus.Ok,
                 What = "How strongly the artwork behind the window is blurred (the default is 36).",
                 Measured = "At 100 the GPU use while changing games is about 27 % higher than at 36; below that no difference was measurable.",
-                PageId = "visual-background", PageLabel = "Background"
+                PageId = "window/window-background", PageLabel = "Window background"
             });
         }
 

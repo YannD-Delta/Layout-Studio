@@ -56,6 +56,21 @@ namespace LayoutStudio.Core
             if (handler != null) handler();
         }
 
+        /// <summary>The constants the next undo would put back (empty when it is empty or only a preset choice).</summary>
+        public IList<string> NextUndoKeys { get { return KeysOf(undo); } }
+
+        /// <summary>The constants the next redo would set again.</summary>
+        public IList<string> NextRedoKeys { get { return KeysOf(redo); } }
+
+        /// <summary>True when the next undo includes a step that is not a constant (a preset choice).</summary>
+        public bool NextUndoHasAction { get { return undo.Count > 0 && undo[undo.Count - 1].Any(c => c.UndoAction != null); } }
+        public bool NextRedoHasAction { get { return redo.Count > 0 && redo[redo.Count - 1].Any(c => c.RedoAction != null); } }
+
+        private static IList<string> KeysOf(List<List<Change>> stack)
+        {
+            if (stack.Count == 0) return new List<string>();
+            return stack[stack.Count - 1].Where(c => c.Key != null).Select(c => c.Key).Distinct().ToList();
+        }
         public bool CanUndo { get { return undo.Count > 0; } }
         public bool CanRedo { get { return redo.Count > 0; } }
 

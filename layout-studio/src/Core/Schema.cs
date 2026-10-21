@@ -80,13 +80,37 @@ namespace LayoutStudio.Core
         public string TipKey;
         public bool NeedsRestart;
         public string DefaultChoice;
+        public bool More;            // rarely changed: shown behind the "More" link of its block
+        public bool Owned;           // edited by the block's specialised editor (or a preset swatch of it): no generated setting
         public List<Choice> Choices = new List<Choice>();
     }
 
+    /// <summary>A link from a block to another place that shows or touches the same thing (never a second editable copy).</summary>
+    public class SeeAlso
+    {
+        public string Page;
+        public string Block;
+        public string Text;
+    }
+
+    /// <summary>The add-on a block of the Add-ons page describes: how to recognise it among the installed ones and which items it feeds.</summary>
+    public class AddonDef
+    {
+        public string Id;
+        public List<string> Match = new List<string>();   // lower-case words looked for in the ids of the installed add-ons
+        public List<string> Items = new List<string>();   // ids of the Items cards (ItemFamilies) the add-on feeds
+        public string Provides;
+    }
+
+    /// <summary>A plain headed block of a page.</summary>
     public class Group
     {
         public string Id;
         public string Title;
+        public string Editor;                                      // the specialised editor shown in the block (background, sections, items...), or null
+        public List<string> Regions = new List<string>();          // rectangles of the window plan this block lights
+        public List<SeeAlso> SeeAlso = new List<SeeAlso>();
+        public AddonDef Addon;
         public List<Control> Controls = new List<Control>();
     }
 
@@ -94,6 +118,8 @@ namespace LayoutStudio.Core
     {
         public string Id;
         public string Title;
+        public string Summary;
+        public List<string> Regions = new List<string>();
         public List<Group> Groups = new List<Group>();
     }
 
@@ -110,6 +136,63 @@ namespace LayoutStudio.Core
         public List<CornerDef> Corners = new List<CornerDef>();
         public List<TuningDef> Tuning = new List<TuningDef>();
         private readonly HashSet<string> restartKeys = new HashSet<string>();
+        private readonly Dictionary<string, string> homes = new Dictionary<string, string>();
+        private readonly Dictionary<string, string> presetHomes = new Dictionary<string, string>();
+        private readonly Dictionary<string, string> aliases = new Dictionary<string, string>();
+
+        /// <summary>True when the schema says where every option lives (ui-layout.yaml): the editor then shows ten pages of blocks. A small schema without it keeps the older page-per-group layout.</summary>
+        public bool HasLayout { get { return homes.Count > 0; } }
+
+        /// <summary>"page/block" where an option lives, or null.</summary>
+        public string HomeOf(string key)
+        {
+            string home;
+            return key != null && homes.TryGetValue(key, out home) ? home : null;
+        }
+
+        /// <summary>"page/block" where a preset group is shown, or null.</summary>
+        public string PresetHomeOf(string id)
+        {
+            string home;
+            return id != null && presetHomes.TryGetValue(id, out home) ? home : null;
+        }
+
+        public IEnumerable<KeyValuePair<string, string>> Homes { get { return homes; } }
+
+        /// <summary>
+        /// Position of a preset group in the schema (the order of options.yaml). Preset files that define the same resource (the Typography group
+        /// overrides the font files of a Material) are merged in this order, so the later group always wins, whatever order the profile applied them in.
+        /// A group the schema does not know ranks last.
+        /// </summary>
+        public int PresetRank(string groupId)
+        {
+            int rank = 0;
+            foreach (var control in Pages.SelectMany(p => p.Groups).SelectMany(g => g.Controls))
+            {
+                if (control.Kind != "preset") continue;
+                if (control.Id == groupId) return rank;
+                rank++;
+            }
+            return int.MaxValue;
+        }
+
+        /// <summary>
+        /// The Items page edits what is homed there, plus the show / open / column switches of the sections (the Sections page is their home; the Items page is the
+        /// same data seen by item). Without a layout it edits everything the older rule gave it.
+        /// </summary>
+        public bool ItemsMayEdit(string key)
+        {
+            if (!HasLayout) return true;
+            string home = HomeOf(key);
+            return home == null || home == "items/items" || home == "sections/order";
+        }
+
+        /// <summary>Where an older page id (the theme's gear buttons, the advice texts) lives now: "page" or "page/block"; null when the id is unknown.</summary>
+        public string ResolveAlias(string id)
+        {
+            string target;
+            return id != null && aliases.TryGetValue(id, out target) ? target : null;
+        }
 
         /// <summary>True when the theme reads this constant with {StaticResource}: a change only shows after a restart.</summary>
         public bool NeedsRestart(string key) { return restartKeys.Contains(key); }
@@ -122,6 +205,9 @@ namespace LayoutStudio.Core
         }
 
         public IEnumerable<ConstantDef> AllConstants() { return constants.Values; }
+
+        /// <summary>Every resource key some brush reads through DynamicResource: the editable constants and the keys only a color profile defines (TextColorDarker...).</summary>
+        public IEnumerable<string> DependentKeys() { return dependents.Keys; }
 
         /// <summary>Consistency of the visual editors' tables with the constants: every key they name exists, tile slots have their three extra keys, a movable section has both order keys.</summary>
         public List<string> Validate()
@@ -146,6 +232,16 @@ namespace LayoutStudio.Core
                 foreach (var key in control.Keys) need("control " + control.Id, key);
                 if (control.Kind == "tileSlots" && control.ExtraKeys.Count != 3 * control.Keys.Count)
                     problems.Add("control " + control.Id + " has " + control.ExtraKeys.Count + " extra keys for " + control.Keys.Count + " slots (3 each expected)");
+            }
+            if (HasLayout)
+            {
+                foreach (var def in constants.Values)
+                    if (!homes.ContainsKey(def.Key)) problems.Add("option " + def.Key + " has no home (ui-layout.yaml)");
+                var blocks = new HashSet<string>(Pages.SelectMany(p => p.Groups.Select(g => p.Id + "/" + g.Id)));
+                foreach (var kv in homes)
+                    if (!blocks.Contains(kv.Value)) problems.Add("option " + kv.Key + " lives in " + kv.Value + ", which is not a block");
+                foreach (var kv in aliases)
+                    if (!Pages.Any(p => p.Id == kv.Value) && !blocks.Contains(kv.Value)) problems.Add("alias " + kv.Key + " points to " + kv.Value + ", which does not exist");
             }
             return problems;
         }
@@ -232,6 +328,9 @@ namespace LayoutStudio.Core
                 schema.Tuning.Add(new TuningDef { Key = Str(d, "key"), Title = Str(d, "title"), Kind = Str(d, "kind") });
             }
             foreach (var k in List(Get(obj, "restartKeys"))) schema.restartKeys.Add((string)k);
+            ReadMap(Get(obj, "homes"), schema.homes);
+            ReadMap(Get(obj, "presetHomes"), schema.presetHomes);
+            ReadMap(Get(obj, "aliases"), schema.aliases);
             var deps = Get(obj, "dependents") as IDictionary<string, object>;
             if (deps != null)
             {
@@ -249,11 +348,25 @@ namespace LayoutStudio.Core
             foreach (var p in List(Get(obj, "pages")))
             {
                 var pd = (IDictionary<string, object>)p;
-                var page = new Page { Id = Str(pd, "id"), Title = Str(pd, "title") };
+                var page = new Page { Id = Str(pd, "id"), Title = Str(pd, "title"), Summary = Str(pd, "summary") };
+                foreach (var r in List(Get(pd, "regions"))) page.Regions.Add((string)r);
                 foreach (var g in List(Get(pd, "groups")))
                 {
                     var gd = (IDictionary<string, object>)g;
-                    var group = new Group { Id = Str(gd, "id"), Title = Str(gd, "title") };
+                    var group = new Group { Id = Str(gd, "id"), Title = Str(gd, "title"), Editor = Str(gd, "editor") };
+                    foreach (var r in List(Get(gd, "regions"))) group.Regions.Add((string)r);
+                    foreach (var l in List(Get(gd, "seeAlso")))
+                    {
+                        var ld = (IDictionary<string, object>)l;
+                        group.SeeAlso.Add(new SeeAlso { Page = Str(ld, "page"), Block = Str(ld, "block"), Text = Str(ld, "text") });
+                    }
+                    var ad = Get(gd, "addon") as IDictionary<string, object>;
+                    if (ad != null)
+                    {
+                        group.Addon = new AddonDef { Id = Str(ad, "id"), Provides = Str(ad, "provides") };
+                        foreach (var m in List(Get(ad, "match"))) group.Addon.Match.Add((string)m);
+                        foreach (var i in List(Get(ad, "items"))) group.Addon.Items.Add((string)i);
+                    }
                     foreach (var c in List(Get(gd, "controls"))) group.Controls.Add(ReadControl((IDictionary<string, object>)c));
                     page.Groups.Add(group);
                 }
@@ -268,7 +381,9 @@ namespace LayoutStudio.Core
             {
                 Kind = Str(d, "kind"), Id = Str(d, "id"), Title = Str(d, "title"), TitleKey = Str(d, "titleKey"),
                 Description = Str(d, "description"), TipKey = Str(d, "tipKey"), DefaultChoice = Str(d, "defaultChoice"),
-                NeedsRestart = Get(d, "needsRestart") is bool && (bool)Get(d, "needsRestart")
+                NeedsRestart = Get(d, "needsRestart") is bool && (bool)Get(d, "needsRestart"),
+                More = Get(d, "more") is bool && (bool)Get(d, "more"),
+                Owned = Get(d, "owned") is bool && (bool)Get(d, "owned")
             };
             foreach (var k in List(Get(d, "keys"))) c.Keys.Add((string)k);
             foreach (var k in List(Get(d, "extraKeys"))) c.ExtraKeys.Add((string)k);
@@ -286,6 +401,12 @@ namespace LayoutStudio.Core
                 c.Choices.Add(choice);
             }
             return c;
+        }
+
+        private static void ReadMap(object value, Dictionary<string, string> into)
+        {
+            var map = value as IDictionary<string, object>;
+            if (map != null) foreach (var kv in map) into[kv.Key] = Convert.ToString(kv.Value, CultureInfo.InvariantCulture);
         }
 
         private static object Get(IDictionary<string, object> d, string key)

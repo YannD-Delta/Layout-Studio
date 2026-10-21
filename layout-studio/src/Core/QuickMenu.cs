@@ -40,8 +40,18 @@ namespace LayoutStudio.Core
         private static string Name(Func<string, string> localize, string key, string english)
         {
             var text = localize == null || string.IsNullOrEmpty(key) ? null : localize(key);
-            return string.IsNullOrEmpty(text) ? english : text;
+            return Short(string.IsNullOrEmpty(text) ? english : text);
         }
+
+        /// <summary>The quick menu is a short list read from the couch: a name longer than 38 characters loses its explanation in parentheses ("Corner rounding (card, panels, tiles, ...)" becomes "Corner rounding").</summary>
+        public static string Short(string text)
+        {
+            if (text == null || text.Length <= MaxName) return text;
+            int open = text.IndexOf(" (", StringComparison.Ordinal);
+            return open > 0 ? text.Substring(0, open) : text;
+        }
+
+        public const int MaxName = 38;
 
         /// <summary>Applies one choice (constants and files) and records it in the profile; false when the group or choice is unknown.</summary>
         public static bool Choose(ProfileApplier applier, Profile profile, string groupId, string choiceId)

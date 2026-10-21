@@ -37,6 +37,7 @@ namespace LayoutStudio.Editor
             get { return Numbers(store.Get(def.Key))[0]; }
             set
             {
+                if (!fromSlider) sliderRaw = null;   // set any way but by the slider: the slider shows the stored value exactly
                 double r = Math.Min(MaxRadius, Math.Max(0, Math.Round(value)));
                 string error;
                 history.BeginBatch();
@@ -48,6 +49,25 @@ namespace LayoutStudio.Editor
                 finally { history.EndBatch(); }
                 RaiseAll();
             }
+        }
+
+        private double? sliderRaw;   // what the slider last wrote, before rounding
+        private bool fromSlider;
+
+        /// <summary>
+        /// The slider position of this element: while the stored radius is the rounded value of what the slider wrote, the slider gets what it wrote
+        /// (a slider drags relative to the value it is given back: the rounded one would make a slow drag of under half a pixel go nowhere).
+        /// </summary>
+        public double SliderRadius
+        {
+            get
+            {
+                double stored = Radius;
+                if (sliderRaw.HasValue && Math.Abs(Math.Min(MaxRadius, Math.Max(0, Math.Round(sliderRaw.Value))) - stored) < 1e-9) return Math.Min(MaxRadius, Math.Max(0, sliderRaw.Value));
+                sliderRaw = null;
+                return stored;
+            }
+            set { sliderRaw = value; fromSlider = true; try { Radius = value; } finally { fromSlider = false; } }
         }
 
         public bool IsCustom { get { var n = Numbers(store.Get(def.Key)); return n.Any(x => Math.Abs(x - n[0]) > 1e-9); } }
@@ -87,25 +107,80 @@ namespace LayoutStudio.Editor
         {
             this.history = history;
             Items = schema.Corners.Select(c => new CornerItemViewModel(c, store, history)).ToList();
-            store.ValueChanged += key => { if (Items.Any(i => i.Key == key)) Raise("Master"); };
+            SharpCommand = new RelayCommand(() => ApplyLook(0));
+            SoftCommand = new RelayCommand(() => ApplyLook(0.6));
+            AppleCommand = new RelayCommand(() => ApplyLook(1));
+            PillCommand = new RelayCommand(() => ApplyLook(1.5));
+            store.ValueChanged += key =>
+            {
+                if (applying || !Items.Any(i => i.Key == key)) return;
+                held = null;   // an element changed on its own (undo, reset, its own slider): the master is the average again
+                Raise("Master");
+            };
         }
+
+        /// <summary>
+        /// The designed set of radii in pixels (100 % of the Designed look): nested corners step down from the card to the chips.
+        /// An element missing here uses its Round value.
+        /// </summary>
+        public static readonly Dictionary<string, double> Designed = new Dictionary<string, double>
+        {
+            { "HeroCardCornerRadius", 28 }, { "SectionCornerRadius", 20 }, { "HeaderTileCornerRadius", 18 }, { "HeroCoverCornerRadius", 18 },
+            { "HeroButtonCornerRadius", 16 }, { "HeroChipCornerRadius", 14 }, { "DetailsViewCoverCornerRadius", 14 },
+            { "DetailsViewExtraButtonsCornerRadius", 10 }, { "ControlCornerRadius", 10 }, { "PopupCornerRadius", 18 },
+            { "ListItemCornerRadius", 12 }, { "SidebarItemCornerRadius", 14 }, { "GridViewCoverCornerRadius", 12 }, { "GridViewSelectionBorderCornerRadius", 15 }
+        };
+
+        public RelayCommand SharpCommand { get; private set; }
+        public RelayCommand SoftCommand { get; private set; }
+        public RelayCommand AppleCommand { get; private set; }
+        public RelayCommand PillCommand { get; private set; }
+
+        /// <summary>Sets every element to a share of its designed radius (one undo step).</summary>
+        private void ApplyLook(double share)
+        {
+            applying = true;
+            history.BeginBatch();
+            try
+            {
+                foreach (var item in Items)
+                {
+                    double designed;
+                    if (!Designed.TryGetValue(item.Key, out designed)) designed = item.Round;
+                    item.Radius = designed * share;
+                }
+            }
+            finally { history.EndBatch(); applying = false; }
+            held = null;   // the master reads the elements again
+            Raise("Master");
+        }
+
+        private bool applying;
+        private double? held;  // the value the master slider wrote last; radii are whole pixels, so the average cannot give it back exactly
 
         public IList<CornerItemViewModel> Items { get; private set; }
 
-        /// <summary>Percent of the Round look: the average of every element's radius relative to its Round value.</summary>
+        /// <summary>
+        /// Percent of the Round look. While the elements still match what the slider wrote it is exactly that value (a slider drags
+        /// relative to its current value, so a reading that differs from what it wrote makes the thumb drift or stick); once an
+        /// element changes on its own it is the average of every element's radius relative to its Round value.
+        /// </summary>
         public double Master
         {
             get
             {
+                if (held.HasValue) return held.Value;
                 var ratios = Items.Where(i => i.Round > 0).Select(i => Math.Min(i.Radius, CornerItemViewModel.MaxRadius) / i.Round).ToList();
                 return ratios.Count == 0 ? 0 : Math.Round(ratios.Average() * 100);
             }
             set
             {
                 double pct = Math.Min(150, Math.Max(0, value));
+                applying = true;
                 history.BeginBatch();
                 try { foreach (var item in Items) item.Radius = item.Round * pct / 100.0; }
-                finally { history.EndBatch(); }
+                finally { history.EndBatch(); applying = false; }
+                held = pct;
                 Raise("Master");
             }
         }

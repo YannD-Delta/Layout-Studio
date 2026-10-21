@@ -56,6 +56,31 @@ public static class SettingViewModelTests
         Assert.Equal(null, blur.Error);
     }
 
+    public static void A_slow_slider_drag_of_less_than_half_a_step_still_moves_the_value()
+    {
+        var e = Make();
+        var blur = Setting(e, "WindowGlassBlurRadius");   // 0..80, step 1 in the real schema; whole numbers here
+        blur.SliderValue = 30;
+        double position = blur.SliderValue;
+        for (int i = 0; i < 10; i++) { position = blur.SliderValue + 0.2; blur.SliderValue = position; }   // the slider adds 0.2 to the value it was given back
+        Assert.True(double.Parse(e.Store.Get("WindowGlassBlurRadius"), CultureInfo.InvariantCulture) >= 32, "got " + e.Store.Get("WindowGlassBlurRadius"));
+        e.Store.TrySet("WindowGlassBlurRadius", "10", out string error);
+        Assert.Equal(10.0, blur.SliderValue, "a value that changed on its own shows exactly");
+    }
+
+    public static void A_typed_value_that_snaps_like_the_last_drag_still_shows_exactly()
+    {
+        var e = Make();
+        var blur = Setting(e, "WindowGlassBlurRadius");
+        blur.SliderValue = 10.4;                    // the drag: stored 10
+        Assert.Equal(10.4, blur.SliderValue);
+        blur.Text = "10";                           // typed: the same snap, but not what the slider wrote
+        Assert.Equal(10.0, blur.SliderValue, "the slider shows the typed number, not the old drag position");
+        blur.SliderValue = 10.4;
+        blur.ResetCommand.Execute(null);
+        Assert.Equal(30.0, blur.SliderValue, "a reset shows the default exactly");
+    }
+
     public static void Invalid_number_text_sets_an_error_and_keeps_the_value()
     {
         var e = Make();
